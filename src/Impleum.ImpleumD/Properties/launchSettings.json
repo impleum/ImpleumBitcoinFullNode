@@ -1,0 +1,19 @@
+{
+	"profiles": {
+		"Impleum.ImpleumD": {
+			"commandName": "Project"
+		},
+		"Impleum.ImpleumD Test": {
+			"commandName": "Project",
+			"commandLineArgs": "-testnet"
+		},
+		"Impleum.ImpleumD Test with RPC": {
+			"commandName": "Project",
+			"commandLineArgs": "-testnet -server -rpcpassword=password -rpcuser=user"
+		},
+		"Impleum.ImpleumD Test Keepalive 60s": {
+			"commandName": "Project",
+			"commandLineArgs": "-testnet -keepalive=60"
+		}
+	}
+}

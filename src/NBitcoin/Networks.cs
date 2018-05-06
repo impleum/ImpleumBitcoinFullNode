@@ -747,8 +747,20 @@ namespace NBitcoin
 
             //MineGenesis(genesis,consensus);
             consensus.HashGenesisBlock = genesis.GetHash();
-            Assert(consensus.HashGenesisBlock == uint256.Parse("0x23ae82184f3c04349881eccd7dd8e3d18b15ee9488a78e343100434ed3957bd0"));
+            Assert(consensus.HashGenesisBlock == uint256.Parse("0x00d55cc2767865168efb6a8d707299943b3bf5afc1307b0fcd6b8d1a012616ea"));
+
+
             // If genesis block hash does not match, then generate new genesis hash.
+            var checkpoints = new Dictionary<int, CheckpointInfo>
+            {
+                //{ 0, new CheckpointInfo(new uint256("0x00000e246d7b73b88c9ab55f2e5e94d9e22d471def3df5ea448f5576b1d156b9"), new uint256("0x0000000000000000000000000000000000000000000000000000000000000000")) },
+                //{ 2, new CheckpointInfo(new uint256("0x56959b1c8498631fb0ca5fe7bd83319dccdc6ac003dccb3171f39f553ecfa2f2"), new uint256("0x13f4c27ca813aefe2d9018077f8efeb3766796b9144fcc4cd51803bf4376ab02")) },
+                //{ 50000, new CheckpointInfo(new uint256("0xb42c18eacf8fb5ed94eac31943bd364451d88da0fd44cc49616ffea34d530ad4"), new uint256("0x824934ddc5f935e854ac59ae7f5ed25f2d29a7c3914cac851f3eddb4baf96d78")) },
+                //{ 100000, new CheckpointInfo(new uint256("0xf9e2f7561ee4b92d3bde400d251363a0e8924204c326da7f4ad9ccc8863aad79"), new uint256("0xdef8d92d20becc71f662ee1c32252aca129f1bf4744026b116d45d9bfe67e9fb")) },
+                //{ 115000, new CheckpointInfo(new uint256("0x8496c77060c8a2b5c9a888ade991f25aa33c232b4413594d556daf9043fad400"), new uint256("0x1886430484a9a36b56a7eb8bd25e9ebe4fc8eec8f9a84f5073f71e08f2feac90")) },
+                //{ 163000, new CheckpointInfo(new uint256("0x4e44a9e0119a2e7cbf15e570a3c649a5605baa601d953a465b5ebd1c1982212a"), new uint256("0x0646fc7db8f3426eb209e1228c7d82724faa46a060f5bbbd546683ef30be245c")) },
+            };
+
 
             consensus.DefaultAssumeValid = null;
             NetworkBuilder builder = new NetworkBuilder()
@@ -756,6 +768,7 @@ namespace NBitcoin
                 .SetRootFolderName(ImpleumRootFolderName)
                 .SetDefaultConfigFilename(ImpleumDefaultConfigFilename)
                 .SetConsensus(consensus)
+                .SetCheckpoints(checkpoints)
                 .SetMagic(magic)
                 .SetGenesis(genesis)
                 .SetPort(16271)
