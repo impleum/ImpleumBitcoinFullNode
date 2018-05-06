@@ -36,6 +36,8 @@ namespace Stratis.Bitcoin.Features.Consensus
         public uint256 HashProofOfStake { get; set; }
 
         public uint256 TargetProofOfStake { get; set; }
+
+        public long CoinAge { get; set; }
     }
 
     /// <summary>

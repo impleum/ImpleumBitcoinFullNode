@@ -183,6 +183,8 @@ namespace Stratis.Bitcoin.Features.Consensus
                 ConsensusErrors.InvalidStakeDepth.Throw();
             }
 
+            context.CoinAge = this.GetCoinAge(transaction, prevChainedBlock);
+
             this.CheckStakeKernelHash(context, headerBits, prevBlockStake, prevUtxo, txIn.PrevOut, transaction.Time);
 
             this.logger.LogTrace("(-)[OK]");
@@ -409,6 +411,28 @@ namespace Stratis.Bitcoin.Features.Consensus
             }
 
             this.logger.LogTrace("(-)[OK]");
+        }
+
+        public long GetCoinAge(Transaction coinstakeTx, ChainedBlock prevBlock)
+        {
+            if (coinstakeTx.IsCoinBase)
+                return 0;
+            BigInteger bnCentSecond = BigInteger.Zero;  // coin age in the unit of cent-seconds
+            foreach (TxIn input in coinstakeTx.Inputs)
+            {
+                var inputCoins = this.coinView.FetchCoinsAsync(new[] { input.PrevOut.Hash }).GetAwaiter().GetResult();
+                if ((inputCoins == null) || (inputCoins.UnspentOutputs.Length != 1))
+                    continue;
+                if (this.IsConfirmedInNPrevBlocks(inputCoins.UnspentOutputs[0], prevBlock, this.consensusOptions.StakeMinConfirmations - 1))
+                    continue;
+
+                long nValueIn = inputCoins.UnspentOutputs[0].Outputs[input.PrevOut.N].Value;
+                var multiplier = BigInteger.ValueOf(coinstakeTx.Time - inputCoins.UnspentOutputs[0].Time);
+                bnCentSecond = bnCentSecond.Add(BigInteger.ValueOf(nValueIn).Multiply(multiplier).Divide(BigInteger.ValueOf(Money.CENT)));
+            }
+            BigInteger bnCoinDay = bnCentSecond.Multiply(BigInteger.ValueOf(Money.CENT)).Divide(BigInteger.ValueOf(Money.COIN))
+                .Divide(BigInteger.ValueOf(24 * 60 * 60));
+            return bnCoinDay.LongValue;
         }
     }
 }

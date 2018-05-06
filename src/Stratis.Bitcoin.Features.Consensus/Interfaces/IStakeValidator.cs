@@ -75,5 +75,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Interfaces
         /// </para>
         /// </remarks>
         Target GetNextTargetRequired(IStakeChain stakeChain, ChainedBlock chainedBlock, NBitcoin.Consensus consensus, bool proofOfStake);
+
+        long GetCoinAge(Transaction coinstakeTx, ChainedBlock prevBlock);
     }
 }

@@ -45,7 +45,7 @@ namespace Stratis.Bitcoin.Configuration
         /// <param name="protocolVersion">Supported protocol version for which to create the configuration.</param>
         /// <param name="agent">The nodes user agent that will be shared with peers.</param>
         public NodeSettings(Network innerNetwork = null, ProtocolVersion protocolVersion = SupportedProtocolVersion, 
-            string agent = "StratisBitcoin", string[] args = null, bool loadConfiguration = true)
+            string agent = "ImpleumBitcoin", string[] args = null, bool loadConfiguration = true)
         {
             this.Agent = agent;
             this.Network = innerNetwork;
@@ -105,7 +105,7 @@ namespace Stratis.Bitcoin.Configuration
             // Setting the data directory.
             if (this.DataDir == null)
             {
-                this.DataDir = this.CreateDefaultDataDirectories(Path.Combine("StratisNode", this.Network.RootFolderName), this.Network);
+                this.DataDir = this.CreateDefaultDataDirectories(Path.Combine("ImpleumNode", this.Network.RootFolderName), this.Network);
             }
             else
             {

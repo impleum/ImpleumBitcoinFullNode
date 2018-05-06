@@ -17,6 +17,6 @@ namespace Stratis.Bitcoin.Features.Consensus.Interfaces
         /// </summary>
         /// <param name="height">Target block height.</param>
         /// <returns>Miner's coin stake reward.</returns>
-        Money GetProofOfStakeReward(int height);
+        Money GetProofOfStakeReward(int height, long? coinAge = null);
     }
 }

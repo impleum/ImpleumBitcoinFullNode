@@ -69,6 +69,24 @@ namespace Stratis.Bitcoin.Features.Consensus
     /// </remarks>
     public class Checkpoints : ICheckpoints
     {
+
+        /// <summary>List of selected checkpoints for Impleum mainnet.</summary>
+        private static Dictionary<int, CheckpointInfo> ImpleumMainnetCheckpoints = new Dictionary<int, CheckpointInfo>
+        {
+            { 0, new CheckpointInfo(new uint256("0x02a8be139ec629b13df22e7abc7f9ad5239df39efaf2f5bf3ab5e4d102425dbe"), new uint256("0x0000000000000000000000000000000000000000000000000000000000000000")) },
+            { 2, new CheckpointInfo(new uint256("0x49c9ce21a7916a4026e782a4728ba626b02cc6caf35615c4d7c9400ad22b5282"), new uint256("0xeda93767b1d501313d9dd2cc77e1dbb256101b351eb17e3a4ab9663d3f0a3cd3")) }, // Premine
+            { 35, new CheckpointInfo(new uint256("0x477d36da0993b3a5e279fd0eba7ab4825b4ff54f0c3e55b8df4e7e6c1afe6939"), new uint256("0xa5bef352cb2182f7ca80f5d6d7a4e6ce4325bcd78bab63979d4ec8871e95a53d")) },
+            { 2500, new CheckpointInfo(new uint256("0x49a2d1719097b5d9ec81d89627eaa71dfefb158cb0bc0ac58051d5ca0089dd98"), new uint256("0xf6494f64e49e8e9f6092686c78af20b7eb868bee6f0ae6a97da40b4dc06e84a7")) },
+            { 4000, new CheckpointInfo(new uint256("0xbd4c0a8c11431012f1b59be225b5913a1f06e1225e85a10216f2be5db1b4c0f1"), new uint256("0x79dca584714897d88de42e9540e1bdabe8df0e5fa17473014c529385b64f7c1e")) },
+            { 26500, new CheckpointInfo(new uint256("0x089f81d221d96e69609de4c5c20bfa9e477e9031599be0bf034d833fa2cd2d98"), new uint256("0x6caa0eb578196f8e0cf9fcea72d9cf4db2c75927cde1997b49bb635dc81e63a5")) }
+        };
+
+        /// <summary>List of selected checkpoints for Impleum testnet.</summary>
+        private static Dictionary<int, CheckpointInfo> ImpleumTestnetCheckpoints = new Dictionary<int, CheckpointInfo>
+        {
+
+        };
+
         /// <summary>List of selected checkpoints for STRAT mainnet.</summary>
         private static Dictionary<int, CheckpointInfo> stratisMainnetCheckpoints = new Dictionary<int, CheckpointInfo>
         {
@@ -164,6 +182,8 @@ namespace Stratis.Bitcoin.Features.Consensus
             else if (network.Equals(Network.RegTest)) this.networkSpecificCheckpoints = new Dictionary<int, CheckpointInfo>();
             else if (network.Equals(Network.StratisMain)) this.networkSpecificCheckpoints = stratisMainnetCheckpoints;
             else if (network.Equals(Network.StratisTest)) this.networkSpecificCheckpoints = stratisTestnetCheckpoints;
+            else if (network.Equals(Network.ImpleumMain)) this.networkSpecificCheckpoints = ImpleumMainnetCheckpoints;
+            else if (network.Equals(Network.ImpleumTest)) this.networkSpecificCheckpoints = ImpleumTestnetCheckpoints;
             else this.networkSpecificCheckpoints = new Dictionary<int, CheckpointInfo>();
         }
 

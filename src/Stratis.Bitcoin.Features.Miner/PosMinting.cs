@@ -395,7 +395,7 @@ namespace Stratis.Bitcoin.Features.Miner
             this.stakingLoop = this.asyncLoopFactory.Run("PosMining.Stake", async token =>
             {
                 this.logger.LogTrace("()");
-                
+
                 try
                 {
                     await this.GenerateBlocksAsync(walletSecret).ConfigureAwait(false);
@@ -476,7 +476,7 @@ namespace Stratis.Bitcoin.Features.Miner
                 }
 
                 // Prevent mining if not fully synced.
-                if (this.initialBlockDownloadState.IsInitialBlockDownload() || 
+                if (this.initialBlockDownloadState.IsInitialBlockDownload() ||
                     this.consensusLoop.Tip != this.chain.Tip)
                 {
                     this.logger.LogTrace("Waiting for synchronization before mining can be started...");
@@ -520,7 +520,7 @@ namespace Stratis.Bitcoin.Features.Miner
                 {
                     UnspentOutputs set = coinset.UnspentOutputs.FirstOrDefault(f => f?.TransactionId == infoTransaction.Transaction.Id);
                     TxOut utxo = (set != null) && (infoTransaction.Transaction.Index < set.Outputs.Length) ? set.Outputs[infoTransaction.Transaction.Index] : null;
-                    uint256 hashBlock = set != null ? this.chain.GetBlock((int) set.Height)?.HashBlock : null;
+                    uint256 hashBlock = set != null ? this.chain.GetBlock((int)set.Height)?.HashBlock : null;
 
                     if ((utxo != null) && (utxo.Value > Money.Zero) && (hashBlock != null))
                     {
@@ -782,7 +782,7 @@ namespace Stratis.Bitcoin.Features.Miner
 
             this.logger.LogTrace("Worker #{0} found the kernel.", workersResult.KernelFoundIndex);
             // Get reward for newly created block.
-            long reward = fees + this.posConsensusValidator.GetProofOfStakeReward(chainTip.Height + 1);
+            long reward = fees + this.posConsensusValidator.GetProofOfStakeReward(chainTip.Height + 1, this.stakeValidator.GetCoinAge(coinstakeContext.CoinstakeTx, chainTip.Previous));
             if (reward <= 0)
             {
                 // TODO: This can't happen unless we remove reward for mined block.

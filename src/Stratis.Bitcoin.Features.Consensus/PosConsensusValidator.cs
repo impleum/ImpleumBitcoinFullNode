@@ -89,7 +89,7 @@ namespace Stratis.Bitcoin.Features.Consensus
             if (BlockStake.IsProofOfStake(block))
             {
                 Money stakeReward = block.Transactions[1].TotalOut - context.Stake.TotalCoinStakeValueIn;
-                Money calcStakeReward = fees + this.GetProofOfStakeReward(height);
+                Money calcStakeReward = fees + this.GetProofOfStakeReward(height, context.Stake.CoinAge);
 
                 this.logger.LogTrace("Block stake reward is {0}, calculated reward is {1}.", stakeReward, calcStakeReward);
                 if (stakeReward > calcStakeReward)
@@ -237,10 +237,98 @@ namespace Stratis.Bitcoin.Features.Consensus
         }
 
         /// <inheritdoc />
-        public Money GetProofOfStakeReward(int height)
+        public Money GetProofOfStakeReward(int height, long? coinAge = null)
         {
             if (this.IsPremine(height))
                 return this.consensusOptions.PremineReward;
+
+            if (coinAge.HasValue)
+            {
+                long nSubsidy = (coinAge.Value * 1 * Money.CENT * 33 / (365 * 33 + 8));
+                //return Money.Satoshis(weight.Value * (100m / 365m) / 100m);
+                if (height <= 1000)
+                {
+                    nSubsidy >>= (int)(nSubsidy / 100000);
+                    return Money.Satoshis(nSubsidy);  //no substantial pos reward until block 1k
+                }
+                else if (height <= 7201)
+                {
+                    return Money.Satoshis(nSubsidy * 500); //Money.Satoshis(weight.Value * (1000m / 365m) / 100m);
+                }
+                else if (height > 7201 && height <= 14401)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (500m / 365m) / 100m);
+                }
+                else if (height > 14401 && height <= 21601)
+                {
+                    return Money.Satoshis(nSubsidy * 500); //Money.Satoshis(weight.Value * (250m / 365m) / 100m);
+                }
+                else if (height > 21601 && height <= 28801)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (500m / 365m) / 100m);
+                }
+                else if (height > 28801 && height <= 32401)
+                {
+                    return Money.Satoshis(nSubsidy * 1000); //Money.Satoshis(weight.Value * (2500m / 365m) / 100m);
+                }
+                else if (height > 32401 && height <= 36001)
+                {
+                    return Money.Satoshis(nSubsidy * 500); //Money.Satoshis(weight.Value * (250m / 365m) / 100m);
+                }
+                else if (height > 36001 && height <= 43201)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (500m / 365m) / 100m);
+                }
+                else if (height > 43201 && height <= 50401)
+                {
+                    return Money.Satoshis(nSubsidy * 500); //Money.Satoshis(weight.Value * 750m / 365m / 100m);
+                }
+                else if (height > 50401 && height <= 57601)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (250m / 365m) / 100m);
+                }
+                else if (height > 57601 && height <= 72001)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (2500m / 365m) / 100m);
+                }
+                else if (height > 72001 && height <= 75601)
+                {
+                    return Money.Satoshis(nSubsidy * 500); //Money.Satoshis(weight.Value * (750m / 365m) / 100m);
+                }
+                else if (height > 75601 && height <= 82801)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (1000m / 365m) / 100m);
+                }
+                else if (height > 82801 && height <= 90001)
+                {
+                    return Money.Satoshis(nSubsidy * 750); //Money.Satoshis(weight.Value * (250m / 365m) / 100m);
+                }
+                else if (height > 90001 && height <= 97201)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (500m / 365m) / 100m);
+                }
+                else if (height > 97201 && height <= 100801)
+                {
+                    return Money.Satoshis(nSubsidy * 500); //Money.Satoshis(weight.Value * (750m / 365m) / 100m);
+                }
+                else if (height > 100801 && height <= 108001)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (750m / 365m) / 100m);
+                }
+                else if (height > 108001 && height <= 115201)
+                {
+                    return Money.Satoshis(nSubsidy * 500); //Money.Satoshis(weight.Value * (500m / 365m) / 100m);
+                }
+                else if (height > 155201 && height <= 129601)
+                {
+                    return Money.Satoshis(nSubsidy * 250); //Money.Satoshis(weight.Value * (250m / 365m) / 100m);
+                }
+                else if (height > 129601)
+                {
+                    return Money.Satoshis(nSubsidy * 10); //Money.Satoshis(weight.Value * (10m / 365m) / 100m);
+                }
+
+            }
 
             return this.consensusOptions.ProofOfStakeReward;
         }
