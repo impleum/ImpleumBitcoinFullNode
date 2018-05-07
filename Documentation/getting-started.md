@@ -1,6 +1,6 @@
 
 
-# Getting started - Building and running a Stratis Full Node 
+# Getting started - Building and running a Impleum Full Node 
 
 ---------------
 
@@ -21,36 +21,36 @@ To install and run the node, you need
 ### Get the repository and its dependencies
 
 ```
-git clone https://github.com/stratisproject/StratisBitcoinFullNode.git  
-cd StratisBitcoinFullNode
+git clone https://github.com/impleum/ImpleumBitcoinFullNode.git  
+cd ImpleumBitcoinFullNode
 git submodule update --init --recursive
 ```
 
 ### Build and run the code
-With this node, you can connect to either the Stratis network or the Bitcoin network, either on MainNet or TestNet.
+With this node, you can connect to either the Impleum network or the Bitcoin network, either on MainNet or TestNet.
 So you have 4 options:
 
-1. To run a <b>Stratis</b> node on <b>MainNet</b>, do
+1. To run a <b>Impleum</b> node on <b>MainNet</b>, do
 ```
-cd Stratis.StratisD
+cd Impleum.StratisD
 dotnet run
 ```  
 
-2. To run a <b>Stratis</b>  node on <b>TestNet</b>, do
+2. To run a <b>Impleum</b>  node on <b>TestNet</b>, do
 ```
-cd Stratis.StratisD
+cd Impleum.ImpleumD
 dotnet run -testnet
 ```  
 
 3. To run a <b>Bitcoin</b> node on <b>MainNet</b>, do
 ```
-cd Stratis.BitcoinD
+cd Impleum.BitcoinD
 dotnet run
 ```  
 
 4. To run a <b>Bitcoin</b> node on <b>TestNet</b>, do
 ```
-cd Stratis.BitcoinD
+cd Impleum.BitcoinD
 dotnet run -testnet
 ```  
 
@@ -82,6 +82,6 @@ Swagger Endpoints
 Once the node is running, a Swagger interface (web UI for testing an API) is available.
 
 * For Bitcoin: http://localhost:37220/swagger/
-* For Stratis: http://localhost:37221/swagger/
+* For Impleum: http://localhost:37221/swagger/
 * For Bitcoin Testnet: http://localhost:38220/swagger/
-* For Stratis Testnet: http://localhost:38221/swagger/
+* For Impleum Testnet: http://localhost:38221/swagger/
