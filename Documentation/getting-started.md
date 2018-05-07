@@ -58,7 +58,7 @@ dotnet run -testnet
 
 You can get a list of command line arguments to pass to the node with the -help command line argument. For example:
 ```
-cd Stratis.StratisD
+cd Impleum.ImpleumD
 dotnet run -help
 ```  
 
