@@ -64,7 +64,7 @@ dotnet run -help
 
 ### Script
 We have a nifty little script that can execute all the previous commands for you, including starting the node.  
-You just need to edit the file and specify whether you want to run a Stratis or a Bitcoin node, on MainNet or Testnet.  
+You just need to edit the file and specify whether you want to run a Impleum or a Bitcoin node, on MainNet or Testnet.  
 It's located [here](https://gist.github.com/bokobza/e68832f5d7d4102bcb33fcde8d9a72fb#file-build-and-run-a-stratis-node-ps1).
 
 
@@ -73,8 +73,8 @@ Docker Containers
 
 Two containers are available [here](https://hub.docker.com/u/stratisplatform/)
 
-- stratis-node: Run on the Bitcoin Main or Test networks
-- stratis-node-sim: Join our simulation network
+- impleum-node: Run on the Bitcoin Main or Test networks
+- impleum-node-sim: Join our simulation network
 
 Swagger Endpoints
 -------------------
