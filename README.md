@@ -22,7 +22,7 @@ Impleum is an implementation of the Bitcoin protocol in C# on the [.NET Core](ht
 The node can run on the Bitcoin and Impleum networks.  
 Impleum Bitcoin is based on the [NBitcoin](https://github.com/MetacoSA/NBitcoin) project.  
 
-For Proof of Stake support on the Stratis token the node is using [NStratis](https://github.com/stratisproject/NStratis) which is a POS implementation of NBitcoin.  
+For Proof of Stake support on the Impleum token the node is using [NStratis](https://github.com/stratisproject/NStratis) which is a POS implementation of NBitcoin.  
 
 [.NET Core](https://dotnet.github.io/) is an open source cross platform framework and enables the development of applications and services on Windows, macOS and Linux.  
 Join our community on [discord](https://discord.gg/AyV8Ssa).  
@@ -61,7 +61,7 @@ Create a Blockchain in a .NET Core style programming
 What's Next
 ----------
 
-We plan to add many more features on top of the Stratis Bitcoin blockchain:
+We plan to add many more features on top of the Impleum Bitcoin blockchain:
 Sidechains, Private/Permissioned blockchain, Compiled Smart Contracts, NTumbleBit/Breeze wallet and more...
 
 Running a FullNode
@@ -79,7 +79,7 @@ dotnet build
 ```
 
 To run on the Bitcoin network: ``` Impleum.BitcoinD\dotnet run ```  
-To run on the Stratis network: ``` Impleum.ImpleumD\dotnet run ```  
+To run on the Impleum network: ``` Impleum.ImpleumD\dotnet run ```  
 
 Getting Started Guide
 -----------
