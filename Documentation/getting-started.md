@@ -84,4 +84,4 @@ Once the node is running, a Swagger interface (web UI for testing an API) is ava
 * For Bitcoin: http://localhost:37220/swagger/
 * For Impleum: http://localhost:38222/swagger/
 * For Bitcoin Testnet: http://localhost:38220/swagger/
-* For Impleum Testnet: http://localhost:38221/swagger/
+* For Impleum Testnet: http://localhost:39222/swagger/
