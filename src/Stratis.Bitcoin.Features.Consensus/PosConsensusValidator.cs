@@ -232,8 +232,23 @@ namespace Stratis.Bitcoin.Features.Consensus
         {
             if (this.IsPremine(height))
                 return this.consensusOptions.PremineReward;
-
-            return this.consensusOptions.ProofOfWorkReward;
+            if (height <= 40100)
+                return this.consensusOptions.ProofOfWorkReward;
+            if (height < 45000)
+                return Money.Coins(24);
+            if (height < 50000)
+                return Money.Coins(12);
+            if (height < 55000)
+                return Money.Coins(6);
+            if (height < 60000)
+                return Money.Coins(3);
+            if (height < 65000)
+                return Money.Coins(1);
+            if (height < 70000)
+                return Money.Coins(0);
+            if (height > 75000)
+                return Money.Coins(0.48m);
+            return Money.Coins(0);
         }
 
         /// <inheritdoc />
