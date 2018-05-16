@@ -1,6 +1,6 @@
 
 
-# Getting started - Building and running a Stratis Full Node 
+# Getting started - Building and running a Impleum Full Node 
 
 ---------------
 
@@ -21,36 +21,36 @@ To install and run the node, you need
 ### Get the repository and its dependencies
 
 ```
-git clone https://github.com/stratisproject/StratisBitcoinFullNode.git  
-cd StratisBitcoinFullNode
+git clone https://github.com/impleum/ImpleumBitcoinFullNode.git  
+cd ImpleumBitcoinFullNode
 git submodule update --init --recursive
 ```
 
 ### Build and run the code
-With this node, you can connect to either the Stratis network or the Bitcoin network, either on MainNet or TestNet.
+With this node, you can connect to either the Impleum network or the Bitcoin network, either on MainNet or TestNet.
 So you have 4 options:
 
-1. To run a <b>Stratis</b> node on <b>MainNet</b>, do
+1. To run a <b>Impleum</b> node on <b>MainNet</b>, do
 ```
-cd Stratis.StratisD
+cd Impleum.ImpleumD
 dotnet run
 ```  
 
-2. To run a <b>Stratis</b>  node on <b>TestNet</b>, do
+2. To run a <b>Impleum</b>  node on <b>TestNet</b>, do
 ```
-cd Stratis.StratisD
+cd Impleum.ImpleumD
 dotnet run -testnet
 ```  
 
 3. To run a <b>Bitcoin</b> node on <b>MainNet</b>, do
 ```
-cd Stratis.BitcoinD
+cd Impleum.BitcoinD
 dotnet run
 ```  
 
 4. To run a <b>Bitcoin</b> node on <b>TestNet</b>, do
 ```
-cd Stratis.BitcoinD
+cd Impleum.BitcoinD
 dotnet run -testnet
 ```  
 
@@ -58,13 +58,13 @@ dotnet run -testnet
 
 You can get a list of command line arguments to pass to the node with the -help command line argument. For example:
 ```
-cd Stratis.StratisD
+cd Impleum.ImpleumD
 dotnet run -help
 ```  
 
 ### Script
 We have a nifty little script that can execute all the previous commands for you, including starting the node.  
-You just need to edit the file and specify whether you want to run a Stratis or a Bitcoin node, on MainNet or Testnet.  
+You just need to edit the file and specify whether you want to run a Impleum or a Bitcoin node, on MainNet or Testnet.  
 It's located [here](https://gist.github.com/bokobza/e68832f5d7d4102bcb33fcde8d9a72fb#file-build-and-run-a-stratis-node-ps1).
 
 
@@ -73,8 +73,8 @@ Docker Containers
 
 Two containers are available [here](https://hub.docker.com/u/stratisplatform/)
 
-- stratis-node: Run on the Bitcoin Main or Test networks
-- stratis-node-sim: Join our simulation network
+- impleum-node: Run on the Bitcoin Main or Test networks
+- impleum-node-sim: Join our simulation network
 
 Swagger Endpoints
 -------------------
@@ -82,6 +82,6 @@ Swagger Endpoints
 Once the node is running, a Swagger interface (web UI for testing an API) is available.
 
 * For Bitcoin: http://localhost:37220/swagger/
-* For Stratis: http://localhost:37221/swagger/
+* For Impleum: http://localhost:38222/swagger/
 * For Bitcoin Testnet: http://localhost:38220/swagger/
-* For Stratis Testnet: http://localhost:38221/swagger/
+* For Impleum Testnet: http://localhost:39222/swagger/
