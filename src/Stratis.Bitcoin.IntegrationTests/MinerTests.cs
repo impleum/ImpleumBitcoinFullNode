@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NBitcoin.DataEncoders;
@@ -18,6 +19,7 @@ using Stratis.Bitcoin.Features.Consensus.Rules;
 using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.MemoryPool.Fee;
 using Stratis.Bitcoin.Features.Miner;
+using Stratis.Bitcoin.IntegrationTests.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.P2P;
 using Stratis.Bitcoin.P2P.Peer;
 using Stratis.Bitcoin.P2P.Protocol.Payloads;
@@ -80,18 +82,18 @@ namespace Stratis.Bitcoin.IntegrationTests
             {2, 0xbbbeb305}, {2, 0xfe1c810a}
         };
 
-        public ChainedBlock CreateBlockIndex(ChainedBlock prev)
+        public ChainedHeader CreateBlockIndex(ChainedHeader prev)
         {
-            ChainedBlock index = new ChainedBlock(new BlockHeader(), new BlockHeader().GetHash(), prev);
+            var index = new ChainedHeader(new BlockHeader(), new BlockHeader().GetHash(), prev);
             return index;
         }
 
-        public bool TestSequenceLocks(TestContext testContext, ChainedBlock chainedBlock, Transaction tx, Transaction.LockTimeFlags flags, LockPoints uselock = null)
+        public bool TestSequenceLocks(TestContext testContext, ChainedHeader chainedHeader, Transaction tx, Transaction.LockTimeFlags flags, LockPoints uselock = null)
         {
             var context = new MempoolValidationContext(tx, new MempoolValidationState(false));
             context.View = new MempoolCoinView(testContext.cachedCoinView, testContext.mempool, testContext.mempoolLock, null);
             context.View.LoadViewAsync(tx).GetAwaiter().GetResult();
-            return MempoolValidator.CheckSequenceLocks(testContext.network, chainedBlock, context, flags, uselock, false);
+            return MempoolValidator.CheckSequenceLocks(testContext.network, chainedHeader, context, flags, uselock, false);
         }
 
         // TODO: There may be an opportunity to share the logic for populating the chain (TestContext) using TestChainFactory in the mempool unit tests.
@@ -610,6 +612,31 @@ namespace Stratis.Bitcoin.IntegrationTests
             Assert.True(tx.IsFinal(context.chain.Tip.GetMedianTimePast().AddMinutes(2), context.chain.Tip.Height + 2)); // Locktime passes 2 min later
         }
 
+        [Fact]
+        public void GetProofOfWorkRewardForMinedBlocksTest()
+        {
+            using (NodeBuilder builder = NodeBuilder.Create())
+            {
+                var node = builder.CreateStratisPowNode();
+                builder.StartAll();
+                node.NotInIBD();
+
+                node.SetDummyMinerSecret(new BitcoinSecret(new Key(), node.FullNode.Network));
+
+                node.GenerateStratisWithMiner(10);
+                node.GetProofOfWorkRewardForMinedBlocks(10).Should().Be(Money.Coins(500));
+
+                node.GenerateStratisWithMiner(90);
+                node.GetProofOfWorkRewardForMinedBlocks(100).Should().Be(Money.Coins(5000));
+
+                node.GenerateStratisWithMiner(100);
+                node.GetProofOfWorkRewardForMinedBlocks(200).Should().Be(Money.Coins(8725));
+
+                node.GenerateStratisWithMiner(200);
+                node.GetProofOfWorkRewardForMinedBlocks(400).Should().Be(Money.Coins((decimal)12462.50));
+            }
+        }
+
         //NOTE: These tests rely on CreateNewBlock doing its own self-validation!
         private void MinerCreateNewBlockValidity()
         {
@@ -699,7 +726,7 @@ namespace Stratis.Bitcoin.IntegrationTests
             //    block.AddTransaction(coinbase);
             //    block.UpdateMerkleRoot();
             //    block.Header.Nonce = 0;
-            //    chain.SetTip(new ChainedBlock(block.Header, block.GetHash(), chain.Tip));
+            //    chain.SetTip(new ChainedHeader(block.Header, block.GetHash(), chain.Tip));
             //}
             //pblocktemplate = AssemblerForTest(consensus, network, date as DateTimeProvider, mempool, scheduler, chain).CreateNewBlock(scriptPubKey);
             //Assert.NotNull(pblocktemplate);
