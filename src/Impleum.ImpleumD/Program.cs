@@ -27,7 +27,7 @@ namespace Impleum.ImpleumD
         {
             try
             {
-                Network network = args.Contains("-testnet") ? args.Contains("-regnet") ? Network.ImpleumRegTest : Network.ImpleumTest : Network.ImpleumMain;
+                Network network = args.Contains("-testnet") ? Network.ImpleumTest : Network.ImpleumMain;
                 NodeSettings nodeSettings = new NodeSettings(network, ProtocolVersion.ALT_PROTOCOL_VERSION, args: args, loadConfiguration: false);
 
                 // NOTES: running BTC and STRAT side by side is not possible yet as the flags for serialization are static
