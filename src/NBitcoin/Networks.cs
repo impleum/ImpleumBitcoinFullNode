@@ -757,62 +757,6 @@ namespace NBitcoin
             messageStart[3] = 0x31;
             uint magic = BitConverter.ToUInt32(messageStart, 0); //0x5223570; 
 
-            //Block genesis = ImpleumMain.GetGenesis();
-            //genesis.Header.Time = 1521134313;
-            //genesis.Header.Nonce = 1503601;
-            //genesis.Header.Bits = consensus.PowLimit;
-
-            ////MineGenesis(genesis,consensus);
-            //consensus.HashGenesisBlock = genesis.GetHash();
-            //Assert(consensus.HashGenesisBlock == uint256.Parse("0x00d55cc2767865168efb6a8d707299943b3bf5afc1307b0fcd6b8d1a012616ea"));
-
-
-            //// If genesis block hash does not match, then generate new genesis hash.
-            //var checkpoints = new Dictionary<int, CheckpointInfo>
-            //{
-            //    //{ 0, new CheckpointInfo(new uint256("0x00000e246d7b73b88c9ab55f2e5e94d9e22d471def3df5ea448f5576b1d156b9"), new uint256("0x0000000000000000000000000000000000000000000000000000000000000000")) },
-            //    //{ 2, new CheckpointInfo(new uint256("0x56959b1c8498631fb0ca5fe7bd83319dccdc6ac003dccb3171f39f553ecfa2f2"), new uint256("0x13f4c27ca813aefe2d9018077f8efeb3766796b9144fcc4cd51803bf4376ab02")) },
-            //    //{ 50000, new CheckpointInfo(new uint256("0xb42c18eacf8fb5ed94eac31943bd364451d88da0fd44cc49616ffea34d530ad4"), new uint256("0x824934ddc5f935e854ac59ae7f5ed25f2d29a7c3914cac851f3eddb4baf96d78")) },
-            //    //{ 100000, new CheckpointInfo(new uint256("0xf9e2f7561ee4b92d3bde400d251363a0e8924204c326da7f4ad9ccc8863aad79"), new uint256("0xdef8d92d20becc71f662ee1c32252aca129f1bf4744026b116d45d9bfe67e9fb")) },
-            //    //{ 115000, new CheckpointInfo(new uint256("0x8496c77060c8a2b5c9a888ade991f25aa33c232b4413594d556daf9043fad400"), new uint256("0x1886430484a9a36b56a7eb8bd25e9ebe4fc8eec8f9a84f5073f71e08f2feac90")) },
-            //    //{ 163000, new CheckpointInfo(new uint256("0x4e44a9e0119a2e7cbf15e570a3c649a5605baa601d953a465b5ebd1c1982212a"), new uint256("0x0646fc7db8f3426eb209e1228c7d82724faa46a060f5bbbd546683ef30be245c")) },
-            //};
-
-
-            //consensus.DefaultAssumeValid = null;
-            //NetworkBuilder builder = new NetworkBuilder()
-            //    .SetName(nameof(ImpleumTest))
-            //    .SetRootFolderName(ImpleumRootFolderName)
-            //    .SetDefaultConfigFilename(ImpleumDefaultConfigFilename)
-            //    .SetConsensus(consensus)
-            //    .SetCheckpoints(checkpoints)
-            //    .SetMagic(magic)
-            //    .SetGenesis(genesis)
-            //    .SetPort(16271)
-            //    .SetRPCPort(16272)
-            //    .SetTxFees(10000, 60000, 10000)
-            //    .SetMaxTimeOffsetSeconds(ImpleumMaxTimeOffsetSeconds)
-            //    .SetMaxTipAge(ImpleumDefaultMaxTipAgeInSeconds)
-            //    .SetBase58Bytes(Base58Type.PUBKEY_ADDRESS, new byte[] { (102) })
-            //    .SetBase58Bytes(Base58Type.SCRIPT_ADDRESS, new byte[] { (196) })
-            //    .SetBase58Bytes(Base58Type.SECRET_KEY, new byte[] { (65 + 128) })
-            //    .SetBase58Bytes(Base58Type.ENCRYPTED_SECRET_KEY_NO_EC, new byte[] { 0x01, 0x42 })
-            //    .SetBase58Bytes(Base58Type.ENCRYPTED_SECRET_KEY_EC, new byte[] { 0x01, 0x43 })
-            //    .SetBase58Bytes(Base58Type.EXT_PUBLIC_KEY, new byte[] { (0x04), (0x88), (0xB2), (0x1E) })
-            //    .SetBase58Bytes(Base58Type.EXT_SECRET_KEY, new byte[] { (0x04), (0x88), (0xAD), (0xE4) });
-            ////	.AddDNSSeeds(new[]
-            ////{
-            ////		new DNSSeedData("192.168.0.121", "192.168.0.121")
-            ////	});
-
-            ////builder.AddSeeds(new[] { new NetworkAddress(IPAddress.Parse("192.168.0.121"), builder.Port) }); // the c# testnet node
-
-            //return builder.BuildAndRegister();
-
-            // The message start string is designed to be unlikely to occur in normal data.
-            // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
-            // a large 4-byte int at any alignment.
-
             Network network = new Network
             {
                 Name = nameof(ImpleumTest),
@@ -858,8 +802,8 @@ namespace NBitcoin
             //network.Consensus.DefaultAssumeValid = new uint256("0xe8dd9ea41e9d8935f31a0f1bd8378a777434dc51549a1c685855a7ec4d5546b1"); // 23000
 
             Block genesis = CreateImpleumGenesisBlock(network.Consensus.ConsensusFactory, 1523364655, 2380297, 0x1e0fffff, 1, Money.Zero);
-            genesis.Header.Time = 1521134313;
-            genesis.Header.Nonce = 1503601;
+            genesis.Header.Time = 1527405749;
+            genesis.Header.Nonce = 2833935;
             genesis.Header.Bits = network.Consensus.PowLimit;
             network.genesis = genesis;
             network.Consensus.HashGenesisBlock = genesis.GetHash();
@@ -873,10 +817,10 @@ namespace NBitcoin
                 //{ 4000, new CheckpointInfo(new uint256("0xbd4c0a8c11431012f1b59be225b5913a1f06e1225e85a10216f2be5db1b4c0f1"), new uint256("0x79dca584714897d88de42e9540e1bdabe8df0e5fa17473014c529385b64f7c1e")) },
                 //{ 26500, new CheckpointInfo(new uint256("0x089f81d221d96e69609de4c5c20bfa9e477e9031599be0bf034d833fa2cd2d98"), new uint256("0x6caa0eb578196f8e0cf9fcea72d9cf4db2c75927cde1997b49bb635dc81e63a5")) }
             };
-            //MineGenesis(genesis,consensus);
+           // MineGenesis(genesis);
 
 
-            Assert(network.Consensus.HashGenesisBlock == uint256.Parse("0x7bb9a58b21bce66dfd060ec0f8bef57f4954d701d723036c5bc51c312536a023"));
+            Assert(network.Consensus.HashGenesisBlock == uint256.Parse("0x000008c7fcdf3713c0f949038bad90ae9205d992b7b1f30e05b541aeb30d345c"));
             Assert(genesis.Header.HashMerkleRoot == uint256.Parse("0xbd3233dd8d4e7ce3ee8097f4002b4f9303000a5109e02a402d41d2faf74eb244"));
 
 
@@ -900,7 +844,7 @@ namespace NBitcoin
 
 
 
-            string[] seeds = new[] {""};
+            string[] seeds = new[] { "" };
             // Convert the pnSeeds array into usable address objects.
             Random rand = new Random();
             TimeSpan oneWeek = TimeSpan.FromDays(7);
@@ -1100,7 +1044,7 @@ namespace NBitcoin
         }
 
 
-        private static void MineGenesis(Block genesis, Consensus consensus)
+        private static void MineGenesis(Block genesis)
         {
 
             // This will figure out a valid hash and Nonce if you're creating a different genesis block:
