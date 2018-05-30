@@ -59,7 +59,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             if (BlockStake.IsProofOfStake(block))
             {
                 Money stakeReward = block.Transactions[1].TotalOut - context.Stake.TotalCoinStakeValueIn;
-                Money calcStakeReward = fees + this.GetProofOfStakeReward(height);
+                Money calcStakeReward = fees + this.GetProofOfStakeReward(height, context.Stake.CoinAge);
 
                 this.Logger.LogTrace("Block stake reward is {0}, calculated reward is {1}.", stakeReward, calcStakeReward);
                 if (stakeReward > calcStakeReward)
@@ -189,19 +189,19 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                 return this.posConsensusOptions.PremineReward;
             if (height <= 40100)
                 return this.posConsensusOptions.ProofOfWorkReward;
-            if (height < 45000)
+            if (height <= 45000)
                 return Money.Coins(24);
-            if (height < 50000)
+            if (height <= 50000)
                 return Money.Coins(12);
-            if (height < 55000)
+            if (height <= 55000)
                 return Money.Coins(6);
-            if (height < 60000)
+            if (height <= 60000)
                 return Money.Coins(3);
-            if (height < 65000)
+            if (height <= 65000)
                 return Money.Coins(1);
-            if (height < 70000)
+            if (height <= 70000)
                 return Money.Coins(0);
-            if (height > 75000)
+            if (height >= 75000)
                 return Money.Coins(0.48m);
             return Money.Coins(0);
         }
