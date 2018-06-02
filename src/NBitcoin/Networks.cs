@@ -55,6 +55,42 @@ namespace NBitcoin
 
         public static Network StratisRegTest => Network.GetNetwork("StratisRegTest") ?? Register(new StratisRegTest());
 
+        public static Network ImpleumMain => Network.GetNetwork(nameof(ImpleumMain)) ?? Register(new ImpleumMain());
+
+        public static Network ImpleumTest => Network.GetNetwork(nameof(ImpleumTest)) ?? Register(new ImpleumTest());
+
+        public static Network ImpleumRegTest => Network.GetNetwork(nameof(ImpleumRegTest)) ?? Register(new ImpleumRegTest());
+
+        protected static Block CreateGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
+        {
+            string pszTimestamp = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
+            Script genesisOutputScript = new Script(Op.GetPushOp(Encoders.Hex.DecodeData("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f")), OpcodeType.OP_CHECKSIG);
+
+            Transaction txNew = consensusFactory.CreateTransaction();
+            txNew.Version = 1;
+            txNew.AddInput(new TxIn()
+            {
+                ScriptSig = new Script(Op.GetPushOp(486604799), new Op()
+                {
+                    Code = (OpcodeType)0x1,
+                    PushData = new[] { (byte)4 }
+                }, Op.GetPushOp(Encoders.ASCII.DecodeData(pszTimestamp)))
+            });
+            txNew.AddOutput(new TxOut()
+            {
+                Value = genesisReward,
+                ScriptPubKey = genesisOutputScript
+            });
+            Block genesis = consensusFactory.CreateBlock();
+            genesis.Header.BlockTime = Utils.UnixTimeToDateTime(nTime);
+            genesis.Header.Bits = nBits;
+            genesis.Header.Nonce = nNonce;
+            genesis.Header.Version = nVersion;
+            genesis.Transactions.Add(txNew);
+            genesis.Header.HashPrevBlock = uint256.Zero;
+            genesis.UpdateMerkleRoot();
+            return genesis;
+        }
 
         protected static Block CreateStratisGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce,
             uint nBits, int nVersion, Money genesisReward)
@@ -88,18 +124,10 @@ namespace NBitcoin
             return genesis;
         }
 
-        private static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce,
-            uint nBits, int nVersion, Money genesisReward)
+        protected static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
         {
             string pszTimestamp =
                 "https://cryptocrimson.com/news/apple-payment-request-api-ripple-interledger-protocol";
-            return CreateImpleumGenesisBlock(consensusFactory, pszTimestamp, nTime, nNonce, nBits, nVersion,
-                genesisReward);
-        }
-
-        private static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, string pszTimestamp,
-            uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
-        {
             Transaction txNew = consensusFactory.CreateTransaction();
             txNew.Version = 1;
             txNew.Time = nTime;
