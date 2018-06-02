@@ -56,9 +56,11 @@ namespace NBitcoin
         public static Network StratisRegTest => Network.GetNetwork("StratisRegTest") ?? Register(new StratisRegTest());
 
 
-        protected static Block CreateStratisGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
+        protected static Block CreateStratisGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce,
+            uint nBits, int nVersion, Money genesisReward)
         {
-            string pszTimestamp = "http://www.theonion.com/article/olympics-head-priestess-slits-throat-official-rio--53466";
+            string pszTimestamp =
+                "http://www.theonion.com/article/olympics-head-priestess-slits-throat-official-rio--53466";
 
             Transaction txNew = consensusFactory.CreateTransaction();
             txNew.Version = 1;
@@ -86,13 +88,17 @@ namespace NBitcoin
             return genesis;
         }
 
-        private static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
+        private static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce,
+            uint nBits, int nVersion, Money genesisReward)
         {
-            string pszTimestamp = "https://cryptocrimson.com/news/apple-payment-request-api-ripple-interledger-protocol";
-            return CreateImpleumGenesisBlock(consensusFactory, pszTimestamp, nTime, nNonce, nBits, nVersion, genesisReward);
+            string pszTimestamp =
+                "https://cryptocrimson.com/news/apple-payment-request-api-ripple-interledger-protocol";
+            return CreateImpleumGenesisBlock(consensusFactory, pszTimestamp, nTime, nNonce, nBits, nVersion,
+                genesisReward);
         }
 
-        private static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, string pszTimestamp, uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
+        private static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, string pszTimestamp,
+            uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
         {
             Transaction txNew = consensusFactory.CreateTransaction();
             txNew.Version = 1;
@@ -137,6 +143,7 @@ namespace NBitcoin
                     //NONCE WRAPPED incrementing time
                     ++genesis.Header.Time;
                 }
+
                 newhash = genesis.GetHash();
                 if (newhash < besthash)
                 {
@@ -144,8 +151,10 @@ namespace NBitcoin
                     //New best hex
                 }
             }
+
             Console.WriteLine($"Found Genesis, Nonce: {genesis.Header.Nonce}, Hash: {genesis.GetHash()}\n");
             Console.WriteLine($"Gensis Hash Merkle: {genesis.GetMerkleRoot().Hash}");
         }
 
     }
+}
