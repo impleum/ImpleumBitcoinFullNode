@@ -40,10 +40,11 @@ namespace NBitcoin
         /// <summary> The name of the root folder containing the different Impleum blockchains (ImpleumMain, ImpleumTest, ImpleumRegTest). </summary>
         public const string ImpleumRootFolderName = "Impleum";
 
+
         /// <summary> The default name used for the Impleum configuration file. </summary>
         public const string ImpleumDefaultConfigFilename = "Impleum.conf";
 
-        public static Network Main => Network.GetNetwork("Main") ?? InitMain();
+        public static Network Main => Network.GetNetwork("Main") ?? Register(new BitcoinMain());
 
         public static Network TestNet => Network.GetNetwork("TestNet") ?? Register(new BitcoinTest());
 

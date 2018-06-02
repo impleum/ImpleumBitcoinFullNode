@@ -33,8 +33,8 @@ namespace Impleum.ImpleumD
                 // NOTES: running BTC and STRAT side by side is not possible yet as the flags for serialization are static
                 Stratis.Bitcoin.IFullNode node = new FullNodeBuilder()
                     .UseNodeSettings(nodeSettings)
-                    .UsePosConsensus()
                     .UseBlockStore()
+                    .UsePosConsensus()
                     .UseMempool()
                     .UseWallet()
                     .AddPowPosMining()

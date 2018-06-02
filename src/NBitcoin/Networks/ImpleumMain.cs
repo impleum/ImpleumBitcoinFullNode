@@ -57,6 +57,7 @@ namespace NBitcoin.Networks
             this.Consensus.CoinType = 769;
             this.Consensus.DefaultAssumeValid = new uint256("0xe8dd9ea41e9d8935f31a0f1bd8378a777434dc51549a1c685855a7ec4d5546b1"); // 23000
 
+            this.Base58Prefixes = new byte[12][];
             this.Base58Prefixes[(int)Base58Type.PUBKEY_ADDRESS] = new byte[] { (102) };
             this.Base58Prefixes[(int)Base58Type.SCRIPT_ADDRESS] = new byte[] { (125) };
             this.Base58Prefixes[(int)Base58Type.SECRET_KEY] = new byte[] { (63 + 128) };
