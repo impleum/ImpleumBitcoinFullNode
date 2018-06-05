@@ -65,6 +65,8 @@ after_build:
 
       if ($LastExitCode -ne 0) { $host.SetShouldExit($LastExitCode)  }
    
+test_script:	
+- ps: |
 
 #---------------------------------#
 #      artifacts configuration    #
