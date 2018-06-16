@@ -1,12 +1,10 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.Bitcoin.Base;
-using Stratis.Bitcoin.BlockPulling;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Builder.Feature;
 using Stratis.Bitcoin.Configuration;
@@ -88,12 +86,6 @@ namespace Stratis.Bitcoin.Features.BlockStore
             this.chainState = chainState;
         }
 
-        /// <inheritdoc />
-        public override void LoadConfiguration()
-        {
-            this.storeSettings.Load(this.nodeSettings);
-        }
-
         public virtual BlockStoreBehavior BlockStoreBehaviorFactory()
         {
             return new BlockStoreBehavior(this.chain, this.blockRepository, this.blockStoreCache, this.loggerFactory);
@@ -104,10 +96,12 @@ namespace Stratis.Bitcoin.Features.BlockStore
             ChainedHeader highestBlock = this.chainState.BlockStoreTip;
 
             if (highestBlock != null)
+            {
                 benchLogs.AppendLine($"{this.name}.Height: ".PadRight(LoggingConfiguration.ColumnLength + 1) +
-                    highestBlock.Height.ToString().PadRight(8) +
-                    $" {this.name}.Hash: ".PadRight(LoggingConfiguration.ColumnLength - 1) +
-                    highestBlock.HashBlock);
+                                     highestBlock.Height.ToString().PadRight(8) +
+                                     $" {this.name}.Hash: ".PadRight(LoggingConfiguration.ColumnLength - 1) +
+                                     highestBlock.HashBlock);
+            }
         }
 
         public Task<Transaction> GetTrxAsync(uint256 trxid)
@@ -143,7 +137,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
         /// <param name="network">The network to extract values from.</param>
         public static void PrintHelp(Network network)
         {
-            StoreSettings.PrintHelp(network);
+            StoreSettings.PrintHelp();
         }
 
         /// <summary>
@@ -172,7 +166,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
     /// </summary>
     public static class FullNodeBuilderBlockStoreExtension
     {
-        public static IFullNodeBuilder UseBlockStore(this IFullNodeBuilder fullNodeBuilder, Action<StoreSettings> setup = null)
+        public static IFullNodeBuilder UseBlockStore(this IFullNodeBuilder fullNodeBuilder)
         {
             LoggingConfiguration.RegisterFeatureNamespace<BlockStoreFeature>("db");
 
@@ -187,7 +181,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
                         services.AddSingleton<BlockStoreQueue>();
                         services.AddSingleton<BlockStoreManager>();
                         services.AddSingleton<BlockStoreSignaled>();
-                        services.AddSingleton<StoreSettings>(new StoreSettings(setup));
+                        services.AddSingleton<StoreSettings>();
                         services.AddSingleton<BlockStoreController>();
                     });
             });

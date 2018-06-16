@@ -38,18 +38,12 @@ namespace NBitcoin
         private static readonly ConcurrentDictionary<string, Network> NetworksContainer = new ConcurrentDictionary<string, Network>();
 
         protected Block Genesis;
-        
+
         protected Network()
         {
             this.Consensus = new Consensus();
         }
-
-        /// <summary>
-        /// The public key used in the alert messaging system.
-        /// TODO: remove as per https://github.com/bitcoin/bitcoin/pull/7692.
-        /// </summary>
-        public PubKey AlertPubKey { get; protected set; }
-
+        
         /// <summary>
         /// Maximal value for the calculated time offset.
         /// If the value is over this limit, the time syncing feature will be switched off.
@@ -102,6 +96,11 @@ namespace NBitcoin
         /// For example, Bitcoin Main can have "Mainnet" as an additional name.
         /// </summary>
         public List<string> AdditionalNames { get; protected set; }
+
+        /// <summary>
+        /// An indicative coin ticker for use with external applications.
+        /// </summary>
+        public string CoinTicker { get; set; }
 
         /// <summary>
         /// The name of the root folder containing blockchains operating with the same consensus rules (for now, this will be bitcoin or stratis).
@@ -205,7 +204,7 @@ namespace NBitcoin
         /// <summary>
         /// Register an immutable <see cref="Network"/> instance so it is queryable through <see cref="GetNetwork(string)"/> and <see cref="GetNetworks()"/>.
         /// </summary>
-        internal static Network Register(Network network)
+        public static Network Register(Network network)
         {
             IEnumerable<string> networkNames = network.AdditionalNames != null ? new[] { network.Name }.Concat(network.AdditionalNames) : new[] { network.Name };
 
@@ -228,6 +227,111 @@ namespace NBitcoin
             }
 
             return network;
+        }
+
+        /// <summary>
+        /// Mines a new genesis block, to use with a new network.
+        /// Typically, 3 such genesis blocks need to be created when bootstrapping a new coin: for Main, Test and Reg networks.
+        /// </summary>
+        /// <param name="consensusFactory">
+        /// The consensus factory used to create transactions and blocks. 
+        /// Use <see cref="PosConsensusFactory"/> for proof-of-stake based networks.
+        /// </param>
+        /// <param name="coinbaseText">
+        /// Traditionally a news headline from the day of the launch, but could be any string or link.
+        /// This will be inserted in the input coinbase transaction script.
+        /// It should be shorter than 92 characters.
+        /// </param>
+        /// <param name="target">
+        /// The difficulty target under which the hash of the block need to be. 
+        /// Some more details: As an example, the target for the Stratis Main network is 00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff.
+        /// To make it harder to mine the genesis block, have more zeros at the beginning (keeping the length the same). This will make the target smaller, so finding a number under it will be more difficult.
+        /// To make it easier to mine the genesis block ,do the opposite. Example of an easy one: 00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff.
+        /// Make the Test and Reg targets ones easier to find than the Main one so that you don't wait too long to mine the genesis block.
+        /// </param>
+        /// <param name="genesisReward">
+        /// Specify how many coins to put in the genesis transaction's output. These coins are unspendable.
+        /// </param>
+        /// <param name="version">
+        /// The version of the transaction and the block header set in the genesis block. 
+        /// </param>
+        /// <example>
+        /// The following example shows the creation of a genesis block.
+        /// <code>
+        /// Block genesis = MineGenesisBlock(new PosConsensusFactory(), "Some topical headline.", new Target(new uint256("000fffff00000000000000000000000000000000000000000000000000000000")), Money.Coins(50m));
+        /// BlockHeader header = genesis.Header;
+        /// Console.WriteLine("Make a note of the following values:");
+        /// Console.WriteLine("bits: " + header.Bits);
+        /// Console.WriteLine("nonce: " + header.Nonce);
+        /// Console.WriteLine("time: " + header.Time);
+        /// Console.WriteLine("version: " + header.Version);
+        /// Console.WriteLine("hash: " + header.GetHash());
+        /// Console.WriteLine("merkleroot: " + header.HashMerkleRoot);
+        /// </code>
+        /// </example>
+        /// <returns>A genesis block.</returns>
+        public static Block MineGenesisBlock(ConsensusFactory consensusFactory, string coinbaseText, Target target, Money genesisReward, int version = 1)
+        {
+            if (target == null)
+                throw new ArgumentException($"Parameter '{nameof(target)}' cannot be null. Example use: new Target(new uint256(\"0000ffff00000000000000000000000000000000000000000000000000000000\"))");
+
+            if (consensusFactory == null)
+            {
+                throw new ArgumentException($"Parameter '{nameof(consensusFactory)}' cannot be null. Use 'new ConsensusFactory()' for Bitcoin-like proof-of-work blockchains" +
+                                            "and 'new PosConsensusFactory()' for Stratis-like proof-of-stake blockchains.");
+            }
+
+            if (string.IsNullOrEmpty(coinbaseText))
+                throw new ArgumentException($"Parameter '{nameof(coinbaseText)}' cannot be null. Use a news headline or any other appropriate string.");
+
+            if (coinbaseText.Length >= 92)
+                throw new ArgumentException($"Parameter '{nameof(coinbaseText)}' should be shorter than 92 characters.");
+
+            if (genesisReward == null)
+                throw new ArgumentException($"Parameter '{nameof(genesisReward)}' cannot be null. Example use: 'Money.Coins(50m)'.");
+
+            DateTimeOffset time = DateTimeOffset.Now;
+            uint unixTime = Utils.DateTimeToUnixTime(time);
+
+            Transaction txNew = consensusFactory.CreateTransaction();
+            txNew.Version = (uint)version;
+            txNew.Time = unixTime;
+            txNew.AddInput(new TxIn()
+            {
+                ScriptSig = new Script(
+                    Op.GetPushOp(0),
+                    new Op()
+                    {
+                        Code = (OpcodeType)0x1,
+                        PushData = new[] { (byte)42 }
+                    },
+                    Op.GetPushOp(Encoders.ASCII.DecodeData(coinbaseText)))
+            });
+
+            txNew.AddOutput(new TxOut()
+            {
+                Value = genesisReward,
+            });
+
+            Block genesis = consensusFactory.CreateBlock();
+            genesis.Header.BlockTime = time;
+            genesis.Header.Bits = target;
+            genesis.Header.Nonce = 0;
+            genesis.Header.Version = version;
+            genesis.Transactions.Add(txNew);
+            genesis.Header.HashPrevBlock = uint256.Zero;
+            genesis.UpdateMerkleRoot();
+
+            // Iterate over the nonce until the proof-of-work is valid.
+            // This will mean the block header hash is under the target.
+            while (!genesis.CheckProofOfWork())
+            {
+                genesis.Header.Nonce++;
+                if (genesis.Header.Nonce == 0)
+                    genesis.Header.Time++;
+            }
+
+            return genesis;
         }
 
         protected static void Assert(bool condition)
@@ -256,18 +360,18 @@ namespace NBitcoin
             if (!type.HasValue)
                 throw new FormatException("Invalid Base58 version");
             if (type == Base58Type.PUBKEY_ADDRESS)
-                return this.CreateBitcoinPubKeyAddress(base58);
+                return CreateBitcoinPubKeyAddress(base58);
             if (type == Base58Type.SCRIPT_ADDRESS)
-                return this.CreateBitcoinScriptAddress(base58);
+                return CreateBitcoinScriptAddress(base58);
             throw new FormatException("Invalid Base58 version");
         }
 
         private Base58Type? GetBase58Type(string base58)
         {
-            var bytes = Encoders.Base58Check.DecodeData(base58);
+            byte[] bytes = Encoders.Base58Check.DecodeData(base58);
             for (int i = 0; i < this.Base58Prefixes.Length; i++)
             {
-                var prefix = this.Base58Prefixes[i];
+                byte[] prefix = this.Base58Prefixes[i];
                 if (prefix == null)
                     continue;
                 if (bytes.Length < prefix.Length)
@@ -289,8 +393,8 @@ namespace NBitcoin
                         continue;
                     if (type.Value == Base58Type.COLORED_ADDRESS)
                     {
-                        var raw = Encoders.Base58Check.DecodeData(base58);
-                        var version = network.GetVersionBytes(type.Value, false);
+                        byte[] raw = Encoders.Base58Check.DecodeData(base58);
+                        byte[] version = network.GetVersionBytes(type.Value, false);
                         if (version == null)
                             continue;
                         raw = raw.Skip(version.Length).ToArray();
@@ -323,8 +427,8 @@ namespace NBitcoin
             if (str == null)
                 throw new ArgumentNullException("str");
 
-            IEnumerable<Network> networks = expectedNetwork == null ? GetNetworks() : new[] {expectedNetwork};
-            var maybeb58 = true;
+            IEnumerable<Network> networks = expectedNetwork == null ? GetNetworks() : new[] { expectedNetwork };
+            bool maybeb58 = true;
             for (int i = 0; i < str.Length; i++)
             {
                 if (!Base58Encoder.pszBase58Chars.Contains(str[i]))
@@ -351,7 +455,7 @@ namespace NBitcoin
                         bool rightNetwork = expectedNetwork == null || (candidate.Network == expectedNetwork);
                         bool rightType = candidate is T;
                         if (rightNetwork && rightType)
-                            return (T) (object) candidate;
+                            return (T)(object)candidate;
                     }
                     throw new FormatException("Invalid base58 string");
                 }
@@ -365,11 +469,11 @@ namespace NBitcoin
                     i++;
                     if (encoder == null)
                         continue;
-                    var type = (Bech32Type) i;
+                    var type = (Bech32Type)i;
                     try
                     {
                         byte witVersion;
-                        var bytes = encoder.Decode(str, out witVersion);
+                        byte[] bytes = encoder.Decode(str, out witVersion);
                         object candidate = null;
 
                         if (witVersion == 0 && bytes.Length == 20 && type == Bech32Type.WITNESS_PUBKEY_ADDRESS)
@@ -378,7 +482,7 @@ namespace NBitcoin
                             candidate = new BitcoinWitScriptAddress(str, network);
 
                         if (candidate is T)
-                            return (T) (object) candidate;
+                            return (T)candidate;
                     }
                     catch (Bech32FormatException)
                     {
@@ -406,7 +510,7 @@ namespace NBitcoin
                 {
                     if (type.Value == Base58Type.COLORED_ADDRESS)
                     {
-                        var wrapped = BitcoinColoredAddress.GetWrappedBase58(base58, network);
+                        string wrapped = BitcoinColoredAddress.GetWrappedBase58(base58, network);
                         Base58Type? wrappedType = network.GetBase58Type(wrapped);
                         if (wrappedType == null)
                             continue;
@@ -437,29 +541,29 @@ namespace NBitcoin
         private IBase58Data CreateBase58Data(Base58Type type, string base58)
         {
             if (type == Base58Type.EXT_PUBLIC_KEY)
-                return this.CreateBitcoinExtPubKey(base58);
+                return CreateBitcoinExtPubKey(base58);
             if (type == Base58Type.EXT_SECRET_KEY)
-                return this.CreateBitcoinExtKey(base58);
+                return CreateBitcoinExtKey(base58);
             if (type == Base58Type.PUBKEY_ADDRESS)
-                return this.CreateBitcoinPubKeyAddress(base58);
+                return CreateBitcoinPubKeyAddress(base58);
             if (type == Base58Type.SCRIPT_ADDRESS)
-                return this.CreateBitcoinScriptAddress(base58);
+                return CreateBitcoinScriptAddress(base58);
             if (type == Base58Type.SECRET_KEY)
-                return this.CreateBitcoinSecret(base58);
+                return CreateBitcoinSecret(base58);
             if (type == Base58Type.CONFIRMATION_CODE)
-                return this.CreateConfirmationCode(base58);
+                return CreateConfirmationCode(base58);
             if (type == Base58Type.ENCRYPTED_SECRET_KEY_EC)
-                return this.CreateEncryptedKeyEC(base58);
+                return CreateEncryptedKeyEC(base58);
             if (type == Base58Type.ENCRYPTED_SECRET_KEY_NO_EC)
-                return this.CreateEncryptedKeyNoEC(base58);
+                return CreateEncryptedKeyNoEC(base58);
             if (type == Base58Type.PASSPHRASE_CODE)
-                return this.CreatePassphraseCode(base58);
+                return CreatePassphraseCode(base58);
             if (type == Base58Type.STEALTH_ADDRESS)
-                return this.CreateStealthAddress(base58);
+                return CreateStealthAddress(base58);
             if (type == Base58Type.ASSET_ID)
-                return this.CreateAssetId(base58);
+                return CreateAssetId(base58);
             if (type == Base58Type.COLORED_ADDRESS)
-                return this.CreateColoredAddress(base58);
+                return CreateColoredAddress(base58);
             throw new NotSupportedException("Invalid Base58Data type : " + type.ToString());
         }
 
@@ -473,9 +577,9 @@ namespace NBitcoin
             return new BitcoinColoredAddress(base58, this);
         }
 
-        public NBitcoin.OpenAsset.BitcoinAssetId CreateAssetId(string base58)
+        public OpenAsset.BitcoinAssetId CreateAssetId(string base58)
         {
-            return new NBitcoin.OpenAsset.BitcoinAssetId(base58, this);
+            return new OpenAsset.BitcoinAssetId(base58, this);
         }
 
         public BitcoinStealthAddress CreateStealthAddress(string base58)
@@ -601,18 +705,21 @@ namespace NBitcoin
 
         public bool ReadMagic(Stream stream, CancellationToken cancellation, bool throwIfEOF = false)
         {
-            byte[] bytes = new byte[1];
+            var bytes = new byte[1];
             for (int i = 0; i < this.MagicBytes.Length; i++)
             {
                 i = Math.Max(0, i);
                 cancellation.ThrowIfCancellationRequested();
 
-                var read = stream.ReadEx(bytes, 0, bytes.Length, cancellation);
+                int read = stream.ReadEx(bytes, 0, bytes.Length, cancellation);
                 if (read == 0)
+                {
                     if (throwIfEOF)
                         throw new EndOfStreamException("No more bytes to read");
                     else
                         return false;
+                }
+
                 if (read != 1)
                     i--;
                 else if (this.MagicBytesArray[i] != bytes[0])
@@ -625,17 +732,23 @@ namespace NBitcoin
         {
             Bech32Encoder encoder = this.Bech32Encoders[(int)type];
             if (encoder == null && throws)
+            {
                 throw new NotImplementedException("The network " + this + " does not have any prefix for bech32 " +
                                                   Enum.GetName(typeof(Bech32Type), type));
+            }
+
             return encoder;
         }
 
         public byte[] GetVersionBytes(Base58Type type, bool throws)
         {
-            var prefix = this.Base58Prefixes[(int)type];
+            byte[] prefix = this.Base58Prefixes[(int)type];
             if (prefix == null && throws)
+            {
                 throw new NotImplementedException("The network " + this + " does not have any prefix for base58 " +
                                                   Enum.GetName(typeof(Base58Type), type));
+            }
+
             return prefix?.ToArray();
         }
 
@@ -645,7 +758,7 @@ namespace NBitcoin
                 throw new ArgumentNullException("network");
             if (bytes == null)
                 throw new ArgumentNullException("bytes");
-            var versionBytes = network.GetVersionBytes(type, true);
+            byte[] versionBytes = network.GetVersionBytes(type, true);
             return Encoders.Base58Check.EncodeData(versionBytes.Concat(bytes));
         }
 
@@ -661,7 +774,7 @@ namespace NBitcoin
 
         protected IEnumerable<NetworkAddress> ConvertToNetworkAddresses(string[] seeds, int defaultPort)
         {
-            Random rand = new Random();
+            var rand = new Random();
             TimeSpan oneWeek = TimeSpan.FromDays(7);
 
             foreach (string seed in seeds)

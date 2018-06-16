@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using NBitcoin.DataEncoders;
 using NBitcoin.Protocol;
 
@@ -16,6 +14,7 @@ namespace NBitcoin.Networks
             this.Magic = 0xDAB5BFFA;
             this.DefaultPort = 18444;
             this.RPCPort = 18332;
+            this.CoinTicker = "TBTC";
 
             this.Consensus.PowAllowMinDifficultyBlocks = true;
             this.Consensus.PowNoRetargeting = true;
@@ -57,7 +56,7 @@ namespace NBitcoin.Networks
             this.GenesisVersion = 1;
             this.GenesisReward = Money.Coins(50m);
 
-            this.Genesis = CreateGenesisBlock(this.Consensus.ConsensusFactory, this.GenesisTime, this.GenesisNonce, this.GenesisBits, this.GenesisVersion, this.GenesisReward);
+            this.Genesis = CreateBitcoinGenesisBlock(this.Consensus.ConsensusFactory, this.GenesisTime, this.GenesisNonce, this.GenesisBits, this.GenesisVersion, this.GenesisReward);
             this.Consensus.HashGenesisBlock = this.Genesis.GetHash();
             Assert(this.Consensus.HashGenesisBlock == uint256.Parse("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
         }

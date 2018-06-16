@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
+using Stratis.Bitcoin.Consensus.Rules;
 using Stratis.Bitcoin.Features.Consensus.Interfaces;
 using Stratis.Bitcoin.Utilities;
 
@@ -18,7 +19,8 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         /// <summary>Database of stake related data for the current blockchain.</summary>
         private IStakeChain stakeChain;
 
-        private PosConsensusOptions posConsensusOptions;
+        /// <summary>The consensus of the parent Network.</summary>
+        private NBitcoin.Consensus consensus;
 
         /// <inheritdoc />
         public override void Initialize()
@@ -27,11 +29,11 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
 
             base.Initialize();
 
+            this.consensus = this.Parent.Network.Consensus;
             var consensusRules = (PosConsensusRules)this.Parent;
 
             this.stakeValidator = consensusRules.StakeValidator;
             this.stakeChain = consensusRules.StakeChain;
-            this.posConsensusOptions = this.Parent.ConsensusParams.Option<PosConsensusOptions>();
 
             this.Logger.LogTrace("(-)");
         }
@@ -45,10 +47,16 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             this.CheckAndComputeStake(context);
 
             await base.RunAsync(context).ConfigureAwait(false);
-
-            await this.stakeChain.SetAsync(context.BlockValidationContext.ChainedHeader, context.Stake.BlockStake).ConfigureAwait(false);
+            var posRuleContext = context as PosRuleContext;
+            await this.stakeChain.SetAsync(context.ValidationContext.ChainedHeader, posRuleContext.BlockStake).ConfigureAwait(false);
 
             this.Logger.LogTrace("(-)");
+        }
+
+        /// <inheritdoc/>
+        protected override bool IsProtocolTransaction(Transaction transaction)
+        {
+            return transaction.IsCoinBase || transaction.IsCoinStake;
         }
 
         /// <inheritdoc />
@@ -58,8 +66,11 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
 
             if (BlockStake.IsProofOfStake(block))
             {
-                Money stakeReward = block.Transactions[1].TotalOut - context.Stake.TotalCoinStakeValueIn;
-                Money calcStakeReward = fees + this.GetProofOfStakeReward(height, context.Stake.CoinAge);
+                var posRuleContext = context as PosRuleContext;
+                Money stakeReward = block.Transactions[1].TotalOut - posRuleContext.TotalCoinStakeValueIn;
+                Money calcStakeReward = fees + this.GetProofOfStakeReward(height);
+                //Money stakeReward = block.Transactions[1].TotalOut - context.Stake.TotalCoinStakeValueIn;
+                //Money calcStakeReward = fees + this.GetProofOfStakeReward(height, context.Stake.CoinAge);
 
                 this.Logger.LogTrace("Block stake reward is {0}, calculated reward is {1}.", stakeReward, calcStakeReward);
                 if (stakeReward > calcStakeReward)
@@ -87,10 +98,12 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         {
             this.Logger.LogTrace("()");
 
-            UnspentOutputSet view = context.Set;
+            var posRuleContext = context as PosRuleContext;
+
+            UnspentOutputSet view = posRuleContext.UnspentOutputSet;
 
             if (transaction.IsCoinStake)
-                context.Stake.TotalCoinStakeValueIn = view.GetValueIn(transaction);
+                posRuleContext.TotalCoinStakeValueIn = view.GetValueIn(transaction);
 
             base.UpdateUTXOSet(context, transaction);
 
@@ -106,9 +119,9 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
 
             if (coins.IsCoinstake)
             {
-                if ((spendHeight - coins.Height) < this.posConsensusOptions.CoinbaseMaturity)
+                if ((spendHeight - coins.Height) < this.consensus.CoinbaseMaturity)
                 {
-                    this.Logger.LogTrace("Coinstake transaction height {0} spent at height {1}, but maturity is set to {2}.", coins.Height, spendHeight, this.posConsensusOptions.CoinbaseMaturity);
+                    this.Logger.LogTrace("Coinstake transaction height {0} spent at height {1}, but maturity is set to {2}.", coins.Height, spendHeight, this.consensus.CoinbaseMaturity);
                     this.Logger.LogTrace("(-)[COINSTAKE_PREMATURE_SPENDING]");
                     ConsensusErrors.BadTransactionPrematureCoinstakeSpending.Throw();
                 }
@@ -127,9 +140,10 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         {
             this.Logger.LogTrace("()");
 
-            ChainedHeader chainedHeader = context.BlockValidationContext.ChainedHeader;
-            Block block = context.BlockValidationContext.Block;
-            BlockStake blockStake = context.Stake.BlockStake;
+            ChainedHeader chainedHeader = context.ValidationContext.ChainedHeader;
+            Block block = context.ValidationContext.Block;
+            var posRuleContext = context as PosRuleContext;
+            BlockStake blockStake = posRuleContext.BlockStake;
 
             // Verify hash target and signature of coinstake tx.
             if (BlockStake.IsProofOfStake(block))
@@ -143,14 +157,14 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                 // Only do proof of stake validation for blocks that are after the assumevalid block or after the last checkpoint.
                 if (!context.SkipValidation)
                 {
-                    this.stakeValidator.CheckProofOfStake(context.Stake, prevChainedHeader, prevBlockStake, block.Transactions[1], chainedHeader.Header.Bits.ToCompact());
+                    this.stakeValidator.CheckProofOfStake(posRuleContext, prevChainedHeader, prevBlockStake, block.Transactions[1], chainedHeader.Header.Bits.ToCompact());
                 }
                 else this.Logger.LogTrace("POS validation skipped for block at height {0}.", chainedHeader.Height);
             }
 
             // PoW is checked in CheckBlock().
             if (BlockStake.IsProofOfWork(block))
-                context.Stake.HashProofOfStake = chainedHeader.Header.GetPoWHash();
+                posRuleContext.HashProofOfStake = chainedHeader.Header.GetPoWHash();
 
             // Compute stake entropy bit for stake modifier.
             if (!blockStake.SetStakeEntropyBit(blockStake.GetStakeEntropyBit()))
@@ -160,7 +174,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             }
 
             // Record proof hash value.
-            blockStake.HashProof = context.Stake.HashProofOfStake;
+            blockStake.HashProof = posRuleContext.HashProofOfStake;
 
             int lastCheckpointHeight = this.Parent.Checkpoints.GetLastCheckpointHeight();
             if (chainedHeader.Height > lastCheckpointHeight)
@@ -186,24 +200,27 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         public override Money GetProofOfWorkReward(int height)
         {
             if (this.IsPremine(height))
+                return this.consensus.PremineReward;
+
+            return this.consensus.ProofOfWorkReward;
                 return this.posConsensusOptions.PremineReward;
-            if (height <= 40100)
-                return this.posConsensusOptions.ProofOfWorkReward;
-            if (height <= 45000)
-                return Money.Coins(24);
-            if (height <= 50000)
-                return Money.Coins(12);
-            if (height <= 55000)
-                return Money.Coins(6);
-            if (height <= 60000)
-                return Money.Coins(3);
-            if (height <= 65000)
-                return Money.Coins(1);
-            if (height <= 70000)
-                return Money.Coins(0);
-            if (height >= 75000)
-                return Money.Coins(0.48m);
-            return Money.Coins(0);
+            //if (height <= 40100)
+            //    return this.posConsensusOptions.ProofOfWorkReward;
+            //if (height <= 45000)
+            //    return Money.Coins(24);
+            //if (height <= 50000)
+            //    return Money.Coins(12);
+            //if (height <= 55000)
+            //    return Money.Coins(6);
+            //if (height <= 60000)
+            //    return Money.Coins(3);
+            //if (height <= 65000)
+            //    return Money.Coins(1);
+            //if (height <= 70000)
+            //    return Money.Coins(0);
+            //if (height >= 75000)
+            //    return Money.Coins(0.48m);
+            //return Money.Coins(0);
         }
 
         /// <summary>
@@ -306,17 +323,9 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
 
             return this.posConsensusOptions.ProofOfStakeReward;
         }
+                
 
-        /// <summary>
-        /// Determines whether the block with specified height is premined.
-        /// </summary>
-        /// <param name="height">Block's height.</param>
-        /// <returns><c>true</c> if the block with provided height is premined, <c>false</c> otherwise.</returns>
-        private bool IsPremine(int height)
-        {
-            return (this.posConsensusOptions.PremineHeight > 0) &&
-                   (this.posConsensusOptions.PremineReward > 0) &&
-                   (height == this.posConsensusOptions.PremineHeight);
+            return this.consensus.ProofOfStakeReward;
         }
     }
 }
