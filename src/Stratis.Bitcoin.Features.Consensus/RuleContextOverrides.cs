@@ -35,7 +35,7 @@ namespace Stratis.Bitcoin.Features.Consensus
             this.BlockStake = blockStake;
         }
 
-        public PosRuleContext(ValidationContext validationContext, NBitcoin.Consensus consensus, ChainedHeader consensusTip) 
+        public PosRuleContext(ValidationContext validationContext, NBitcoin.Consensus consensus, ChainedHeader consensusTip)
             : base(validationContext, consensus, consensusTip)
         {
         }
@@ -43,6 +43,8 @@ namespace Stratis.Bitcoin.Features.Consensus
         public BlockStake BlockStake { get; set; }
 
         public Money TotalCoinStakeValueIn { get; set; }
+
+        public long? CoinAge { get; set; }
 
         public uint256 HashProofOfStake { get; set; }
 

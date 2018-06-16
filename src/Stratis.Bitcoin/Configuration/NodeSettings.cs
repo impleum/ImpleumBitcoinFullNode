@@ -148,7 +148,7 @@ namespace Stratis.Bitcoin.Configuration
                     throw new ConfigurationException("Invalid combination of regtest and testnet.");
 
                 if (protocolVersion == ProtocolVersion.ALT_PROTOCOL_VERSION)
-                    this.Network = testNet ? Network.StratisTest : regTest ? Network.StratisRegTest : Network.StratisMain;
+                    this.Network = testNet ? Network.ImpleumTest : regTest ? Network.ImpleumRegTest : Network.ImpleumMain;
                 else
                     this.Network = testNet ? Network.TestNet : regTest ? Network.RegTest : Network.Main;
 

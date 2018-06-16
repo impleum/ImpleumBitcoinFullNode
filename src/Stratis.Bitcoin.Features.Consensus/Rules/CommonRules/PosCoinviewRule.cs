@@ -68,9 +68,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             {
                 var posRuleContext = context as PosRuleContext;
                 Money stakeReward = block.Transactions[1].TotalOut - posRuleContext.TotalCoinStakeValueIn;
-                Money calcStakeReward = fees + this.GetProofOfStakeReward(height);
-                //Money stakeReward = block.Transactions[1].TotalOut - context.Stake.TotalCoinStakeValueIn;
-                //Money calcStakeReward = fees + this.GetProofOfStakeReward(height, context.Stake.CoinAge);
+                Money calcStakeReward = fees + this.GetProofOfStakeReward(height, posRuleContext.CoinAge);
 
                 this.Logger.LogTrace("Block stake reward is {0}, calculated reward is {1}.", stakeReward, calcStakeReward);
                 if (stakeReward > calcStakeReward)
@@ -201,26 +199,23 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         {
             if (this.IsPremine(height))
                 return this.consensus.PremineReward;
-
-            return this.consensus.ProofOfWorkReward;
-                return this.posConsensusOptions.PremineReward;
-            //if (height <= 40100)
-            //    return this.posConsensusOptions.ProofOfWorkReward;
-            //if (height <= 45000)
-            //    return Money.Coins(24);
-            //if (height <= 50000)
-            //    return Money.Coins(12);
-            //if (height <= 55000)
-            //    return Money.Coins(6);
-            //if (height <= 60000)
-            //    return Money.Coins(3);
-            //if (height <= 65000)
-            //    return Money.Coins(1);
-            //if (height <= 70000)
-            //    return Money.Coins(0);
-            //if (height >= 75000)
-            //    return Money.Coins(0.48m);
-            //return Money.Coins(0);
+            if (height <= 40100)
+                return this.consensus.ProofOfWorkReward;
+            if (height <= 45000)
+                return Money.Coins(24);
+            if (height <= 50000)
+                return Money.Coins(12);
+            if (height <= 55000)
+                return Money.Coins(6);
+            if (height <= 60000)
+                return Money.Coins(3);
+            if (height <= 65000)
+                return Money.Coins(1);
+            if (height <= 70000)
+                return Money.Coins(0);
+            if (height >= 75000)
+                return Money.Coins(0.48m);
+            return Money.Coins(0);
         }
 
         /// <summary>
@@ -232,7 +227,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         public Money GetProofOfStakeReward(int height, long? coinAge = null)
         {
             if (this.IsPremine(height))
-                return this.posConsensusOptions.PremineReward;
+                return this.consensus.PremineReward;
 
             if (coinAge.HasValue)
             {
@@ -317,13 +312,9 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                 else if (height > 129601)
                 {
                     return Money.Satoshis(nSubsidy * 10);
-                } 
+                }
 
             }
-
-            return this.posConsensusOptions.ProofOfStakeReward;
-        }
-                
 
             return this.consensus.ProofOfStakeReward;
         }

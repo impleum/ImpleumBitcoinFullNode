@@ -33,6 +33,7 @@ namespace NBitcoin.Networks
             this.MinRelayTxFee = 10000;
             this.MaxTimeOffsetSeconds = ImpleumMaxTimeOffsetSeconds;
             this.MaxTipAge = ImpleumDefaultMaxTipAgeInSeconds;
+            this.CoinTicker = "IMP";
 
             this.Consensus.SubsidyHalvingInterval = 210000;
             this.Consensus.MajorityEnforceBlockUpgrade = 750;
@@ -56,6 +57,13 @@ namespace NBitcoin.Networks
             this.Consensus.ProofOfStakeLimitV2 = new BigInteger(uint256.Parse("000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffff").ToBytes(false));
             this.Consensus.CoinType = 769;
             this.Consensus.DefaultAssumeValid = new uint256("0xe8dd9ea41e9d8935f31a0f1bd8378a777434dc51549a1c685855a7ec4d5546b1"); // 23000
+            this.Consensus.CoinbaseMaturity = 50;
+            this.Consensus.PremineReward = Money.Coins(1000000);
+            this.Consensus.PremineHeight = 2;
+            this.Consensus.ProofOfWorkReward = Money.Coins(48);
+            this.Consensus.ProofOfStakeReward = Money.COIN;
+            this.Consensus.MaxReorgLength = 500;
+            this.Consensus.MaxMoney = 100000000 * Money.COIN;
 
             this.Base58Prefixes = new byte[12][];
             this.Base58Prefixes[(int)Base58Type.PUBKEY_ADDRESS] = new byte[] { (102) };

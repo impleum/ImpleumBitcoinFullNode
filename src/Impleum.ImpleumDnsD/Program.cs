@@ -38,18 +38,16 @@ namespace Impleum.ImpleumDnsD
         {
             try
             {
-                Network network = args.Contains("-testnet") ? Network.ImpleumTest : Network.ImpleumMain;
-                NodeSettings nodeSettings = new NodeSettings(network, ProtocolVersion.ALT_PROTOCOL_VERSION, args: args, loadConfiguration: false);
+                // Network network = args.Contains("-testnet") ? Network.ImpleumTest : Network.ImpleumMain;
+                NodeSettings nodeSettings = new NodeSettings(protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args);
+                var dnsSettings = new DnsSettings(nodeSettings);
 
-                Action<DnsSettings> serviceTest = (s) =>
-                {
-                    if (string.IsNullOrWhiteSpace(s.DnsHostName) || string.IsNullOrWhiteSpace(s.DnsNameServer) || string.IsNullOrWhiteSpace(s.DnsMailBox))
-                        throw new ConfigurationException("When running as a DNS Seed service, the -dnshostname, -dnsnameserver and -dnsmailbox arguments must be specified on the command line.");
-                };
+                if (string.IsNullOrWhiteSpace(dnsSettings.DnsHostName) || string.IsNullOrWhiteSpace(dnsSettings.DnsNameServer) || string.IsNullOrWhiteSpace(dnsSettings.DnsMailBox))
+                    throw new ConfigurationException("When running as a DNS Seed service, the -dnshostname, -dnsnameserver and -dnsmailbox arguments must be specified on the command line.");
 
                 // Run as a full node with DNS or just a DNS service?
                 IFullNode node;
-                if (args.Contains("-dnsfullnode"))
+                if (dnsSettings.DnsFullNode)
                 {
                     // Build the Dns full node.
                     node = new FullNodeBuilder()
@@ -61,7 +59,7 @@ namespace Impleum.ImpleumDnsD
                         .AddPowPosMining()
                         .UseApi()
                         .AddRPC()
-                        .UseDns(serviceTest)
+                        .UseDns()
                         .Build();
                 }
                 else
@@ -72,7 +70,7 @@ namespace Impleum.ImpleumDnsD
                         .UsePosConsensus()
                         .UseApi()
                         .AddRPC()
-                        .UseDns(serviceTest)
+                        .UseDns()
                         .Build();
                 }
 

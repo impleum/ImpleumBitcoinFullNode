@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
-using NBitcoin;
 using NBitcoin.Protocol;
+using Stratis.Bitcoin;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Features.Api;
@@ -27,20 +26,18 @@ namespace Impleum.ImpleumD
         {
             try
             {
-                Network network = args.Contains("-testnet") ? Network.ImpleumTest : Network.ImpleumMain;
-                NodeSettings nodeSettings = new NodeSettings(network, ProtocolVersion.ALT_PROTOCOL_VERSION, args: args, loadConfiguration: false);
+                NodeSettings nodeSettings = new NodeSettings(protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args);
 
-                // NOTES: running BTC and STRAT side by side is not possible yet as the flags for serialization are static
                 Stratis.Bitcoin.IFullNode node = new FullNodeBuilder()
-                    .UseNodeSettings(nodeSettings)
-                    .UseBlockStore()
-                    .UsePosConsensus()
-                    .UseMempool()
-                    .UseWallet()
-                    .AddPowPosMining()
-                    .UseApi()
-                    .AddRPC()
-                    .Build();
+                      .UseNodeSettings(nodeSettings)
+                      .UseBlockStore()
+                      .UsePosConsensus()
+                      .UseMempool()
+                      .UseWallet()
+                      .AddPowPosMining()
+                      .UseApi()
+                      .AddRPC()
+                      .Build();
 
                 if (node != null)
                     await node.RunAsync();
