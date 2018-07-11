@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NBitcoin.DataEncoders;
-using NBitcoin.RPC;
+using NBitcoin.Formatters;
 using Newtonsoft.Json.Linq;
 
 namespace NBitcoin
@@ -30,19 +30,18 @@ namespace NBitcoin
         public Block()
         {
             this.header = new BlockHeader();
-            this.SetNull();
+            this.transactions.Clear();
+            this.BlockSize = null;
         }
 
         [Obsolete("Should use Block.Load outside of ConsensusFactories")]
-        internal Block(BlockHeader blockHeader)
+        public Block(BlockHeader blockHeader) : this()
         {
-            this.header = new BlockHeader();
-            this.SetNull();
             this.header = blockHeader;
         }
 
         [Obsolete("Should use Block.Load outside of ConsensusFactories")]
-        internal Block(byte[] bytes, ConsensusFactory consensusFactory)
+        public Block(byte[] bytes, ConsensusFactory consensusFactory)
         {
             var stream = new BitcoinStream(bytes)
             {
@@ -50,11 +49,6 @@ namespace NBitcoin
             };
 
             this.ReadWrite(stream);
-        }
-
-        [Obsolete("Should use Block.Load outside of ConsensusFactories")]
-        internal Block(byte[] bytes) : this(bytes, Network.Main.Consensus.ConsensusFactory)
-        {
         }
 
         public virtual void ReadWrite(BitcoinStream stream)
@@ -73,18 +67,13 @@ namespace NBitcoin
             }
         }
 
-        private void SetNull()
-        {
-            this.header.SetNull();
-            this.transactions.Clear();
-            this.BlockSize = null;
-        }
-
         public BlockHeader Header => this.header;
 
+        /// <summary>
+        /// A block's hash is it's header's hash.
+        /// </summary>
         public uint256 GetHash()
         {
-            // A Block's hash is it's header's hash.
             return this.header.GetHash();
         }
 
@@ -148,9 +137,10 @@ namespace NBitcoin
 
         public static Block ParseJson(Network network, string json)
         {
-            var formatter = new BlockExplorerFormatter();
+            var formatter = new BlockExplorerFormatter(network);
             JObject block = JObject.Parse(json);
             var txs = (JArray)block["tx"];
+
             Block blk = network.Consensus.ConsensusFactory.CreateBlock();
             blk.Header.Bits = new Target((uint)block["bits"]);
             blk.Header.BlockTime = Utils.UnixTimeToDateTime((uint)block["time"]);
@@ -176,7 +166,7 @@ namespace NBitcoin
                 throw new ArgumentNullException(nameof(network));
 
             Block block = network.Consensus.ConsensusFactory.CreateBlock();
-            block.ReadWrite(Encoders.Hex.DecodeData(hex), network: network);
+            block.ReadWrite(Encoders.Hex.DecodeData(hex), consensusFactory: network.Consensus.ConsensusFactory);
 
             return block;
         }
@@ -190,7 +180,7 @@ namespace NBitcoin
                 throw new ArgumentNullException(nameof(network));
 
             Block block = network.Consensus.ConsensusFactory.CreateBlock();
-            block.ReadWrite(hex, network: network);
+            block.ReadWrite(hex, network.Consensus.ConsensusFactory);
 
             return block;
         }

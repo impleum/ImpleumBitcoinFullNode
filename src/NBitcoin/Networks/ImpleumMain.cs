@@ -10,6 +10,18 @@ namespace NBitcoin.Networks
 {
     public class ImpleumMain : Network
     {
+        /// <summary> Impleum maximal value for the calculated time offset. If the value is over this limit, the time syncing feature will be switched off. </summary>
+        public const int ImpleumMaxTimeOffsetSeconds = 25 * 60;
+
+        /// <summary> Impleum default value for the maximum tip age in seconds to consider the node in initial block download (2 hours). </summary>
+        public const int ImpleumDefaultMaxTipAgeInSeconds = 24 * 60 * 60;
+
+        /// <summary> The name of the root folder containing the different Impleum blockchains (ImpleumMain, ImpleumTest, ImpleumRegTest). </summary>
+        public const string ImpleumRootFolderName = "Impleum";
+
+        /// <summary> The default name used for the Impleum configuration file. </summary>
+        public const string ImpleumDefaultConfigFilename = "Impleum.conf";
+
         public ImpleumMain()
         {
             // The message start string is designed to be unlikely to occur in normal data.
@@ -109,10 +121,40 @@ namespace NBitcoin.Networks
 
             //MineGenesis(genesis,consensus);
 
-            Network.Assert(this.Consensus.HashGenesisBlock == uint256.Parse("0x02a8be139ec629b13df22e7abc7f9ad5239df39efaf2f5bf3ab5e4d102425dbe"));
-            Network.Assert(genesis.Header.HashMerkleRoot == uint256.Parse("0xbd3233dd8d4e7ce3ee8097f4002b4f9303000a5109e02a402d41d2faf74eb244"));
+            Assert(this.Consensus.HashGenesisBlock == uint256.Parse("0x02a8be139ec629b13df22e7abc7f9ad5239df39efaf2f5bf3ab5e4d102425dbe"));
+            Assert(genesis.Header.HashMerkleRoot == uint256.Parse("0xbd3233dd8d4e7ce3ee8097f4002b4f9303000a5109e02a402d41d2faf74eb244"));
 
 
+        }
+
+        protected static Block CreateImpleumGenesisBlock(ConsensusFactory consensusFactory, uint nTime, uint nNonce, uint nBits, int nVersion, Money genesisReward)
+        {
+            string pszTimestamp =
+                "https://cryptocrimson.com/news/apple-payment-request-api-ripple-interledger-protocol";
+            Transaction txNew = consensusFactory.CreateTransaction();
+            txNew.Version = 1;
+            txNew.Time = nTime;
+            txNew.AddInput(new TxIn()
+            {
+                ScriptSig = new Script(Op.GetPushOp(0), new Op()
+                {
+                    Code = (OpcodeType)0x1,
+                    PushData = new[] { (byte)63 }
+                }, Op.GetPushOp(Encoders.ASCII.DecodeData(pszTimestamp)))
+            });
+            txNew.AddOutput(new TxOut()
+            {
+                Value = genesisReward,
+            });
+            Block genesis = consensusFactory.CreateBlock();
+            genesis.Header.BlockTime = Utils.UnixTimeToDateTime(nTime);
+            genesis.Header.Bits = nBits;
+            genesis.Header.Nonce = nNonce;
+            genesis.Header.Version = nVersion;
+            genesis.Transactions.Add(txNew);
+            genesis.Header.HashPrevBlock = uint256.Zero;
+            genesis.UpdateMerkleRoot();
+            return genesis;
         }
     }
 }
