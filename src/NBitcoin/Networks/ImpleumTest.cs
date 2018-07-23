@@ -61,7 +61,7 @@ namespace NBitcoin.Networks
             this.Genesis.Header.Nonce = 2833935;
             this.Genesis.Header.Bits = this.Consensus.PowLimit;
             this.Consensus.HashGenesisBlock = this.Genesis.GetHash();
-            Network.Assert(this.Consensus.HashGenesisBlock == uint256.Parse("0xd73b0d8d3b98b638ff8b955bf9a74febba4b145081933dadd4e9cd8766df389b"));
+            Network.Assert(this.Consensus.HashGenesisBlock == uint256.Parse("dab06c78af72a1fb8a17581c631ec2d3df60a8029142962de5448b992b47467e"));
 
 
         }
