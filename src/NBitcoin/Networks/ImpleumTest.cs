@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -25,8 +25,8 @@ namespace NBitcoin.Networks
 
             this.Name = nameof(ImpleumTest);
             this.Magic = magic;
-            this.DefaultPort = 28171;
-            this.RPCPort = 28172;
+            this.DefaultPort = 16271;
+            this.RPCPort = 16272;
 
             this.Consensus.PowLimit = new Target(new uint256("0000ffff00000000000000000000000000000000000000000000000000000000"));
             this.Consensus.DefaultAssumeValid = null;

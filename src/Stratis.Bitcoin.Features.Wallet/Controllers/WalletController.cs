@@ -718,6 +718,8 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                     });
                 }
 
+                
+                
                 this.broadcasterManager.BroadcastTransactionAsync(transaction).GetAwaiter().GetResult();
 
                 TransactionBroadcastEntry transactionBroadCastEntry = this.broadcasterManager.GetTransaction(transaction.GetHash());
