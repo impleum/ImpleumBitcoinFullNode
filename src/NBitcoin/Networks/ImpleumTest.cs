@@ -57,13 +57,13 @@ namespace NBitcoin.Networks
             this.GenesisReward = Money.Zero;
 
             this.Genesis = CreateImpleumGenesisBlock(this.Consensus.ConsensusFactory, this.GenesisTime, this.GenesisNonce, this.GenesisBits, this.GenesisVersion, this.GenesisReward);
-            this.Genesis.Header.Time = 1527405749;
-            this.Genesis.Header.Nonce = 2833935;
+            this.Genesis.Header.Time = 152336701;
+            this.Genesis.Header.Nonce = 1503601;
             this.Genesis.Header.Bits = this.Consensus.PowLimit;
             this.Consensus.HashGenesisBlock = this.Genesis.GetHash();
             Network.Assert(this.Consensus.HashGenesisBlock == uint256.Parse("dab06c78af72a1fb8a17581c631ec2d3df60a8029142962de5448b992b47467e"));
 
-
+            
         }
     }
 }
