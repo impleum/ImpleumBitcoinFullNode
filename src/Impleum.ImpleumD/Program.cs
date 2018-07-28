@@ -5,6 +5,7 @@ using Stratis.Bitcoin;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Features.Api;
+using Stratis.Bitcoin.Features.Apps;
 using Stratis.Bitcoin.Features.BlockStore;
 using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Features.MemoryPool;
@@ -28,16 +29,17 @@ namespace Impleum.ImpleumD
             {
                 NodeSettings nodeSettings = new NodeSettings(protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args);
 
-                Stratis.Bitcoin.IFullNode node = new FullNodeBuilder()
-                      .UseNodeSettings(nodeSettings)
-                      .UseBlockStore()
-                      .UsePosConsensus()
-                      .UseMempool()
-                      .UseWallet()
-                      .AddPowPosMining()
-                      .UseApi()
-                      .AddRPC()
-                      .Build();
+                IFullNode node = new FullNodeBuilder()
+                    .UseNodeSettings(nodeSettings)
+                    .UseBlockStore()
+                    .UsePosConsensus()
+                    .UseMempool()
+                    .UseWallet()
+                    .AddPowPosMining()
+                    .UseApi()
+                    .UseApps()
+                    .AddRPC()
+                    .Build();
 
                 if (node != null)
                     await node.RunAsync();
