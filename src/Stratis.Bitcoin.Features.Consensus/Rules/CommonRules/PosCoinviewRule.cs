@@ -309,13 +309,16 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                 {
                     return Money.Satoshis(nSubsidy * 250);
                 }
-                else if (height > 129601)
+                else if (height > 129601 && height <= 200000)
                 {
                     return Money.Satoshis(nSubsidy * 10);
                 }
+                else if (height > 200000)
+                {
+                    return this.consensus.ProofOfStakeReward;
+                }
 
             }
-
             return this.consensus.ProofOfStakeReward;
         }
     }
