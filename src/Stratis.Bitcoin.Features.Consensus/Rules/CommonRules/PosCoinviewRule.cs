@@ -68,15 +68,8 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             {
                 var posRuleContext = context as PosRuleContext;
                 Money stakeReward = block.Transactions[1].TotalOut - posRuleContext.TotalCoinStakeValueIn;
-                Money calcStakeReward = null;
-                if (height <= 215000)
-                {
-                    calcStakeReward = fees + this.GetProofOfStakeReward(height, posRuleContext.CoinAge);
-                }
-                else
-                {
-                    calcStakeReward = fees + this.GetProofOfStakeReward(height);
-                }
+                Money calcStakeReward = fees + this.GetProofOfStakeReward(height, posRuleContext.CoinAge);
+               
 
                 this.Logger.LogTrace("Block stake reward is {0}, calculated reward is {1}.", stakeReward, calcStakeReward);
                 if (stakeReward > calcStakeReward)
