@@ -72,7 +72,7 @@ namespace Stratis.Bitcoin.Networks
             this.Consensus.PremineReward = Money.Coins(1000000);
             this.Consensus.PremineHeight = 2;
             this.Consensus.ProofOfWorkReward = Money.Coins(48);
-            this.Consensus.ProofOfStakeReward = Money.COIN;
+            this.Consensus.ProofOfStakeReward = Money.Coins(5m);
             this.Consensus.MaxReorgLength = 500;
             this.Consensus.MaxMoney = 100000000 * Money.COIN;
 
