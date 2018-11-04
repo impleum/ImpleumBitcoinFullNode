@@ -53,6 +53,10 @@ rm "src\Stratis.Bitcoin.Features.WatchOnlyWallet\bin\debug\" -Recurse -Force
 dotnet pack src\Stratis.Bitcoin.Features.WatchOnlyWallet --configuration Debug --include-source --include-symbols
 dotnet nuget push "src\Stratis.Bitcoin.Features.WatchOnlyWallet\bin\debug\*.symbols.nupkg" --source "https://api.nuget.org/v3/index.json"
 
+rm "src\Stratis.Bitcoin.Networks\bin\debug\" -Recurse -Force
+dotnet pack src\Stratis.Bitcoin.Networks --configuration Debug --include-source --include-symbols
+dotnet nuget push "src\Stratis.Bitcoin.Networks\bin\debug\*.symbols.nupkg" --source "https://api.nuget.org/v3/index.json"
+
 # TESTS PROJECTS
 rm "src\Stratis.Bitcoin.IntegrationTests.Common\bin\debug\" -Recurse -Force
 dotnet pack src\Stratis.Bitcoin.IntegrationTests.Common --configuration Debug --include-source --include-symbols
@@ -65,3 +69,9 @@ dotnet nuget push "src\Stratis.Bitcoin.Tests.Common\bin\debug\*.symbols.nupkg" -
 rm "src\Stratis.Bitcoin.Tests.Wallet.Common\bin\debug\" -Recurse -Force
 dotnet pack src\Stratis.Bitcoin.Tests.Wallet.Common --configuration Debug --include-source --include-symbols 
 dotnet nuget push "src\Stratis.Bitcoin.Tests.Wallet.Common\bin\debug\*.symbols.nupkg" --source "https://api.nuget.org/v3/index.json"
+
+# TOOLS PROJECTS
+
+rm "src\FodyNlogAdapter\bin\debug\" -Recurse -Force
+dotnet pack src\FodyNlogAdapter --configuration Debug --include-source --include-symbols 
+dotnet nuget push "src\FodyNlogAdapter\bin\debug\*.symbols.nupkg" --source "https://api.nuget.org/v3/index.json"

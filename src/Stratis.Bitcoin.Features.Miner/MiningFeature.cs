@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -147,7 +148,7 @@ namespace Stratis.Bitcoin.Features.Miner
         }
 
         /// <inheritdoc />
-        public override void Initialize()
+        public override Task InitializeAsync()
         {
             if (this.minerSettings.Mine)
             {
@@ -167,6 +168,8 @@ namespace Stratis.Bitcoin.Features.Miner
             {
                 this.StartStaking(this.minerSettings.WalletName, this.minerSettings.WalletPassword);
             }
+
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
@@ -223,14 +226,14 @@ namespace Stratis.Bitcoin.Features.Miner
                         services.AddSingleton<IBlockProvider, BlockProvider>();
                         services.AddSingleton<BlockDefinition, PowBlockDefinition>();
                         services.AddSingleton<MiningRpcController>();
-                        services.AddSingleton<MiningApiController>();
+                        services.AddSingleton<MiningController>();
                         services.AddSingleton<MinerSettings>();
                     });
             });
 
             return fullNodeBuilder;
         }
-        
+
         /// <summary>
         /// Adds POW and POS miner components to the node, so that it can mine or stake.
         /// </summary>
@@ -257,9 +260,9 @@ namespace Stratis.Bitcoin.Features.Miner
                         services.AddSingleton<BlockDefinition, PosBlockDefinition>();
                         services.AddSingleton<BlockDefinition, PosPowBlockDefinition>();
                         services.AddSingleton<StakingRpcController>();
-                        services.AddSingleton<StakingApiController>();
+                        services.AddSingleton<StakingController>();
                         services.AddSingleton<MiningRpcController>();
-                        services.AddSingleton<MiningApiController>();
+                        services.AddSingleton<MiningController>();
                         services.AddSingleton<MinerSettings>();
                     });
             });

@@ -31,12 +31,20 @@ namespace Stratis.Bitcoin.Features.Wallet.Models
     {
         public string Mnemonic { get; set; }
 
+        /// <summary>
+        /// This password is used to encrypt the wallet for secure storage. The password is required.
+        /// </summary>
         [Required(ErrorMessage = "A password is required.")]
         public string Password { get; set; }
 
-        public string Network { get; set; }
-
-        public string FolderPath { get; set; }
+        /// <summary>
+        /// This passphrase is used as an additional seed (word) joined together with the <see cref="Mnemonic"/>.
+        /// </summary>
+        /// <remarks>
+        /// Empty string is a valid passphrase.
+        /// </remarks>
+        [Required(ErrorMessage = "A passphrase is required.", AllowEmptyStrings = true)]
+        public string Passphrase { get; set; }
 
         [Required(ErrorMessage = "The name of the wallet to create is missing.")]
         public string Name { get; set; }
@@ -47,8 +55,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Models
         [Required(ErrorMessage = "A password is required.")]
         public string Password { get; set; }
 
-        public string FolderPath { get; set; }
-
         [Required(ErrorMessage = "The name of the wallet is missing.")]
         public string Name { get; set; }
     }
@@ -58,15 +64,23 @@ namespace Stratis.Bitcoin.Features.Wallet.Models
         [Required(ErrorMessage = "A mnemonic is required.")]
         public string Mnemonic { get; set; }
 
+        /// <summary>
+        /// Supply the password that was used to create the wallet.
+        /// </summary>
         [Required(ErrorMessage = "A password is required.")]
         public string Password { get; set; }
 
-        public string FolderPath { get; set; }
+        /// <summary>
+        /// Supply the passphrase that was used when account was created.
+        /// </summary>
+        /// <remarks>
+        /// If the wallet was created before <see cref="Passphrase"/> was available, set the passphrase to be the same as the password.
+        /// </remarks>
+        [Required(ErrorMessage = "A passphrase is required.", AllowEmptyStrings = true)]
+        public string Passphrase { get; set; }
 
         [Required(ErrorMessage = "The name of the wallet is missing.")]
         public string Name { get; set; }
-
-        public string Network { get; set; }
 
         [JsonConverter(typeof(IsoDateTimeConverter))]
         public DateTime CreationDate { get; set; }
@@ -80,12 +94,8 @@ namespace Stratis.Bitcoin.Features.Wallet.Models
         [Required(ErrorMessage = "An account number is required. E.g. 0.")]
         public int AccountIndex { get; set; }
 
-        public string FolderPath { get; set; }
-
         [Required(ErrorMessage = "The name of the wallet is missing.")]
         public string Name { get; set; }
-
-        public string Network { get; set; }
 
         [JsonConverter(typeof(IsoDateTimeConverter))]
         public DateTime CreationDate { get; set; }
@@ -278,5 +288,47 @@ namespace Stratis.Bitcoin.Features.Wallet.Models
         /// </summary>
         [Required]
         public string Password { get; set; }
+    }
+
+    /// <summary>
+    /// Object used to synchronize a wallet
+    /// </summary>
+    public class WalletSyncFromDateRequest : RequestModel
+    {
+        [JsonConverter(typeof(IsoDateTimeConverter))]
+        public DateTime Date { get; set; }
+    }
+
+    /// <summary>
+    /// Request object for adding an address to the address book.
+    /// </summary>
+    /// <seealso cref="Stratis.Bitcoin.Features.Wallet.Models.RequestModel" />
+    public class AddressBookEntryRequest : RequestModel
+    {
+        [Required(ErrorMessage = "A label is required.")]
+        [MaxLength(200)]
+        public string Label { get; set; }
+
+        [Required(ErrorMessage = "An address is required.")]
+        [IsBitcoinAddress()]
+        public string Address { get; set; }
+    }
+    
+    /// Model object to use as input to the Api request for getting the spendable transactions in an account.
+    /// </summary>
+    /// <seealso cref="Stratis.Bitcoin.Features.Wallet.Models.RequestModel" />
+    public class SpendableTransactionsRequest : RequestModel
+    {
+        [Required(ErrorMessage = "The name of the wallet is missing.")]
+        public string WalletName { get; set; }
+
+        [Required(ErrorMessage = "The name of the account is missing.")]
+        public string AccountName { get; set; }
+
+        /// <summary>
+        /// The min number of confirmations required. 
+        /// To allow unconfirmed transactions, set this value to 0. 
+        /// </summary>
+        public int MinConfirmations { get; set; }
     }
 }

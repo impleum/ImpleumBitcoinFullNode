@@ -4,6 +4,7 @@ using System.Net;
 using NBitcoin;
 using NBitcoin.BouncyCastle.Math;
 using NBitcoin.Protocol;
+using Stratis.Bitcoin.Networks.Deployments;
 
 namespace Stratis.Bitcoin.Networks
 {
@@ -27,38 +28,77 @@ namespace Stratis.Bitcoin.Networks
             this.RPCPort = 26174;
             this.CoinTicker = "TSTRAT";
 
-            var consensus = new Consensus();
-            consensus.SubsidyHalvingInterval = 210000;
-            consensus.MajorityEnforceBlockUpgrade = 750;
-            consensus.MajorityRejectBlockOutdated = 950;
-            consensus.MajorityWindow = 1000;
-            consensus.BuriedDeployments[BuriedDeployments.BIP34] = 0;
-            consensus.BuriedDeployments[BuriedDeployments.BIP65] = 0;
-            consensus.BuriedDeployments[BuriedDeployments.BIP66] = 0;
-            consensus.BIP34Hash = new uint256("0x000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8");
-            consensus.PowTargetTimespan = TimeSpan.FromSeconds(14 * 24 * 60 * 60); // two weeks
-            consensus.PowTargetSpacing = TimeSpan.FromSeconds(10 * 60);
-            consensus.PowAllowMinDifficultyBlocks = false;
-            consensus.PowNoRetargeting = false;
-            consensus.RuleChangeActivationThreshold = 1916; // 95% of 2016
-            consensus.MinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
-            consensus.LastPOWBlock = 12500;
-            consensus.IsProofOfStake = true;
-            consensus.ConsensusFactory = new PosConsensusFactory();
-            consensus.ProofOfStakeLimit = new BigInteger(uint256.Parse("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").ToBytes(false));
-            consensus.ProofOfStakeLimitV2 = new BigInteger(uint256.Parse("000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffff").ToBytes(false));
-            consensus.CoinType = 105;
-            consensus.PremineReward = Money.Coins(98000000);
-            consensus.PremineHeight = 2;
-            consensus.ProofOfWorkReward = Money.Coins(4);
-            consensus.ProofOfStakeReward = Money.COIN;
-            consensus.MaxReorgLength = 500;
-            consensus.MaxMoney = long.MaxValue;
+            var powLimit = new Target(new uint256("0000ffff00000000000000000000000000000000000000000000000000000000"));
 
-            // StratisTest consensus differences
-            consensus.PowLimit = new Target(new uint256("0000ffff00000000000000000000000000000000000000000000000000000000"));
-            consensus.DefaultAssumeValid = new uint256("0x98fa6ef0bca5b431f15fd79dc6f879dc45b83ed4b1bbe933a383ef438321958e"); // 372652
-            consensus.CoinbaseMaturity = 10;
+            var consensusFactory = new PosConsensusFactory();
+
+            // Create the genesis block.
+            this.GenesisTime = 1470467000;
+            this.GenesisNonce = 1831645;
+            this.GenesisBits = 0x1e0fffff;
+            this.GenesisVersion = 1;
+            this.GenesisReward = Money.Zero;
+
+            Block genesisBlock = CreateStratisGenesisBlock(consensusFactory, this.GenesisTime, this.GenesisNonce, this.GenesisBits, this.GenesisVersion, this.GenesisReward);
+
+            genesisBlock.Header.Time = 1493909211;
+            genesisBlock.Header.Nonce = 2433759;
+            genesisBlock.Header.Bits = powLimit;
+
+            this.Genesis = genesisBlock;
+
+            // Taken from StratisX.
+            var consensusOptions = new PosConsensusOptions(
+                maxBlockBaseSize: 1_000_000,
+                maxStandardVersion: 2,
+                maxStandardTxWeight: 100_000,
+                maxBlockSigopsCost: 20_000,
+                maxStandardTxSigopsCost: 20_000 / 5,
+                provenHeadersActivationHeight: 10_000_000 // TODO: Set it to the real value once it is known.
+            );
+
+            var buriedDeployments = new BuriedDeploymentsArray
+            {
+                [BuriedDeployments.BIP34] = 0,
+                [BuriedDeployments.BIP65] = 0,
+                [BuriedDeployments.BIP66] = 0
+            };
+
+            var bip9Deployments = new StratisBIP9Deployments();
+
+            this.Consensus = new NBitcoin.Consensus(
+                consensusFactory: consensusFactory,
+                consensusOptions: consensusOptions,
+                coinType: 105,
+                hashGenesisBlock: genesisBlock.GetHash(),
+                subsidyHalvingInterval: 210000,
+                majorityEnforceBlockUpgrade: 750,
+                majorityRejectBlockOutdated: 950,
+                majorityWindow: 1000,
+                buriedDeployments: buriedDeployments,
+                bip9Deployments: bip9Deployments,
+                bip34Hash: new uint256("0x000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8"),
+                ruleChangeActivationThreshold: 1916, // 95% of 2016
+                minerConfirmationWindow: 2016, // nPowTargetTimespan / nPowTargetSpacing
+                maxReorgLength: 500,
+                defaultAssumeValid: new uint256("0x98fa6ef0bca5b431f15fd79dc6f879dc45b83ed4b1bbe933a383ef438321958e"), // 372652
+                maxMoney: long.MaxValue,
+                coinbaseMaturity: 10,
+                premineHeight: 2,
+                premineReward: Money.Coins(98000000),
+                proofOfWorkReward: Money.Coins(4),
+                powTargetTimespan: TimeSpan.FromSeconds(14 * 24 * 60 * 60), // two weeks
+                powTargetSpacing: TimeSpan.FromSeconds(10 * 60),
+                powAllowMinDifficultyBlocks: false,
+                powNoRetargeting: false,
+                powLimit: powLimit,
+                minimumChainWork: null,
+                isProofOfStake: true,
+                lastPowBlock: 12500,
+                proofOfStakeLimit: new BigInteger(uint256.Parse("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").ToBytes(false)),
+                proofOfStakeLimitV2: new BigInteger(uint256.Parse("000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffff").ToBytes(false)),
+                proofOfStakeReward: Money.COIN
+            );
 
             this.Base58Prefixes[(int)Base58Type.PUBKEY_ADDRESS] = new byte[] { (65) };
             this.Base58Prefixes[(int)Base58Type.SCRIPT_ADDRESS] = new byte[] { (196) };
@@ -89,25 +129,10 @@ namespace Stratis.Bitcoin.Networks
             this.SeedNodes = new List<NetworkAddress>
             {
                 new NetworkAddress(IPAddress.Parse("51.140.231.125"), this.DefaultPort), // danger cloud node
-                new NetworkAddress(IPAddress.Parse("13.70.81.5"), 3389), // beard cloud node  
-                new NetworkAddress(IPAddress.Parse("191.235.85.131"), 3389), // fassa cloud node  
+                new NetworkAddress(IPAddress.Parse("13.70.81.5"), 3389), // beard cloud node
+                new NetworkAddress(IPAddress.Parse("191.235.85.131"), 3389), // fassa cloud node
                 new NetworkAddress(IPAddress.Parse("52.232.58.52"), 26178), // neurosploit public node
             };
-
-            // Create the genesis block.
-            this.GenesisTime = 1470467000;
-            this.GenesisNonce = 1831645;
-            this.GenesisBits = 0x1e0fffff;
-            this.GenesisVersion = 1;
-            this.GenesisReward = Money.Zero;
-
-            this.Genesis = CreateStratisGenesisBlock(consensus.ConsensusFactory, this.GenesisTime, this.GenesisNonce, this.GenesisBits, this.GenesisVersion, this.GenesisReward);
-            this.Genesis.Header.Time = 1493909211;
-            this.Genesis.Header.Nonce = 2433759;
-            this.Genesis.Header.Bits = consensus.PowLimit;
-            consensus.HashGenesisBlock = this.Genesis.GetHash();
-
-            this.Consensus = consensus;
 
             Assert(this.Consensus.HashGenesisBlock == uint256.Parse("0x00000e246d7b73b88c9ab55f2e5e94d9e22d471def3df5ea448f5576b1d156b9"));
         }

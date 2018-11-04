@@ -12,7 +12,6 @@ using NLog.Extensions.Logging;
 using Stratis.Bitcoin.Builder.Feature;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Configuration.Settings;
-using Stratis.Bitcoin.Networks;
 using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.Configuration
@@ -83,20 +82,22 @@ namespace Stratis.Bitcoin.Configuration
         /// <param name="protocolVersion">Supported protocol version for which to create the configuration.</param>
         /// <param name="agent">The nodes user agent that will be shared with peers.</param>
         /// <param name="args">The command-line arguments.</param>
+        /// <param name="networksSelector">A selector class that delayed load a network for either - regtest/testnet/mainnet.</param>
         /// <exception cref="ConfigurationException">Thrown in case of any problems with the configuration file or command line arguments.</exception>
         /// <remarks>
-        /// Processing depends on whether a configuration file is passed via the command line. 
+        /// Processing depends on whether a configuration file is passed via the command line.
         /// There are two main scenarios here:
         /// - The configuration file is passed via the command line. In this case we need
         ///   to read it earlier so that it can provide defaults for "testnet" and "regtest".
-        /// - Alternatively, if the file name is not supplied then a network-specific file 
+        /// - Alternatively, if the file name is not supplied then a network-specific file
         ///   name would be determined. In this case we first need to determine the network.
         /// </remarks>
         public NodeSettings(Network network = null, ProtocolVersion protocolVersion = SupportedProtocolVersion,
-            string agent = "ImpleumBitcoin", string[] args = null)
+            string agent = "ImpleumBitcoin", string[] args = null, NetworksSelector networksSelector = null)
         {
             // Create the default logger factory and logger.
-            this.LoggerFactory = new ExtendedLoggerFactory();
+            var loggerFactory = new ExtendedLoggerFactory();
+            this.LoggerFactory = loggerFactory;
             this.LoggerFactory.AddConsoleWithFilters();
             this.LoggerFactory.AddNLog();
             this.Logger = this.LoggerFactory.CreateLogger(typeof(NodeSettings).FullName);
@@ -142,6 +143,9 @@ namespace Stratis.Bitcoin.Configuration
             // If the network is not known then derive it from the command line arguments.
             if (this.Network == null)
             {
+                if(networksSelector == null)
+                    throw new ConfigurationException("Network or NetworkSelector not provided.");
+
                 // Find out if we need to run on testnet or regtest from the config file.
                 bool testNet = this.ConfigReader.GetOrDefault<bool>("testnet", false, this.Logger);
                 bool regTest = this.ConfigReader.GetOrDefault<bool>("regtest", false, this.Logger);
@@ -149,13 +153,13 @@ namespace Stratis.Bitcoin.Configuration
                 if (testNet && regTest)
                     throw new ConfigurationException("Invalid combination of regtest and testnet.");
 
-                if (protocolVersion == ProtocolVersion.ALT_PROTOCOL_VERSION)
-                    this.Network = testNet ? NetworkRegistration.Register(new ImpleumTest()) : regTest ? NetworkRegistration.Register(new ImpleumRegTest()) : NetworkRegistration.Register(new ImpleumMain());
-                else
-                    this.Network = testNet ? NetworkRegistration.Register(new BitcoinTest()) : regTest ? NetworkRegistration.Register(new BitcoinRegTest()) : NetworkRegistration.Register(new BitcoinMain());
+                this.Network = testNet ? networksSelector.Testnet() : regTest ? networksSelector.Regtest() : networksSelector.Mainnet();
 
                 this.Logger.LogDebug("Network set to '{0}'.", this.Network.Name);
             }
+
+            // Ensure the network being used is registered and we have the correct Network object reference.
+            this.Network = NetworkRegistration.Register(this.Network);
 
             // Set the full data directory path.
             if (this.DataDir == null)
@@ -173,6 +177,9 @@ namespace Stratis.Bitcoin.Configuration
 
             // Set the data folder.
             this.DataFolder = new DataFolder(this.DataDir);
+
+            // Attempt to load NLog configuration from the DataFolder.
+            loggerFactory.LoadNLogConfiguration(this.DataFolder);
 
             // Get the configuration file name for the network if it was not specified on the command line.
             if (this.ConfigurationFile == null)
@@ -210,7 +217,7 @@ namespace Stratis.Bitcoin.Configuration
         /// <param name="network">Specification of the network the node runs on - regtest/testnet/mainnet.</param>
         /// <param name="protocolVersion">Supported protocol version for which to create the configuration.</param>
         /// <returns>Default node configuration.</returns>
-        public static NodeSettings Default(Network network = null, ProtocolVersion protocolVersion = SupportedProtocolVersion)
+        public static NodeSettings Default(Network network, ProtocolVersion protocolVersion = SupportedProtocolVersion)
         {
             return new NodeSettings(network, protocolVersion);
         }
@@ -356,8 +363,6 @@ namespace Stratis.Bitcoin.Configuration
         /// <param name="network">The network to base the defaults off.</param>
         public static void BuildDefaultConfigurationFile(StringBuilder builder, Network network)
         {
-            NodeSettings defaults = Default(network: network);
-
             builder.AppendLine("####Node Settings####");
             builder.AppendLine($"#Test network. Defaults to 0.");
             builder.AppendLine($"testnet={((network.IsTest() && !network.IsRegTest()) ? 1 : 0)}");

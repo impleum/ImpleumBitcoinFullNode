@@ -11,8 +11,8 @@ namespace Stratis.Bitcoin.Features.Consensus
         {
         }
 
-        protected UtxoRuleContext(ValidationContext validationContext, NBitcoin.Consensus consensus, ChainedHeader consensusTip, DateTimeOffset time)
-            : base(validationContext, consensus, consensusTip, time)
+        protected UtxoRuleContext(ValidationContext validationContext, DateTimeOffset time)
+            : base(validationContext, time)
         {
         }
 
@@ -23,7 +23,7 @@ namespace Stratis.Bitcoin.Features.Consensus
     }
 
     /// <summary>
-    /// A context that is used by the <see cref="IConsensusRules"/> for the PoS network type.
+    /// A context that is used by the <see cref="IConsensusRuleEngine"/> for the PoS network type.
     /// </summary>
     public class PosRuleContext : UtxoRuleContext
     {
@@ -36,8 +36,8 @@ namespace Stratis.Bitcoin.Features.Consensus
             this.BlockStake = blockStake;
         }
 
-        public PosRuleContext(ValidationContext validationContext, NBitcoin.Consensus consensus, ChainedHeader consensusTip, DateTimeOffset time) 
-            : base(validationContext, consensus, consensusTip, time)
+        public PosRuleContext(ValidationContext validationContext, DateTimeOffset time) 
+            : base(validationContext, time)
         {
         }
 
@@ -53,7 +53,7 @@ namespace Stratis.Bitcoin.Features.Consensus
     }
 
     /// <summary>
-    /// A context that is used by the <see cref="IConsensusRules"/> for the PoW network type.
+    /// A context that is used by the <see cref="IConsensusRuleEngine"/> for the PoW network type.
     /// </summary>
     public class PowRuleContext : UtxoRuleContext
     {
@@ -61,8 +61,8 @@ namespace Stratis.Bitcoin.Features.Consensus
         {
         }
 
-        public PowRuleContext(ValidationContext validationContext, NBitcoin.Consensus consensus, ChainedHeader consensusTip, DateTimeOffset time)
-            : base(validationContext, consensus, consensusTip, time)
+        public PowRuleContext(ValidationContext validationContext, DateTimeOffset time)
+            : base(validationContext, time)
         {
         }
     }

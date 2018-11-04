@@ -128,8 +128,8 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         /// <summary>Coin view of the memory pool.</summary>
         private readonly ICoinView coinView;
 
-        /// <inheritdoc cref="IConsensusRules" />
-        private readonly IConsensusRules consensusRules;
+        /// <inheritdoc cref="IConsensusRuleEngine" />
+        private readonly IConsensusRuleEngine consensusRules;
 
         /// <summary>Transaction memory pool for managing transactions in the memory pool.</summary>
         private readonly ITxMempool memPool;
@@ -154,18 +154,6 @@ namespace Stratis.Bitcoin.Features.MemoryPool
 
         private Network network;
 
-        /// <summary>
-        /// Constructs a memory pool validator object.
-        /// </summary>
-        /// <param name="memPool">Transaction memory pool for managing transactions in the memory pool.</param>
-        /// <param name="mempoolLock">A lock for managing asynchronous access to memory pool.</param>
-        /// <param name="dateTimeProvider">Date and time information provider.</param>
-        /// <param name="mempoolSettings">Settings from the memory pool.</param>
-        /// <param name="chain">Thread safe access to the best chain of block headers (that the node is aware of) from genesis.</param>
-        /// <param name="coinView">Coin view of the memory pool.</param>
-        /// <param name="loggerFactory">Logger factory for creating instance logger.</param>
-        /// <param name="nodeSettings">Full node settings.</param>
-        /// <param name="consensusRules">Consensus rules engine.</param>
         public MempoolValidator(
             ITxMempool memPool,
             MempoolSchedulerLock mempoolLock,
@@ -175,7 +163,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             ICoinView coinView,
             ILoggerFactory loggerFactory,
             NodeSettings nodeSettings,
-            IConsensusRules consensusRules)
+            IConsensusRuleEngine consensusRules)
         {
             this.memPool = memPool;
             this.mempoolLock = mempoolLock;
@@ -201,7 +189,6 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         /// <inheritdoc />
         public async Task<bool> AcceptToMemoryPoolWithTime(MempoolValidationState state, Transaction tx)
         {
-            this.logger.LogTrace("({0}:'{1}',{2}:'{3}')", nameof(state), state?.ToString(), nameof(tx), tx?.GetHash());
             try
             {
                 var vHashTxToUncache = new List<uint256>();
@@ -388,7 +375,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         {
             return tx.GetSerializedSize(
                        (ProtocolVersion)
-                       ((uint)ProtocolVersion.PROTOCOL_VERSION | consensusOptions.SerializeTransactionNoWitness),
+                       ((uint)ProtocolVersion.PROTOCOL_VERSION | ConsensusOptions.SerializeTransactionNoWitness),
                        SerializationType.Network) * (consensusOptions.WitnessScaleFactor - 1) +
                    tx.GetSerializedSize(ProtocolVersion.PROTOCOL_VERSION, SerializationType.Network);
         }
@@ -409,7 +396,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             // Providing any more cleanup incentive than making additional inputs free would
             // risk encouraging people to create junk outputs to redeem later.
             if (nTxSize == 0)
-                nTxSize = (GetTransactionWeight(trx, consensusOptions) + consensusOptions.WitnessScaleFactor - 1) / consensusOptions.WitnessScaleFactor;
+                nTxSize = (GetTransactionWeight(trx, consensusOptions) + (consensusOptions.WitnessScaleFactor) - 1) / consensusOptions.WitnessScaleFactor;
 
             foreach (TxIn txInput in trx.Inputs)
             {
@@ -442,7 +429,10 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             {
                 // is it already in the memory pool?
                 if (this.memPool.Exists(context.TransactionHash))
+                {
+                    this.logger.LogTrace("(-)[INVALID_ALREADY_EXISTS]");
                     state.Invalid(MempoolErrors.InPool).Throw();
+                }
 
                 // Check for conflicts with in-memory transactions
                 this.CheckConflicts(context);
@@ -479,7 +469,10 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                     this.LimitMempoolSize(this.mempoolSettings.MaxMempool * 1000000, this.mempoolSettings.MempoolExpiry * 60 * 60);
 
                     if (!this.memPool.Exists(context.TransactionHash))
+                    {
+                        this.logger.LogTrace("(-)[FAIL_MEMPOOL_FULL]");
                         state.Fail(MempoolErrors.Full).Throw();
+                    }
                 }
 
                 // do this here inside the exclusive scheduler for better accuracy
@@ -535,7 +528,10 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                         }
 
                         if (replacementOptOut)
+                        {
+                            this.logger.LogTrace("(-)[INVALID_CONFLICT]");
                             context.State.Invalid(MempoolErrors.Conflict).Throw();
+                        }
 
                         context.SetConflicts.Add(ptxConflicting.GetHash());
                     }
@@ -557,12 +553,18 @@ namespace Stratis.Bitcoin.Features.MemoryPool
 
             // Coinbase is only valid in a block, not as a loose transaction
             if (context.Transaction.IsCoinBase)
+            {
+                this.logger.LogTrace("(-)[FAIL_INVALID_COINBASE]");
                 context.State.Fail(MempoolErrors.Coinbase).Throw();
+            }
 
             // Coinstake is only valid in a block, not as a loose transaction
             // TODO: mempool needs to have seprate checks for POW/POS as part of the change to rules.
-            if (context.Transaction.IsCoinStake)
+            if (this.network.Consensus.IsProofOfStake && context.Transaction.IsCoinStake)
+            {
+                this.logger.LogTrace("(-)[FAIL_INVALID_COINSTAKE]");
                 context.State.Fail(MempoolErrors.Coinstake).Throw();
+            }
 
             // TODO: Implement Witness Code
             // Bitcoin Ref: https://github.com/bitcoin/bitcoin/blob/ea729d55b4dbd17a53ced474a8457d4759cfb5a5/src/validation.cpp#L463-L467
@@ -582,7 +584,10 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             // block; we don't want our mempool filled up with transactions that can't
             // be mined yet.
             if (!CheckFinalTransaction(this.chain, this.dateTimeProvider, context.Transaction, MempoolValidator.StandardLocktimeVerifyFlags))
+            {
+                this.logger.LogTrace("(-)[FAIL_NONSTANDARD]");
                 context.State.Fail(MempoolErrors.NonFinal).Throw();
+            }
         }
 
         /// <summary>
@@ -599,7 +604,22 @@ namespace Stratis.Bitcoin.Features.MemoryPool
 
             Transaction tx = context.Transaction;
             if (tx.Version > this.ConsensusOptions.MaxStandardVersion || tx.Version < 1)
+            {
+                this.logger.LogTrace("(-)[FAIL_TX_VERSION]");
                 context.State.Fail(MempoolErrors.Version).Throw();
+            }
+
+            if (this.network.Consensus.IsProofOfStake)
+            {
+                long adjustedTime = this.dateTimeProvider.GetAdjustedTimeAsUnixTimestamp();
+                PosFutureDriftRule futureDriftRule = this.consensusRules.GetRule<PosFutureDriftRule>();
+
+                // nTime has different purpose from nLockTime but can be used in similar attacks
+                if (tx.Time > adjustedTime + futureDriftRule.GetFutureDrift(adjustedTime))
+                {
+                    context.State.Fail(MempoolErrors.TimeTooNew).Throw();
+                }
+            }
 
             // Extremely large transactions with lots of inputs can cost the network
             // almost as much to process as they cost the sender in fees, because
@@ -607,7 +627,10 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             // to MAX_STANDARD_TX_WEIGHT mitigates CPU exhaustion attacks.
             int sz = GetTransactionWeight(tx, this.ConsensusOptions);
             if (sz >= this.ConsensusOptions.MaxStandardTxWeight)
+            {
+                this.logger.LogTrace("(-)[FAIL_TX_SIZE]");
                 context.State.Fail(MempoolErrors.TxSize).Throw();
+            }
 
             foreach (TxIn txin in tx.Inputs)
             {
@@ -620,11 +643,13 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 // considered standard.
                 if (txin.ScriptSig.Length > 1650)
                 {
+                    this.logger.LogTrace("(-)[FAIL_SCRIPTSIGSZ]");
                     context.State.Fail(MempoolErrors.ScriptsigSize).Throw();
                 }
 
                 if (!txin.ScriptSig.IsPushOnly)
                 {
+                    this.logger.LogTrace("(-)[FAIL_SCRIPTSIGPUSH]");
                     context.State.Fail(MempoolErrors.ScriptsigNotPushonly).Throw();
                 }
             }
@@ -635,6 +660,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 ScriptTemplate script = StandardScripts.GetTemplateFromScriptPubKey(txout.ScriptPubKey);
                 if (script == null) //!::IsStandard(txout.scriptPubKey, whichType, witnessEnabled))  https://github.com/bitcoin/bitcoin/blob/aa624b61c928295c27ffbb4d27be582f5aa31b56/src/policy/policy.cpp#L57-L80
                 {
+                    this.logger.LogTrace("(-)[FAIL_SCRIPT_PUBKEY]");
                     context.State.Fail(MempoolErrors.Scriptpubkey).Throw();
                 }
 
@@ -647,13 +673,17 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 //}
                 else if (txout.IsDust(this.minRelayTxFee))
                 {
+                    this.logger.LogTrace("(-)[FAIL_DUST]");
                     context.State.Fail(MempoolErrors.Dust).Throw();
                 }
             }
 
             // only one OP_RETURN txout is permitted
             if (dataOut > 1)
+            {
+                this.logger.LogTrace("(-)[FAIL_MULTI_OPRETURN]");
                 context.State.Fail(MempoolErrors.MultiOpReturn).Throw();
+            }
         }
 
         /// <summary>
@@ -670,6 +700,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             // do we already have it?
             if (context.View.HaveCoins(context.TransactionHash))
             {
+                this.logger.LogTrace("(-)[INVALID_ALREADY_KNOWN]");
                 context.State.Invalid(MempoolErrors.AlreadyKnown).Throw();
             }
 
@@ -681,13 +712,17 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 if (!context.View.HaveCoins(txin.PrevOut.Hash))
                 {
                     context.State.MissingInputs = true;
+                    this.logger.LogTrace("(-)[FAIL_MISSING_INPUTS]");
                     context.State.Fail(new MempoolError()).Throw(); // fMissingInputs and !state.IsInvalid() is used to detect this condition, don't set state.Invalid()
                 }
             }
 
             // are the actual inputs available?
             if (!context.View.HaveInputs(context.Transaction))
+            {
+                this.logger.LogTrace("(-)[INVALID_BAD_INPUTS]");
                 context.State.Invalid(MempoolErrors.BadInputsSpent).Throw();
+            }
         }
 
         /// <summary>
@@ -701,17 +736,22 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             Money mempoolRejectFee = this.memPool.GetMinFee(this.mempoolSettings.MaxMempool * 1000000).GetFee(context.EntrySize);
             if (mempoolRejectFee > 0 && context.ModifiedFees < mempoolRejectFee)
             {
+                this.logger.LogTrace("(-)[FAIL_MIN_FEE_NOT_MET]");
                 context.State.Fail(MempoolErrors.MinFeeNotMet, $" {context.Fees} < {mempoolRejectFee}").Throw();
             }
             else if (this.mempoolSettings.RelayPriority && context.ModifiedFees < this.minRelayTxFee.GetFee(context.EntrySize) &&
                      !TxMempool.AllowFree(context.Entry.GetPriority(this.chain.Height + 1)))
             {
+                this.logger.LogTrace("(-)[FAIL_INSUFFICENT_PRIORITY]");
                 // Require that free transactions have sufficient priority to be mined in the next block.
                 context.State.Fail(MempoolErrors.InsufficientPriority).Throw();
             }
 
             if (context.State.AbsurdFee > 0 && context.Fees > context.State.AbsurdFee)
+            {
+                this.logger.LogTrace("(-)[INVALID_ABSURD_FEE]");
                 context.State.Invalid(MempoolErrors.AbsurdlyHighFee, $"{context.Fees} > {context.State.AbsurdFee}").Throw();
+            }
         }
 
         /// <summary>
@@ -725,8 +765,11 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             // itself can contain sigops MAX_STANDARD_TX_SIGOPS is less than
             // MAX_BLOCK_SIGOPS; we still consider this an invalid rather than
             // merely non-standard transaction.
-            if (context.SigOpsCost > this.ConsensusOptions.MaxBlockSigopsCost)
+            if (context.SigOpsCost > this.ConsensusOptions.MaxStandardTxSigopsCost)
+            {
+                this.logger.LogTrace("(-)[FAIL_TOO_MANY_SIGOPS]");
                 context.State.Fail(MempoolErrors.TooManySigops).Throw();
+            }
         }
 
         /// <summary>
@@ -744,17 +787,26 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             // Must keep pool.cs for this unless we change CheckSequenceLocks to take a
             // CoinsViewCache instead of create its own
             if (!CheckSequenceLocks(this.network, this.chain.Tip, context, StandardLocktimeVerifyFlags, context.LockPoints))
+            {
+                this.logger.LogTrace("(-)[FAIL_BIP68_SEQLOCK]");
                 context.State.Fail(MempoolErrors.NonBIP68Final).Throw();
+            }
 
             // Check for non-standard pay-to-script-hash in inputs
             if (this.mempoolSettings.RequireStandard && !this.AreInputsStandard(context.Transaction, context.View))
+            {
+                this.logger.LogTrace("(-)[INVALID_NONSTANDARD_INPUTS]");
                 context.State.Invalid(MempoolErrors.NonstandardInputs).Throw();
+            }
 
             // Check for non-standard witness in P2WSH
             if (context.Transaction.HasWitness && this.mempoolSettings.RequireStandard && !this.IsWitnessStandard(context.Transaction, context.View))
+            {
+                this.logger.LogTrace("(-)[INVALID_NONSTANDARD_WITNESS]");
                 context.State.Invalid(MempoolErrors.NonstandardWitness).Throw();
+            }
 
-            context.SigOpsCost = consensusRules.GetRule<CoinViewRule>().GetTransactionSignatureOperationCost(context.Transaction, context.View.Set,
+            context.SigOpsCost = this.consensusRules.GetRule<CoinViewRule>().GetTransactionSignatureOperationCost(context.Transaction, context.View.Set,
                 new DeploymentFlags { ScriptFlags = ScriptVerify.Standard });
 
             Money nValueIn = context.View.GetValueIn(context.Transaction);
@@ -833,6 +885,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                     var oldFeeRate = new FeeRate(mi.ModifiedFee, (int)mi.GetTxSize());
                     if (newFeeRate <= oldFeeRate)
                     {
+                        this.logger.LogTrace("(-)[FAIL_INSUFFICIENT_FEE]");
                         context.State.Fail(MempoolErrors.InsufficientFee,
                             $"rejecting replacement {context.TransactionHash}; new feerate {newFeeRate} <= old feerate {oldFeeRate}").Throw();
                     }
@@ -863,6 +916,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 }
                 else
                 {
+                    this.logger.LogTrace("(-)[FAIL_TOO_MANY_POTENTIAL_REPLACEMENTS]");
                     context.State.Fail(MempoolErrors.TooManyPotentialReplacements,
                             $"rejecting replacement {context.TransactionHash}; too many potential replacements ({context.ConflictingCount} > {MaxDescendantsToVisit})").Throw();
                 }
@@ -880,6 +934,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                         // tx that's in the mempool.
                         if (this.memPool.MapTx.ContainsKey(context.Transaction.Inputs[j].PrevOut.Hash))
                         {
+                            this.logger.LogTrace("(-)[FAIL_REPLACEMENT_ADDS_UNCONFIRMED]");
                             context.State.Fail(MempoolErrors.ReplacementAddsUnconfirmed,
                                 $"replacement {context.TransactionHash} adds unconfirmed input, idx {j}").Throw();
                         }
@@ -891,6 +946,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 // transactions would not be paid for.
                 if (context.ModifiedFees < context.ConflictingFees)
                 {
+                    this.logger.LogTrace("(-)[FAIL_INSUFFICIENT_FEE]");
                     context.State.Fail(MempoolErrors.Insufficientfee,
                             $"rejecting replacement {context.TransactionHash}, less fees than conflicting txs; {context.ModifiedFees} < {context.ConflictingFees}").Throw();
                 }
@@ -900,6 +956,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 Money nDeltaFees = context.ModifiedFees - context.ConflictingFees;
                 if (nDeltaFees < this.minRelayTxFee.GetFee(context.EntrySize))
                 {
+                    this.logger.LogTrace("(-)[FAIL_INSUFFICIENT_DELTA_FEE]");
                     context.State.Fail(MempoolErrors.Insufficientfee,
                             $"rejecting replacement {context.TransactionHash}, not enough additional fees to relay; {nDeltaFees} < {this.minRelayTxFee.GetFee(context.EntrySize)}").Throw();
                 }
@@ -936,6 +993,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             if (!this.memPool.CalculateMemPoolAncestors(context.Entry, context.SetAncestors, nLimitAncestors,
                 nLimitAncestorSize, nLimitDescendants, nLimitDescendantSize, out errString))
             {
+                this.logger.LogTrace("(-)FAIL_CHAIN_TOO_LONG]");
                 context.State.Fail(MempoolErrors.TooLongMempoolChain, errString).Throw();
             }
 
@@ -948,6 +1006,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 uint256 hashAncestor = ancestorIt.TransactionHash;
                 if (context.SetConflicts.Contains(hashAncestor))
                 {
+                    this.logger.LogTrace("(-)[FAIL_BAD_TX_SPENDS_CONFLICTING]");
                     context.State.Fail(MempoolErrors.BadTxnsSpendsConflictingTx,
                         $"{context.TransactionHash} spends conflicting transaction {hashAncestor}").Throw();
                 }
@@ -982,10 +1041,15 @@ namespace Stratis.Bitcoin.Features.MemoryPool
 
             //if (IsInitialBlockDownload())
             //  return false;
+
             if (this.chain.Tip.Header.BlockTime.ToUnixTimeMilliseconds() < (this.dateTimeProvider.GetTime() - MaxFeeEstimationTipAge))
+            {
                 return false;
+            }
+
             //if (chainActive.Height() < pindexBestHeader->nHeight - 1)
             //  return false;
+
             return true;
         }
 
@@ -1019,6 +1083,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                 //  state.SetCorruptionPossible();
                 //}
 
+                this.logger.LogTrace("(-)[FAIL_INPUTS_PREV_TXS]");
                 context.State.Fail(new MempoolError()).Throw();
             }
 
@@ -1033,6 +1098,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             // can be exploited as a DoS attack.
             if (!this.CheckInputs(context, ScriptVerify.P2SH, txdata))
             {
+                this.logger.LogTrace("(-)[FAIL_SCRIPT_VERIFY]");
                 context.State.Fail(new MempoolError(),
                         $"CheckInputs: BUG! PLEASE REPORT THIS! ConnectInputs failed against MANDATORY but not STANDARD flags {context.TransactionHash}").Throw();
             }
@@ -1067,6 +1133,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                     ctx.ScriptVerify = scriptVerify;
                     if (ctx.VerifyScript(input.ScriptSig, txout.ScriptPubKey, checker))
                     {
+                        this.logger.LogTrace("(-)[SCRIPT_VERIFIED]:true");
                         return true;
                     }
                     else
@@ -1093,6 +1160,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                         //// as to the correct behavior - we may want to continue
                         //// peering with non-upgraded nodes even after soft-fork
                         //// super-majority signaling has occurred.
+                        this.logger.LogTrace("(-)[FAIL_SCRIPT_VERIFY]");
                         context.State.Fail(MempoolErrors.MandatoryScriptVerifyFlagFailed, ctx.Error.ToString()).Throw();
                     }
 
@@ -1112,19 +1180,28 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         private bool AreInputsStandard(Transaction tx, MempoolCoinView mapInputs)
         {
             if (tx.IsCoinBase)
+            {
+                this.logger.LogTrace("(-)[IS_COINBASE]:true");
                 return true; // Coinbases don't use vin normally
+            }
 
             foreach (TxIn txin in tx.Inputs)
             {
                 TxOut prev = mapInputs.GetOutputFor(txin);
                 ScriptTemplate template = StandardScripts.GetTemplateFromScriptPubKey(prev.ScriptPubKey);
                 if (template == null)
+                {
+                    this.logger.LogTrace("(-)[BAD_SCRIPT_TEMPLATE]:false");
                     return false;
+                }
 
                 if (template.Type == TxOutType.TX_SCRIPTHASH)
                 {
                     if (prev.ScriptPubKey.GetSigOpCount(true) > 15) //MAX_P2SH_SIGOPS
+                    {
+                        this.logger.LogTrace("(-)[SIG_OP_MAX]:false");
                         return false;
+                    }
                 }
             }
 
@@ -1141,7 +1218,10 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         private bool IsWitnessStandard(Transaction tx, MempoolCoinView mapInputs)
         {
             if (tx.IsCoinBase)
+            {
+                this.logger.LogTrace("(-)[IS_COINBASE]:true");
                 return true; // Coinbases are skipped.
+            }
 
             foreach (TxIn input in tx.Inputs)
             {
@@ -1161,19 +1241,28 @@ namespace Stratis.Bitcoin.Features.MemoryPool
                     // If the check fails at this stage, we know that this txid must be a bad one.
                     PayToScriptHashSigParameters sigParams = PayToScriptHashTemplate.Instance.ExtractScriptSigParameters(this.network, input.ScriptSig);
                     if (sigParams == null || sigParams.RedeemScript == null)
+                    {
+                        this.logger.LogTrace("(-)[BAD_TXID]:false");
                         return false;
+                    }
 
                     prevScript = sigParams.RedeemScript;
                 }
 
                 // Non-witness program must not be associated with any witness.
                 if (!prevScript.IsWitness(this.network))
+                {
+                    this.logger.LogTrace("(-)[WITNESS_MISMATCH]:false");
                     return false;
+                }
 
                 // Check P2WSH standard limits.
                 WitProgramParameters wit = PayToWitTemplate.Instance.ExtractScriptPubKeyParameters2(this.chain.Network, prevScript);
                 if (wit == null)
+                {
+                    this.logger.LogTrace("(-)[BAD_WITNESS_PARAMS]:false");
                     return false;
+                }
 
                 // Version 0 segregated witness program validation.
                 if (wit.Version == 0 && wit.Program.Length == 32)
@@ -1199,17 +1288,26 @@ namespace Stratis.Bitcoin.Features.MemoryPool
 
                     // Validate P2WSH script isn't larger than max length.
                     if (scriptPubKey.ToBytes(true).Length > MaxStandardP2wshScriptSize)
+                    {
+                        this.logger.LogTrace("(-)[P2WSH_SCRIPT_SIZE]:false");
                         return false;
+                    }
 
                     // Validate number items in witness stack isn't larger than max.
                     if (sizeWitnessStack > MaxStandardP2wshStackItems)
+                    {
+                        this.logger.LogTrace("(-)[P2WSH_STACK_ITEMS]:false");
                         return false;
+                    }
 
                     // Validate size of each of the witness stack items.
                     for (int j = 0; j < sizeWitnessStack; j++)
                     {
                         if (stack[j].Length > MaxStandardP2wshStackItemSize)
+                        {
+                            this.logger.LogTrace("(-)[P2WSH_STACK_ITEM_SIZE]:false");
                             return false;
+                        }
                     }
                 }
             }

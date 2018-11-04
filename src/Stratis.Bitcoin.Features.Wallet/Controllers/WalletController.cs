@@ -82,8 +82,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         [HttpGet]
         public IActionResult GenerateMnemonic([FromQuery] string language = "English", int wordCount = 12)
         {
-            this.logger.LogTrace("({0}:'{1}',{2}:'{3}')", nameof(language), language, nameof(wordCount), wordCount);
-
             try
             {
                 Wordlist wordList;
@@ -151,7 +149,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             {
                 Mnemonic requestMnemonic = string.IsNullOrEmpty(request.Mnemonic) ? null : new Mnemonic(request.Mnemonic);
 
-                Mnemonic mnemonic = this.walletManager.CreateWallet(request.Password, request.Name, mnemonic: requestMnemonic);
+                Mnemonic mnemonic = this.walletManager.CreateWallet(request.Password, request.Name, request.Passphrase, mnemonic: requestMnemonic);
 
                 // start syncing the wallet from the creation date
                 this.walletSyncManager.SyncFromDate(this.dateTimeProvider.GetUtcNow());
@@ -219,7 +217,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         public IActionResult Recover([FromBody]WalletRecoveryRequest request)
         {
             Guard.NotNull(request, nameof(request));
-            this.logger.LogTrace("({0}.{1}:'{2}')", nameof(request), nameof(request.Name), request.Name);
 
             // checks the request is valid
             if (!this.ModelState.IsValid)
@@ -229,10 +226,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
 
             try
             {
-                Wallet wallet = this.walletManager.RecoverWallet(request.Password, request.Name, request.Mnemonic, request.CreationDate);
+                Wallet wallet = this.walletManager.RecoverWallet(request.Password, request.Name, request.Mnemonic, request.CreationDate, passphrase: request.Passphrase);
 
-                // start syncing the wallet from the creation date
-                this.walletSyncManager.SyncFromDate(request.CreationDate);
+                this.SyncFromBestHeightForRecoveredWallets(request.CreationDate);
 
                 return this.Ok();
             }
@@ -253,10 +249,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                 this.logger.LogError("Exception occurred: {0}", e.ToString());
                 return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, e.Message, e.ToString());
             }
-            finally
-            {
-                this.logger.LogTrace("(-)");
-            }
         }
 
         /// <summary>
@@ -268,7 +260,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         public IActionResult RecoverViaExtPubKey([FromBody]WalletExtPubRecoveryRequest request)
         {
             Guard.NotNull(request, nameof(request));
-            this.logger.LogTrace("({0}.{1}:'{2}')", nameof(request), nameof(request.Name), request.Name);
 
             if (!this.ModelState.IsValid)
             {
@@ -286,9 +277,8 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                 this.walletManager.RecoverWallet(request.Name, ExtPubKey.Parse(accountExtPubKey), request.AccountIndex,
                     request.CreationDate);
 
-                this.walletSyncManager.SyncFromDate(request.CreationDate);
-
-                this.logger.LogTrace("(-)");
+                this.SyncFromBestHeightForRecoveredWallets(request.CreationDate);
+                
                 return this.Ok();
             }
             catch (WalletException e)
@@ -307,10 +297,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             {
                 this.logger.LogError("Exception occurred: {0}", e.ToString());
                 return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, e.Message, e.ToString());
-            }
-            finally
-            {
-                this.logger.LogTrace("(-)");
             }
         }
 
@@ -358,10 +344,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             catch (Exception e)
             {
                 this.logger.LogError(e, "Exception occurred: {0}", e.StackTrace);
-                if (e is System.FormatException)
-                    return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, e.Message, e.ToString());
-
-                return ErrorHelpers.BuildErrorResponse(HttpStatusCode.InternalServerError, e.Message, e.ToString());
+                return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, e.Message, e.ToString());
             }
         }
 
@@ -646,6 +629,47 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
+        /// Gets the spendable transactions in an account, taking into account coin maturity and number of confirmations.
+        /// </summary>
+        /// <param name="request">The request parameters.</param>
+        /// <returns></returns>
+        [Route("spendable-transactions")]
+        [HttpGet]
+        public IActionResult GetSpendableTransactions([FromQuery] SpendableTransactionsRequest request)
+        {
+            Guard.NotNull(request, nameof(request));
+
+            // Checks the request is valid.
+            if (!this.ModelState.IsValid)
+            {
+                return ModelStateErrors.BuildErrorResponse(this.ModelState);
+            }
+
+            try
+            {
+                IEnumerable<UnspentOutputReference> spendableTransactions = this.walletManager.GetSpendableTransactionsInAccount(new WalletAccountReference(request.WalletName, request.AccountName), request.MinConfirmations);
+
+                return this.Json(new SpendableTransactionsModel
+                {
+                    SpendableTransactions = spendableTransactions.Select(st => new SpendableTransactionModel
+                    {
+                        Id = st.Transaction.Id,
+                        Amount = st.Transaction.Amount,
+                        Address = st.Address.Address,
+                        IsChange = st.Address.IsChangeAddress(),
+                        CreationTime = st.Transaction.CreationTime,
+                        Confirmations = st.Transaction.BlockHeight == null ? 0 : this.chain.Tip.Height - st.Transaction.BlockHeight.Value
+                    }).ToList()
+                });
+            }
+            catch (Exception e)
+            {
+                this.logger.LogError("Exception occurred: {0}", e.ToString());
+                return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, e.Message, e.ToString());
+            }
+        }
+
+        /// <summary>
         /// Gets a transaction fee estimate.
         /// Fee can be estimated by creating a <see cref="TransactionBuildContext"/> with no password
         /// and then building the transaction and retrieving the fee from the context.
@@ -667,13 +691,12 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             try
             {
                 Script destination = BitcoinAddress.Create(request.DestinationAddress, this.network).ScriptPubKey;
-                var context = new TransactionBuildContext(
-                    this.network,
-                    new WalletAccountReference(request.WalletName, request.AccountName),
-                    new[] { new Recipient { Amount = request.Amount, ScriptPubKey = destination } }.ToList())
+                var context = new TransactionBuildContext(this.network)
                 {
+                    AccountReference = new WalletAccountReference(request.WalletName, request.AccountName),
                     FeeType = FeeParser.Parse(request.FeeType),
                     MinConfirmations = request.AllowUnconfirmed ? 0 : 1,
+                    Recipients = new[] { new Recipient { Amount = request.Amount, ScriptPubKey = destination } }.ToList()
                 };
 
                 return this.Json(this.walletTransactionHandler.EstimateFee(context));
@@ -705,15 +728,15 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             try
             {
                 Script destination = BitcoinAddress.Create(request.DestinationAddress, this.network).ScriptPubKey;
-                var context = new TransactionBuildContext(
-                    this.network,
-                    new WalletAccountReference(request.WalletName, request.AccountName),
-                    new[] { new Recipient { Amount = request.Amount, ScriptPubKey = destination } }.ToList(),
-                    request.Password, request.OpReturnData)
+                var context = new TransactionBuildContext(this.network)
                 {
+                    AccountReference = new WalletAccountReference(request.WalletName, request.AccountName),
                     TransactionFee = string.IsNullOrEmpty(request.FeeAmount) ? null : Money.Parse(request.FeeAmount),
                     MinConfirmations = request.AllowUnconfirmed ? 0 : 1,
-                    Shuffle = request.ShuffleOutputs ?? true // We shuffle transaction outputs by default as it's better for anonymity.
+                    Shuffle = request.ShuffleOutputs ?? true, // We shuffle transaction outputs by default as it's better for anonymity.
+                    OpReturnData = request.OpReturnData,
+                    WalletPassword = request.Password,
+                    Recipients = new[] { new Recipient { Amount = request.Amount, ScriptPubKey = destination } }.ToList()
                 };
 
                 if (!string.IsNullOrEmpty(request.FeeType))
@@ -757,7 +780,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             }
 
             if (!this.connectionManager.ConnectedPeers.Any())
-                throw new WalletException("Can't send transaction: sending transaction requires at least one connection!");
+            {
+                this.logger.LogTrace("(-)[NO_CONNECTED_PEERS]");
+                return ErrorHelpers.BuildErrorResponse(HttpStatusCode.Forbidden, "Can't send transaction: sending transaction requires at least one connection!", string.Empty);
+            }
 
             try
             {
@@ -1008,6 +1034,11 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                 }
                 else
                 {
+                    if (request.TransactionsIds == null || request.TransactionsIds.Any(trx => trx == null))
+                    {
+                        throw new WalletException("Transaction ids need to be specified if the 'all' flag is not set.");
+                    }
+
                     IEnumerable<uint256> ids = request.TransactionsIds.Select(uint256.Parse);
                     result = this.walletManager.RemoveTransactionsByIdsLocked(request.WalletName, ids);
                 }
@@ -1071,7 +1102,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Starts sending block to the wallet for synchronisation.
+        /// Request the node to sync back from a given block hash.
         /// This is for demo and testing use only.
         /// </summary>
         /// <param name="model">The hash of the block from which to start syncing.</param>
@@ -1094,6 +1125,38 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
 
             this.walletSyncManager.SyncFromHeight(block.Height);
             return this.Ok();
+        }
+
+        /// <summary>
+        /// Request the node to sync back from a given date.
+        /// </summary>
+        /// <param name="request">The model containing the date from which to start syncing.</param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("syncfromdate")]
+        public IActionResult SyncFromDate([FromBody] WalletSyncFromDateRequest request)
+        {
+            if (!this.ModelState.IsValid)
+            {
+                return ModelStateErrors.BuildErrorResponse(this.ModelState);
+            }
+
+            this.walletSyncManager.SyncFromDate(request.Date);
+
+            return this.Ok();
+        }
+
+        private void SyncFromBestHeightForRecoveredWallets(DateTime walletCreationDate)
+        {
+            // After recovery the wallet needs to be synced.
+            // We only sync if the syncing process needs to go back.
+            int blockHeightToSyncFrom = this.chain.GetHeightAtTime(walletCreationDate);
+            int currentSyncingHeight = this.walletSyncManager.WalletTip.Height;
+
+            if (blockHeightToSyncFrom < currentSyncingHeight)
+            {
+                this.walletSyncManager.SyncFromHeight(blockHeightToSyncFrom);
+            }
         }
     }
 }

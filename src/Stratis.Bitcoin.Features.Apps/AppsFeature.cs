@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Builder.Feature;
+using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Features.Apps.Interfaces;
 
@@ -16,26 +19,32 @@ namespace Stratis.Bitcoin.Features.Apps
         private readonly ILogger logger;
         private readonly IAppsStore appsStore;
         private readonly IAppsHost appsHost;
+        private readonly DataFolder dataFolder;
 
-        public AppsFeature(ILoggerFactory loggerFactory, IAppsStore appsStore, IAppsHost appsHost)
+        public AppsFeature(ILoggerFactory loggerFactory, IAppsStore appsStore, IAppsHost appsHost, DataFolder dataFolder)
         {
             this.appsStore = appsStore;
             this.appsHost = appsHost;
+            this.dataFolder = dataFolder;
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
         }
 
-        public override void Initialize()
+        public override Task InitializeAsync()
         {
-            this.logger.LogInformation("Initializing {0}", nameof(AppsFeature));
+            this.logger.LogInformation("Initializing {0}.", nameof(AppsFeature));
+
+            Directory.CreateDirectory(this.dataFolder.ApplicationsPath);
 
             this.appsHost.Host(this.appsStore.Applications);
+
+            return Task.CompletedTask;
         }
 
         public override void Dispose()
         {
             if (this.disposed)
                 return;
-            this.logger.LogInformation("Disposing {0}", nameof(AppsFeature));
+            this.logger.LogInformation("Disposing {0}.", nameof(AppsFeature));
 
             this.appsHost.Close();
 
@@ -56,7 +65,7 @@ namespace Stratis.Bitcoin.Features.Apps
                     .AddFeature<AppsFeature>()
                     .FeatureServices(services =>
                     {
-                        services.AddSingleton<IAppsStore, AppsStore>();                        
+                        services.AddSingleton<IAppsStore, AppsStore>();
                         services.AddSingleton<IAppsHost, AppsHost>();
                         services.AddSingleton<AppsController>();
                     });

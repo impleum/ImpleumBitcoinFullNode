@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using NBitcoin;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Builder.Feature;
 using Stratis.Bitcoin.Configuration;
+using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Tests.Common;
 using Stratis.Bitcoin.Utilities;
 using Xunit;
@@ -15,9 +17,10 @@ namespace Stratis.Bitcoin.Tests.Builder
     {
         public class DummyFeature : FullNodeFeature
         {
-            public override void Initialize()
+            public override Task InitializeAsync()
             {
                 // nothing.
+                return Task.CompletedTask;
             }
         }
 
@@ -35,6 +38,8 @@ namespace Stratis.Bitcoin.Tests.Builder
             this.featureCollection = new FeatureCollection();
 
             this.fullNodeBuilder = new FullNodeBuilder(this.serviceCollectionDelegates, this.serviceProviderDelegates, this.featureCollectionDelegates, this.featureCollection);
+
+            this.fullNodeBuilder.Network = KnownNetworks.RegTest;
         }
 
         [Fact]
@@ -53,7 +58,7 @@ namespace Stratis.Bitcoin.Tests.Builder
         [Fact]
         public void ConstructorWithNodeSettingsSetupBaseServices()
         {
-            var settings = new NodeSettings();
+            var settings = new NodeSettings(KnownNetworks.RegTest);
 
             this.fullNodeBuilder = new FullNodeBuilder(settings, this.serviceCollectionDelegates, this.serviceProviderDelegates, this.featureCollectionDelegates, this.featureCollection);
 
@@ -61,7 +66,7 @@ namespace Stratis.Bitcoin.Tests.Builder
             Assert.Single(this.featureCollectionDelegates);
             Assert.Empty(this.serviceProviderDelegates);
             Assert.Single(this.serviceCollectionDelegates);
-            Assert.Equal(KnownNetworks.Main, this.fullNodeBuilder.Network);
+            Assert.Equal(KnownNetworks.RegTest, this.fullNodeBuilder.Network);
             Assert.Equal(settings, this.fullNodeBuilder.NodeSettings);
         }
 
@@ -120,7 +125,7 @@ namespace Stratis.Bitcoin.Tests.Builder
                 e.AddFeature<DummyFeature>();
             });
 
-            IFullNode result = this.fullNodeBuilder.Build();
+            IFullNode result = this.fullNodeBuilder.UsePosConsensus().Build();
 
             Assert.NotNull(result);
         }
@@ -129,7 +134,7 @@ namespace Stratis.Bitcoin.Tests.Builder
         public void BuildConfiguresFullNodeUsingConfiguration()
         {
             string dataDir = "TestData/FullNodeBuilder/BuildConfiguresFullNodeUsingConfiguration";
-            var nodeSettings = new NodeSettings(args: new string[] { $"-datadir={dataDir}" });
+            var nodeSettings = new NodeSettings(KnownNetworks.StratisRegTest, args: new string[] { $"-datadir={dataDir}" });
 
             this.fullNodeBuilder.ConfigureServices(e =>
             {
@@ -158,7 +163,7 @@ namespace Stratis.Bitcoin.Tests.Builder
                 this.fullNodeBuilder.ConfigureServices(e =>
                 {
                     e.AddSingleton<NodeSettings>();
-                    e.AddSingleton<Network>(NodeSettings.Default().Network);
+                    e.AddSingleton<Network>(NodeSettings.Default(this.fullNodeBuilder.Network).Network);
                 });
 
                 this.fullNodeBuilder.Build();
@@ -170,7 +175,7 @@ namespace Stratis.Bitcoin.Tests.Builder
         public void BuildTwiceThrowsException()
         {
             string dataDir = "TestData/FullNodeBuilder/BuildConfiguresFullNodeUsingConfiguration";
-            var nodeSettings = new NodeSettings(args: new string[] { $"-datadir={dataDir}" });
+            var nodeSettings = new NodeSettings(KnownNetworks.StratisRegTest, args: new string[] { $"-datadir={dataDir}" });
 
             Assert.Throws<InvalidOperationException>(() =>
             {
@@ -195,13 +200,6 @@ namespace Stratis.Bitcoin.Tests.Builder
             {
                 this.fullNodeBuilder.Build();
             });
-        }
-
-        [Fact]
-        public void WhenNodeSettingsIsNullUseDefault()
-        {
-            var builder = new FullNodeBuilder(null);
-            Assert.Equal(KnownNetworks.Main, builder.Network);
         }
     }
 }

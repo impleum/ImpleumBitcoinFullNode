@@ -194,8 +194,8 @@ namespace Stratis.Bitcoin.Features.Wallet
         /// According to BIP44, an account at index (i) can only be created when the account at index (i - 1) contains at least one transaction.
         /// </remarks>
         /// <seealso cref="https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki"/>
-        /// <param name="extPubKey">The extended public key for the wallet<see cref="EncryptedSeed"/>.</param>
         /// <param name="coinType">The type of coin this account is for.</param>
+        /// <param name="extPubKey">The extended public key for the wallet<see cref="EncryptedSeed"/>.</param>
         /// <param name="accountIndex">Zero-based index of the account to add.</param>
         /// <param name="accountCreationTime">Creation time of the account to be created.</param>
         /// <returns>A new HD account.</returns>
@@ -277,8 +277,7 @@ namespace Stratis.Bitcoin.Features.Wallet
         {
             IEnumerable<HdAccount> accounts = this.GetAccountsByCoinType(coinType);
 
-            return accounts
-                .SelectMany(x => x.GetSpendableTransactions(currentChainHeight, confirmations));
+            return accounts.SelectMany(x => x.GetSpendableTransactions(currentChainHeight, this.Network, confirmations));
         }
     }
 
@@ -329,7 +328,7 @@ namespace Stratis.Bitcoin.Features.Wallet
             if (this.Accounts == null)
                 return null;
 
-            List<HdAccount> unusedAccounts = this.Accounts.Where(acc => !acc.ExternalAddresses.Any() && !acc.InternalAddresses.Any()).ToList();
+            List<HdAccount> unusedAccounts = this.Accounts.Where(acc => !acc.ExternalAddresses.SelectMany(add => add.Transactions).Any() && !acc.InternalAddresses.SelectMany(add => add.Transactions).Any()).ToList();
             if (!unusedAccounts.Any())
                 return null;
 
@@ -342,17 +341,17 @@ namespace Stratis.Bitcoin.Features.Wallet
         /// Gets the account matching the name passed as a parameter.
         /// </summary>
         /// <param name="accountName">The name of the account to get.</param>
-        /// <returns></returns>
-        /// <exception cref="System.Exception"></exception>
+        /// <returns>The HD account specified by the parameter.</returns>
+        /// <exception cref="WalletException">An exception thrown if no account could be found.</exception>
         public HdAccount GetAccountByName(string accountName)
         {
             if (this.Accounts == null)
-                throw new WalletException($"No account with the name {accountName} could be found.");
+                throw new WalletException($"No account with the name '{accountName}' could be found.");
 
-            // get the account
+            // Get the requested account.
             HdAccount account = this.Accounts.SingleOrDefault(a => a.Name == accountName);
             if (account == null)
-                throw new WalletException($"No account with the name {accountName} could be found.");
+                throw new WalletException($"No account with the name '{accountName}' could be found.");
 
             return account;
         }
@@ -708,11 +707,14 @@ namespace Stratis.Bitcoin.Features.Wallet
         /// Lists all spendable transactions in the current account.
         /// </summary>
         /// <param name="currentChainHeight">The current height of the chain. Used for calculating the number of confirmations a transaction has.</param>
+        /// <param name="network">The network this account holds transactions for.</param>
         /// <param name="confirmations">The minimum number of confirmations required for transactions to be considered.</param>
         /// <returns>A collection of spendable outputs that belong to the given account.</returns>
-        public IEnumerable<UnspentOutputReference> GetSpendableTransactions(int currentChainHeight, int confirmations = 0)
+        /// <remarks>Note that coinbase and coinstake transaction outputs also have to mature with a sufficient number of confirmations before
+        /// they are considered spendable. This is independent of the confirmations parameter.</remarks>
+        public IEnumerable<UnspentOutputReference> GetSpendableTransactions(int currentChainHeight, Network network, int confirmations = 0)
         {
-            // This will take all the spendable coins that belong to the account and keep the reference to the HDAddress and HDAccount.
+            // This will take all the spendable coins that belong to the account and keep the reference to the HdAddress and HdAccount.
             // This is useful so later the private key can be calculated just from a given UTXO.
             foreach (HdAddress address in this.GetCombinedAddresses())
             {
@@ -726,7 +728,15 @@ namespace Stratis.Bitcoin.Features.Wallet
                     if (transactionData.BlockHeight != null)
                         confirmationCount = countFrom >= transactionData.BlockHeight ? countFrom - transactionData.BlockHeight : 0;
 
-                    if (confirmationCount >= confirmations)
+                    if (confirmationCount < confirmations)
+                        continue;
+
+                    bool isCoinBase = transactionData.IsCoinBase ?? false;
+                    bool isCoinStake = transactionData.IsCoinStake ?? false;
+
+                    // This output can unconditionally be included in the results.
+                    // Or this output is a CoinBase or CoinStake and has reached maturity.
+                    if ((!isCoinBase && !isCoinStake) || (confirmationCount > network.Consensus.CoinbaseMaturity))
                     {
                         yield return new UnspentOutputReference
                         {
@@ -847,7 +857,13 @@ namespace Stratis.Bitcoin.Features.Wallet
         public Money Amount { get; set; }
 
         /// <summary>
-        /// A value indicating whether this is a coin stake transaction or not.
+        /// A value indicating whether this is a coinbase transaction or not.
+        /// </summary>
+        [JsonProperty(PropertyName = "isCoinBase", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? IsCoinBase { get; set; }
+
+        /// <summary>
+        /// A value indicating whether this is a coinstake transaction or not.
         /// </summary>
         [JsonProperty(PropertyName = "isCoinStake", NullValueHandling = NullValueHandling.Ignore)]
         public bool? IsCoinStake { get; set; }

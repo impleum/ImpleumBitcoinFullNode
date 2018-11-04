@@ -1,61 +1,69 @@
-﻿using System;
-using System.Collections.Generic;
-using NBitcoin;
-using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
+﻿using Stratis.SmartContracts.Core;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
+    public enum VmExecutionErrorKind
+    {
+        OutOfGas,
+        OutOfResources,
+        ValidationFailed,
+        LoadFailed,
+        InvocationFailed
+    }
+    
     public class VmExecutionResult
     {
-        public uint160 NewContractAddress { get; }
+        public VmExecutionError Error { get; }
 
-        public List<TransferInfo> InternalTransfers { get; }
+        public VmExecutionSuccess Success { get; }
 
-        public Gas GasConsumed { get; }
+        public bool IsSuccess { get; }
+
+        private VmExecutionResult(VmExecutionError error)
+        {
+            this.IsSuccess = false;
+            this.Error = error;
+        }
+
+        private VmExecutionResult(VmExecutionSuccess success)
+        {
+            this.IsSuccess = true;
+            this.Success = success;
+        }
+
+        public static VmExecutionResult Ok(object result, string type)
+        {
+            return new VmExecutionResult(new VmExecutionSuccess(result, type));
+        }
+
+        public static VmExecutionResult Fail(VmExecutionErrorKind errorKind, string error)
+        {
+            return new VmExecutionResult(new VmExecutionError(errorKind, new ContractErrorMessage(error)));
+        }
+    }
+
+    public class VmExecutionSuccess
+    {
+        public VmExecutionSuccess(object result, string type)
+        {
+            this.Result = result;
+            this.Type = type;
+        }
 
         public object Result { get; }
 
-        public Exception ExecutionException { get; }
+        public string Type { get; }
+    }
 
-        private VmExecutionResult(
-            List<TransferInfo> internalTransfers, 
-            Gas gasConsumed, 
-            object result,
-            Exception e = null)
+    public class VmExecutionError
+    {
+        public VmExecutionError(VmExecutionErrorKind errorKind, ContractErrorMessage errorMessage)
         {
-            this.InternalTransfers = internalTransfers ?? new List<TransferInfo>();
-            this.GasConsumed = gasConsumed;
-            this.Result = result;
-            this.ExecutionException = e;
+            this.ErrorKind = errorKind;
+            this.Message = errorMessage;
         }
 
-        private VmExecutionResult(
-            uint160 newContractAddress,
-            List<TransferInfo> internalTransfers,
-            Gas gasConsumed,
-            object result,
-            Exception e = null)
-        {
-            this.NewContractAddress = newContractAddress;
-            this.InternalTransfers = internalTransfers ?? new List<TransferInfo>();
-            this.GasConsumed = gasConsumed;
-            this.Result = result;
-            this.ExecutionException = e;
-        }
-
-        public static VmExecutionResult Success(List<TransferInfo> internalTransfers, Gas gasConsumed, object result)
-        {
-            return new VmExecutionResult(internalTransfers, gasConsumed, result);
-        }
-
-        public static VmExecutionResult CreationSuccess(uint160 newContractAddress, List<TransferInfo> internalTransfers, Gas gasConsumed, object result)
-        {
-            return new VmExecutionResult(newContractAddress, internalTransfers, gasConsumed, result);
-        }
-
-        public static VmExecutionResult Error(Gas gasConsumed, Exception e)
-        {
-            return new VmExecutionResult(null, gasConsumed, null, e);
-        }
+        public VmExecutionErrorKind ErrorKind { get; }
+        public ContractErrorMessage Message { get; }
     }
 }

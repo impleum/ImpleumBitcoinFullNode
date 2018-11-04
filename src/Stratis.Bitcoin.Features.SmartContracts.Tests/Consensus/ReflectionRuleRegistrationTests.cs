@@ -1,16 +1,21 @@
 ﻿using System.Linq;
 using Moq;
 using NBitcoin;
-using Stratis.Bitcoin.BlockPulling;
+using Stratis.Bitcoin.Base;
+using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
+using Stratis.Bitcoin.Features.SmartContracts.PoW;
+using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor;
 using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Consensus.Rules;
 using Stratis.Bitcoin.Tests.Common;
 using Stratis.Bitcoin.Utilities;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Receipts;
 using Stratis.SmartContracts.Core.State;
+using Stratis.SmartContracts.Core.Util;
+using Stratis.SmartContracts.Executor.Reflection;
 using Xunit;
 
 namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Consensus
@@ -23,22 +28,28 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Consensus
             Network network = KnownNetworks.StratisRegTest;
 
             var chain = new ConcurrentChain(network);
-            var contractState = new ContractStateRepositoryRoot();
-            var executorFactory = new Mock<ISmartContractExecutorFactory>();
+            var contractState = new StateRepositoryRoot();
+            var executorFactory = new Mock<IContractExecutorFactory>();
             var loggerFactory = new ExtendedLoggerFactory();
-            var receiptStorage = new Mock<ISmartContractReceiptStorage>();
 
-            var consensusRules = new SmartContractConsensusRules(
-                chain, new Mock<ICheckpoints>().Object, new Configuration.Settings.ConsensusSettings(),
+            var dateTimeProvider = new DateTimeProvider();
+            var callDataSerializer = Mock.Of<ICallDataSerializer>();
+
+            var consensusRules = new SmartContractPowConsensusRuleEngine(
+                chain, new Mock<ICheckpoints>().Object, new Configuration.Settings.ConsensusSettings(NodeSettings.Default(network)),
                 DateTimeProvider.Default, executorFactory.Object, loggerFactory, network,
                 new Base.Deployments.NodeDeployments(network, chain), contractState,
-                new Mock<ILookaheadBlockPuller>().Object,
-                new Mock<ICoinView>().Object, receiptStorage.Object);
+                new Mock<IReceiptRepository>().Object,
+                new Mock<ISenderRetriever>().Object,
+                new Mock<ICoinView>().Object,
+                new Mock<IChainState>().Object,
+                new InvalidBlockHashStore(dateTimeProvider),
+                new NodeStats(dateTimeProvider));
 
-            var feature = new ReflectionVirtualMachineFeature(consensusRules, loggerFactory);
-            feature.Initialize();
+            var feature = new ReflectionVirtualMachineFeature(loggerFactory, network, callDataSerializer);
+            feature.InitializeAsync().GetAwaiter().GetResult();
 
-            Assert.Single(consensusRules.Rules.Where(r => r.GetType() == typeof(SmartContractFormatRule)));
+            Assert.Single(network.Consensus.FullValidationRules.Where(r => r.GetType() == typeof(SmartContractFormatRule)));
         }
     }
 }
