@@ -12,6 +12,7 @@ using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Miner;
 using Stratis.Bitcoin.Features.RPC;
 using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Networks;
 using Stratis.Bitcoin.Utilities;
 
 namespace Impleum.ImpleumD
@@ -27,7 +28,7 @@ namespace Impleum.ImpleumD
         {
             try
             {
-                NodeSettings nodeSettings = new NodeSettings(protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args);
+                var nodeSettings = new NodeSettings(networksSelector: Networks.Impleum, protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args);
 
                 IFullNode node = new FullNodeBuilder()
                     .UseNodeSettings(nodeSettings)
@@ -42,7 +43,9 @@ namespace Impleum.ImpleumD
                     .Build();
 
                 if (node != null)
+                {
                     await node.RunAsync();
+                }
             }
             catch (Exception ex)
             {

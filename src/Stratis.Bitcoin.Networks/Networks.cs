@@ -22,5 +22,14 @@ namespace Stratis.Bitcoin.Networks
                 return new NetworksSelector(() => new StratisMain(), () => new StratisTest(), () => new StratisRegTest());
             }
         }
+
+
+        public static NetworksSelector Impleum
+        {
+            get
+            {
+                return new NetworksSelector(() => new ImpleumMain(), () => new ImpleumTest(), () => new ImpleumRegTest());
+            }
+        }
     }
 }
