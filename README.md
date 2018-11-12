@@ -68,13 +68,13 @@ dotnet build
 
 To run on the Bitcoin network:
 ```
-cd Stratis.BitcoinD
+cd Impleum.BitcoinD
 dotnet run
 ```  
 
 To run on the Stratis network:
 ```
-cd Stratis.StratisD
+cd Impleum.ImpleumD
 dotnet run
 ```  
 
