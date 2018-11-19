@@ -439,7 +439,7 @@ namespace Stratis.Bitcoin.IntegrationTests.API
             commands.Should().Contain(x => x.Command == "startstaking <walletname> <walletpassword>");
             commands.Should().Contain(x => x.Command == "getstakinginfo [<isjsonformat>]");
             commands.Should().Contain(x => x.Command == "sendtoaddress <address> <amount> <commenttx> <commentdest>");
-            commands.Should().Contain(x => x.Command == "getnewaddress");
+            commands.Should().Contain(x => x.Command == "getnewaddress <account> <addresstype>");
             commands.Should().Contain(x => x.Command == "sendrawtransaction <hex>");
             commands.Should().Contain(x => x.Command == "decoderawtransaction <hex>");
             commands.Should().Contain(x => x.Command == "getblock <blockhash> [<isjsonformat>]");
@@ -564,8 +564,7 @@ namespace Stratis.Bitcoin.IntegrationTests.API
                     AccountName = WalletAccountName,
                     AllowUnconfirmed = true,
                     ShuffleOutputs = false,
-                    Amount = this.transferAmount.ToString(),
-                    DestinationAddress = this.receiverAddress.Address,
+                    Recipients = new List<RecipientModel> { new RecipientModel { DestinationAddress = this.receiverAddress.Address, Amount = this.transferAmount.ToString() } },
                     FeeType = FeeType.Medium.ToString("D"),
                     Password = WalletPassword,
                     WalletName = WalletName,
