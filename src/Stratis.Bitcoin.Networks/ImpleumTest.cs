@@ -115,7 +115,7 @@ namespace Stratis.Bitcoin.Networks
 
             this.SeedNodes = new List<NetworkAddress>
             {
-                new NetworkAddress(IPAddress.Parse("109.108.77.134"), this.DefaultPort),
+                new NetworkAddress(IPAddress.Parse("94.131.240.45"), this.DefaultPort),
                 new NetworkAddress(IPAddress.Parse("62.80.181.141"), this.DefaultPort)
             };
             

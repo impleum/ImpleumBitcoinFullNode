@@ -54,10 +54,10 @@ namespace Stratis.Bitcoin.Features.Api
         /// Please refer to .Net Core documentation for usage: <seealso cref="https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.x509certificates.x509certificate2.-ctor?view=netcore-2.1#System_Security_Cryptography_X509Certificates_X509Certificate2__ctor_System_Byte___" />.
         /// </remarks>
         public string HttpsCertificateFilePath { get; set; }
-        
+
         /// <summary>Use HTTPS or not.</summary>
         public bool UseHttps { get; set; }
-    
+
         /// <summary>
         /// Initializes an instance of the object from the node configuration.
         /// </summary>
@@ -66,7 +66,7 @@ namespace Stratis.Bitcoin.Features.Api
         {
             Guard.NotNull(nodeSettings, nameof(nodeSettings));
 
-            this.logger = nodeSettings.LoggerFactory.CreateLogger(typeof(ApiSettings).FullName);    
+            this.logger = nodeSettings.LoggerFactory.CreateLogger(typeof(ApiSettings).FullName);
 
             TextFileConfiguration config = nodeSettings.ConfigReader;
 
@@ -76,8 +76,8 @@ namespace Stratis.Bitcoin.Features.Api
             if (this.UseHttps && string.IsNullOrWhiteSpace(this.HttpsCertificateFilePath))
                 throw new ConfigurationException("The path to a certificate needs to be provided when using https. Please use the argument 'certificatefilepath' to provide it.");
 
-            var defaultApiHost = this.UseHttps 
-                ? DefaultApiHost.Replace(@"http://", @"https://") 
+            var defaultApiHost = this.UseHttps
+                ? DefaultApiHost.Replace(@"http://", @"https://")
                 : DefaultApiHost;
 
             string apiHost = config.GetOrDefault("apiuri", defaultApiHost, this.logger);
@@ -120,8 +120,10 @@ namespace Stratis.Bitcoin.Features.Api
         {
             if (network.IsBitcoin())
                 return network.IsTest() ? TestBitcoinApiPort : DefaultBitcoinApiPort;
-            
-            return network.IsTest() ? TestImpleumApiPort : DefaultImpleumApiPort;
+            if (network.IsImpleum())
+                return network.IsTest() ? TestImpleumApiPort : DefaultImpleumApiPort;
+
+            return network.IsTest() ? TestStratisApiPort : DefaultStratisApiPort;
         }
 
         /// <summary>Prints the help information on how to configure the API settings to the logger.</summary>

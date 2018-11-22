@@ -58,6 +58,28 @@ namespace Stratis.Bitcoin.Api.Tests
             settings.UseHttps.Should().BeFalse();
         }
 
+
+        /// <summary>
+        /// Tests that if no API settings are passed and we're on the Impleum network, the defaults settings are used.
+        /// </summary>
+        [Fact]
+        public void GivenNoApiSettingsAreProvided_AndOnImpleumNetwork_ThenDefaultSettingAreUsed()
+        {
+            // Arrange.
+            Network network = KnownNetworks.ImpleumMain;
+            var nodeSettings = new NodeSettings(network);
+
+            // Act.
+            ApiSettings settings = FullNodeSetup(nodeSettings);
+
+            // Assert.
+            Assert.Equal(ApiSettings.DefaultImpleumApiPort, settings.ApiPort);
+            Assert.Equal(new Uri($"{ApiSettings.DefaultApiHost}:{ApiSettings.DefaultImpleumApiPort}"), settings.ApiUri);
+
+            settings.HttpsCertificateFilePath.Should().BeNull();
+            settings.UseHttps.Should().BeFalse();
+        }
+
         /// <summary>
         /// Tests that if a custom API port is passed, the port is used in conjunction with the default API URI.
         /// </summary>
@@ -66,7 +88,7 @@ namespace Stratis.Bitcoin.Api.Tests
         {
             // Arrange.
             int customPort = 55555;
-            var nodeSettings = new NodeSettings(this.Network, args:new[] { $"-apiport={customPort}" });
+            var nodeSettings = new NodeSettings(this.Network, args: new[] { $"-apiport={customPort}" });
 
             // Act.
             ApiSettings settings = FullNodeSetup(nodeSettings);
@@ -85,7 +107,7 @@ namespace Stratis.Bitcoin.Api.Tests
             // Arrange.
             string customApiUri = "http://0.0.0.0";
             Network network = KnownNetworks.Main;
-            var nodeSettings = new NodeSettings(network, args:new[] { $"-apiuri={customApiUri}" });
+            var nodeSettings = new NodeSettings(network, args: new[] { $"-apiuri={customApiUri}" });
 
             // Act.
             ApiSettings settings = FullNodeSetup(nodeSettings);
@@ -105,7 +127,7 @@ namespace Stratis.Bitcoin.Api.Tests
             // Arrange.
             string customApiUri = "http://0.0.0.0";
             Network network = KnownNetworks.StratisMain;
-            var nodeSettings = new NodeSettings(network, args:new[] { $"-apiuri={customApiUri}" });
+            var nodeSettings = new NodeSettings(network, args: new[] { $"-apiuri={customApiUri}" });
 
             // Act.
             ApiSettings settings = FullNodeSetup(nodeSettings);
@@ -113,6 +135,25 @@ namespace Stratis.Bitcoin.Api.Tests
             // Assert.
             Assert.Equal(ApiSettings.DefaultStratisApiPort, settings.ApiPort);
             Assert.Equal(new Uri($"{customApiUri}:{ApiSettings.DefaultStratisApiPort}"), settings.ApiUri);
+        }
+
+        /// <summary>
+        /// Tests that if a custom API URI is passed and we're on the Stratis network, the bitcoin port is used in conjunction with the passed API URI.
+        /// </summary>
+        [Fact]
+        public void GivenApiUriIsProvided_AndGivenImpleumNetwork_ThenApiUriIsUsedWithDefaultImpleumApiPort()
+        {
+            // Arrange.
+            string customApiUri = "http://0.0.0.0";
+            Network network = KnownNetworks.ImpleumMain;
+            var nodeSettings = new NodeSettings(network, args: new[] { $"-apiuri={customApiUri}" });
+
+            // Act.
+            ApiSettings settings = FullNodeSetup(nodeSettings);
+
+            // Assert.
+            Assert.Equal(ApiSettings.DefaultImpleumApiPort, settings.ApiPort);
+            Assert.Equal(new Uri($"{customApiUri}:{ApiSettings.DefaultImpleumApiPort}"), settings.ApiUri);
         }
 
         /// <summary>
@@ -125,7 +166,7 @@ namespace Stratis.Bitcoin.Api.Tests
             string customApiUri = "http://0.0.0.0";
             int customPort = 55555;
             Network network = KnownNetworks.Main;
-            var nodeSettings = new NodeSettings(network, args:new[] { $"-apiuri={customApiUri}", $"-apiport={customPort}" });
+            var nodeSettings = new NodeSettings(network, args: new[] { $"-apiuri={customApiUri}", $"-apiport={customPort}" });
 
             // Act.
             ApiSettings settings = FullNodeSetup(nodeSettings);
@@ -145,7 +186,7 @@ namespace Stratis.Bitcoin.Api.Tests
             int customPort = 5522;
             string customApiUri = $"http://0.0.0.0:{customPort}";
             Network network = KnownNetworks.Main;
-            var nodeSettings = new NodeSettings(network, args:new[] { $"-apiuri={customApiUri}" });
+            var nodeSettings = new NodeSettings(network, args: new[] { $"-apiuri={customApiUri}" });
 
             // Act.
             ApiSettings settings = FullNodeSetup(nodeSettings);
@@ -217,6 +258,39 @@ namespace Stratis.Bitcoin.Api.Tests
 
             // Assert.
             Assert.Equal(ApiSettings.TestStratisApiPort, settings.ApiPort);
+        }
+
+
+        /// <summary>
+        /// Tests that if we're on the Stratis main network, the port used in the API is the right one.
+        /// </summary>
+        [Fact]
+        public void GivenImpleumMainnet_ThenUseTheCorrectPort()
+        {
+            // Arrange.
+            NodeSettings nodeSettings = NodeSettings.Default(KnownNetworks.ImpleumMain);
+
+            // Act.
+            ApiSettings settings = FullNodeSetup(nodeSettings);
+
+            // Assert.
+            Assert.Equal(ApiSettings.DefaultImpleumApiPort, settings.ApiPort);
+        }
+
+        /// <summary>
+        /// Tests that if we're on the Impleum test network, the port used in the API is the right one.
+        /// </summary>
+        [Fact]
+        public void GivenImpleumTestnet_ThenUseTheCorrectPort()
+        {
+            // Arrange.
+            NodeSettings nodeSettings = NodeSettings.Default(KnownNetworks.ImpleumTest);
+
+            // Act.
+            ApiSettings settings = FullNodeSetup(nodeSettings);
+
+            // Assert.
+            Assert.Equal(ApiSettings.TestImpleumApiPort, settings.ApiPort);
         }
 
         [Theory]
