@@ -84,7 +84,7 @@ namespace Stratis.Bitcoin.Networks
                 maxReorgLength: 500,
                 defaultAssumeValid: null, // 23000
                 maxMoney: 100000000 * Money.COIN,
-                coinbaseMaturity: 50,
+                coinbaseMaturity: 10,
                 premineHeight: 2,
                 premineReward: Money.Coins(1000000),
                 proofOfWorkReward: Money.Coins(48),
@@ -118,7 +118,7 @@ namespace Stratis.Bitcoin.Networks
                 new NetworkAddress(IPAddress.Parse("94.131.240.45"), this.DefaultPort),
                 new NetworkAddress(IPAddress.Parse("62.80.181.141"), this.DefaultPort)
             };
-            
+
             Assert(this.Consensus.HashGenesisBlock == uint256.Parse("dab06c78af72a1fb8a17581c631ec2d3df60a8029142962de5448b992b47467e"));
         }
     }
