@@ -1,8 +1,8 @@
-Contributing to Stratis FullNode
+Contributing to Impleum FullNode
 ================================
 
-The Stratis team maintains a few guidelines, which are provided below. Many of these are straightforward.  
-For any questions a Stratis team member will be happy to explain more.
+The Impleum team maintains a few guidelines, which are provided below. Many of these are straightforward.  
+For any questions a Impleum team member will be happy to explain more.
 
 We try to follow the [.Net core](https://github.com/dotnet/coreclr/blob/master/Documentation/project-docs/contributing.md) guidlines.
 
@@ -28,7 +28,7 @@ Adding Unit Tests
 -----------------
 Test contributions are more than welcome!
 Pick a class that does not have any tests and start testing it.
-Have a look at our [testing guidelines](https://github.com/stratisproject/StratisBitcoinFullNode/blob/master/Documentation/testing-guidelines.md)
+Have a look at our [testing guidelines](https://github.com/impleum/ImpleumBitcoinFullNode/blob/master/Documentation/testing-guidelines.md)
 Use other tests for reference.
 
 Typos and small changes
