@@ -72,7 +72,7 @@ cd Impleum.BitcoinD
 dotnet run
 ```  
 
-To run on the Stratis network:
+To run on the Impleum network:
 ```
 cd Impleum.ImpleumD
 dotnet run
