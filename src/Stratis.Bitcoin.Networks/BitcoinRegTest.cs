@@ -4,6 +4,7 @@ using NBitcoin;
 using NBitcoin.DataEncoders;
 using NBitcoin.Protocol;
 using Stratis.Bitcoin.Networks.Deployments;
+using Stratis.Bitcoin.Networks.Policies;
 
 namespace Stratis.Bitcoin.Networks
 {
@@ -15,6 +16,8 @@ namespace Stratis.Bitcoin.Networks
             this.AdditionalNames = new List<string> {"reg"};
             this.Magic = 0xDAB5BFFA;
             this.DefaultPort = 18444;
+            this.DefaultMaxOutboundConnections = 8;
+            this.DefaultMaxInboundConnections = 117;
             this.RPCPort = 18332;
             this.CoinTicker = "TBTC";
 
@@ -94,6 +97,8 @@ namespace Stratis.Bitcoin.Networks
             this.Checkpoints = new Dictionary<int, CheckpointInfo>();
             this.DNSSeeds = new List<DNSSeedData>();
             this.SeedNodes = new List<NetworkAddress>();
+
+            this.StandardScriptsRegistry = new BitcoinStandardScriptsRegistry();
 
             Assert(this.Consensus.HashGenesisBlock == uint256.Parse("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
         }

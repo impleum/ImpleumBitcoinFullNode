@@ -14,11 +14,9 @@ using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.Features.BlockStore
 {
-    public class BlockStoreSignaled : SignalObserver<ChainedHeaderBlock>
+    public class BlockStoreSignaled : IDisposable
     {
         private readonly IBlockStoreQueue blockStoreQueue;
-
-        private readonly ConcurrentChain chain;
 
         private readonly IChainState chainState;
 
@@ -44,37 +42,38 @@ namespace Stratis.Bitcoin.Features.BlockStore
         /// <summary>Task that runs <see cref="DequeueContinuouslyAsync"/>.</summary>
         private readonly Task dequeueLoopTask;
 
+        private readonly ISignals signals;
+
         public BlockStoreSignaled(
             IBlockStoreQueue blockStoreQueue,
-            ConcurrentChain chain,
             StoreSettings storeSettings,
             IChainState chainState,
             IConnectionManager connection,
             INodeLifetime nodeLifetime,
             ILoggerFactory loggerFactory,
-            IInitialBlockDownloadState initialBlockDownloadState)
+            IInitialBlockDownloadState initialBlockDownloadState,
+            ISignals signals)
         {
             this.blockStoreQueue = blockStoreQueue;
-            this.chain = chain;
             this.chainState = chainState;
             this.connection = connection;
             this.nodeLifetime = nodeLifetime;
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.storeSettings = storeSettings;
             this.initialBlockDownloadState = initialBlockDownloadState;
+            this.signals = signals;
 
             this.blocksToAnnounce = new AsyncQueue<ChainedHeader>();
             this.dequeueLoopTask = this.DequeueContinuouslyAsync();
         }
 
-        protected override void OnNextCore(ChainedHeaderBlock blockPair)
+        public void Initialize()
         {
-            if (this.storeSettings.Prune)
-            {
-                this.logger.LogTrace("(-)[PRUNE]");
-                return;
-            }
+            this.signals.OnBlockConnected.Attach(this.OnBlockConnected);
+        }
 
+        private void OnBlockConnected(ChainedHeaderBlock blockPair)
+        {
             ChainedHeader chainedHeader = blockPair.ChainedHeader;
             if (chainedHeader == null)
             {
@@ -92,6 +91,12 @@ namespace Stratis.Bitcoin.Features.BlockStore
             if (isIBD)
             {
                 this.logger.LogTrace("(-)[IBD]");
+                return;
+            }
+
+            if (this.storeSettings.PruningEnabled)
+            {
+                this.logger.LogTrace("(-)[PRUNE]");
                 return;
             }
 
@@ -140,7 +145,9 @@ namespace Stratis.Bitcoin.Features.BlockStore
                         // Set the dequeue task to null so it can be assigned on the next iteration.
                         dequeueTask = null;
                         batch.Add(item);
-                        sendBatch = item == this.chain.Tip;
+
+                        if (this.chainState.IsAtBestChainTip)
+                            sendBatch = true;
                     }
                     else sendBatch = true;
 
@@ -186,7 +193,6 @@ namespace Stratis.Bitcoin.Features.BlockStore
         /// Before relaying, verify the block is still in the best chain else discard it.
         /// </para>
         /// <para>
-        /// TODO: consider moving the relay logic to the <see cref="LoopSteps.ProcessPendingStorageStep"/>.
         /// </para>
         /// </remarks>
         private async Task SendBatchAsync(List<ChainedHeader> batch)
@@ -234,13 +240,13 @@ namespace Stratis.Bitcoin.Features.BlockStore
         }
 
         /// <inheritdoc />
-        protected override void Dispose(bool disposing)
+        public void Dispose()
         {
             // Let current batch sending task finish.
             this.blocksToAnnounce.Dispose();
             this.dequeueLoopTask.GetAwaiter().GetResult();
 
-            base.Dispose(disposing);
+            this.signals.OnBlockConnected.Detach(this.OnBlockConnected);
         }
     }
 }

@@ -9,6 +9,7 @@ using Stratis.Bitcoin.P2P.Peer;
 using Stratis.Bitcoin.P2P.Protocol.Payloads;
 using Stratis.Bitcoin.Utilities;
 using Stratis.Bitcoin.Utilities.Extensions;
+using TracerAttributes;
 
 namespace Stratis.Bitcoin.P2P
 {
@@ -37,11 +38,6 @@ namespace Stratis.Bitcoin.P2P
         /// <inheritdoc/>
         public override void OnInitialize()
         {
-            // For the -addnode connector, effectively disable burst mode by preventing high frequency connection attempts.
-            // The initial -addnode list will all have their connection attempts made in parallel regardless, so this
-            // does not slow down the startup.
-            this.burstConnectionInterval = TimeSpans.Second;
-
             this.MaxOutboundConnections = this.ConnectionSettings.AddNode.Count;
 
             // Add the endpoints from the -addnode arg to the address manager.
@@ -61,6 +57,13 @@ namespace Stratis.Bitcoin.P2P
         public override void OnStartConnect()
         {
             this.CurrentParameters.PeerAddressManagerBehaviour().Mode = PeerAddressManagerBehaviourMode.AdvertiseDiscover;
+        }
+
+        /// <inheritdoc/>
+        [NoTrace]
+        public override TimeSpan CalculateConnectionInterval()
+        {
+            return TimeSpans.Second;
         }
 
         /// <summary>

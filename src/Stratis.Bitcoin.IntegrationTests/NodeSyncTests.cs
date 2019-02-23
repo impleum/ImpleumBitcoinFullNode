@@ -151,7 +151,7 @@ namespace Stratis.Bitcoin.IntegrationTests
             }
         }
 
-        [Retry]
+        [Fact]
         [Trait("Unstable", "True")]
         public void Pos_Given_NodesAreSynced_When_ABigReorgHappens_Then_TheReorgIsIgnored()
         {
@@ -175,7 +175,7 @@ namespace Stratis.Bitcoin.IntegrationTests
                 TestHelper.MineBlocks(stratisMiner, 11);
                 TestHelper.MineBlocks(stratisReorg, 12);
 
-                // make sure the nodes are actually on different chains.
+                // Make sure the nodes are actually on different chains.
                 Assert.NotEqual(stratisMiner.FullNode.Chain.GetBlock(2).HashBlock, stratisReorg.FullNode.Chain.GetBlock(2).HashBlock);
 
                 TestHelper.ConnectAndSync(stratisSyncer, stratisMiner);
@@ -201,58 +201,6 @@ namespace Stratis.Bitcoin.IntegrationTests
 
                 // Check that a reorg did not happen.
                 Assert.Equal(hashBeforeReorg, stratisSyncer.FullNode.Chain.Tip.HashBlock);
-            }
-        }
-
-        /// <summary>
-        /// This tests simulates scenario 2 from issue 636.
-        /// <para>
-        /// The test mines a block and roughly at the same time, but just after that, a new block at the same height
-        /// arrives from the puller. Then another block comes from the puller extending the chain without the block we mined.
-        /// </para>
-        /// </summary>
-        /// <seealso cref="https://github.com/stratisproject/StratisBitcoinFullNode/issues/636"/>
-        [Fact]
-        public void Pos_PullerVsMinerRaceCondition()
-        {
-            using (NodeBuilder builder = NodeBuilder.Create(this))
-            {
-                var stratisRegTest = new StratisRegTest();
-
-                // This represents local node.
-                CoreNode stratisMinerLocal = builder.CreateStratisPosNode(stratisRegTest).OverrideDateTimeProvider().WithDummyWallet().Start();
-
-                // This represents remote, which blocks are received by local node using its puller.
-                CoreNode stratisMinerRemote = builder.CreateStratisPosNode(stratisRegTest).OverrideDateTimeProvider().WithDummyWallet().Start();
-
-                // Let's mine block Ap and Bp.
-                TestHelper.MineBlocks(stratisMinerRemote, 2);
-
-                // Wait for block repository for block sync to work.
-                TestHelper.ConnectAndSync(stratisMinerLocal, stratisMinerRemote);
-
-                // Now disconnect the peers and mine block C2p on remote.
-                TestHelper.Disconnect(stratisMinerLocal, stratisMinerRemote);
-
-                // Mine block C2p.
-                TestHelper.MineBlocks(stratisMinerRemote, 1);
-                Thread.Sleep(2000);
-
-                // Now reconnect nodes and mine block C1s before C2p arrives.
-                TestHelper.Connect(stratisMinerLocal, stratisMinerRemote);
-                TestHelper.MineBlocks(stratisMinerLocal, 1);
-
-                // Mine block Dp.
-                uint256 dpHash = TestHelper.MineBlocks(stratisMinerRemote, 1, false).BlockHashes[0];
-
-                // Now we wait until the local node's chain tip has correct hash of Dp.
-                TestHelper.WaitLoop(() => stratisMinerLocal.FullNode.Chain.Tip.HashBlock.Equals(dpHash));
-
-                // Then give it time to receive the block from the puller.
-                Thread.Sleep(2500);
-
-                // Check that local node accepted the Dp as consensus tip.
-                Assert.Equal(stratisMinerLocal.FullNode.ChainBehaviorState.ConsensusTip.HashBlock, dpHash);
             }
         }
 
@@ -303,37 +251,5 @@ namespace Stratis.Bitcoin.IntegrationTests
                 TestHelper.WaitForNodeToSync(nodes.ToArray());
             }
         }
-
-        [Fact]
-        public void Pos_NodesCanConnect_AndSync_AndMineBlocks()
-        {
-            using (NodeBuilder builder = NodeBuilder.Create(this))
-            {
-                var minerA = builder.CreateStratisPosNode(this.posNetwork).WithDummyWallet().Start();
-                var minerB = builder.CreateStratisPosNode(this.posNetwork).WithDummyWallet().Start();
-                var syncer = builder.CreateStratisPosNode(this.posNetwork).Start();
-
-                // MinerA mines to height 5.
-                TestHelper.MineBlocks(minerA, 5);
-
-                // Sync the network to height 5.
-                TestHelper.ConnectAndSync(syncer, minerA);
-
-                // MinerA mines to height 5.
-                TestHelper.MineBlocks(minerA, 10);
-
-                // Sync the network to height 5.
-                TestHelper.ConnectAndSync(syncer, minerB);
-
-                // MinerA mines to height 5.
-                TestHelper.MineBlocks(minerB, 5);
-
-                TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(syncer, minerA));
-                TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(syncer, minerB));
-
-                Assert.Equal(20, minerB.FullNode.Chain.Height);
-            }
-        }
-
     }
 }

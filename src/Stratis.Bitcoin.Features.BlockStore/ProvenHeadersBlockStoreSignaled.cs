@@ -5,6 +5,7 @@ using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.Interfaces;
 using Stratis.Bitcoin.Primitives;
+using Stratis.Bitcoin.Signals;
 using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.Features.BlockStore
@@ -22,15 +23,15 @@ namespace Stratis.Bitcoin.Features.BlockStore
         public ProvenHeadersBlockStoreSignaled(
             Network network,
             IBlockStoreQueue blockStoreQueue,
-            ConcurrentChain chain,
             StoreSettings storeSettings,
             IChainState chainState,
             IConnectionManager connection,
             INodeLifetime nodeLifetime,
             ILoggerFactory loggerFactory,
             IInitialBlockDownloadState initialBlockDownloadState,
-            IProvenBlockHeaderStore provenBlockHeaderStore)
-            : base(blockStoreQueue, chain, storeSettings, chainState, connection, nodeLifetime, loggerFactory, initialBlockDownloadState)
+            IProvenBlockHeaderStore provenBlockHeaderStore,
+            ISignals signals)
+            : base(blockStoreQueue, storeSettings, chainState, connection, nodeLifetime, loggerFactory, initialBlockDownloadState, signals)
         {
             this.network = Guard.NotNull(network, nameof(network));
             this.provenBlockHeaderStore = Guard.NotNull(provenBlockHeaderStore, nameof(provenBlockHeaderStore));

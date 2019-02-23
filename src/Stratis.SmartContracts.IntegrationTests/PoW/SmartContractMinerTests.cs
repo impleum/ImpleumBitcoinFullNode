@@ -19,7 +19,6 @@ using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.MemoryPool.Fee;
 using Stratis.Bitcoin.Features.Miner;
 using Stratis.Bitcoin.Features.SmartContracts;
-using Stratis.Bitcoin.Features.SmartContracts.Networks;
 using Stratis.Bitcoin.Features.SmartContracts.PoW;
 using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Consensus.Rules;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
@@ -31,12 +30,13 @@ using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Receipts;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.Util;
-using Stratis.SmartContracts.Core.Validation;
-using Stratis.SmartContracts.Executor.Reflection;
-using Stratis.SmartContracts.Executor.Reflection.Compilation;
-using Stratis.SmartContracts.Executor.Reflection.Loader;
-using Stratis.SmartContracts.Executor.Reflection.ResultProcessors;
-using Stratis.SmartContracts.Executor.Reflection.Serialization;
+using Stratis.SmartContracts.CLR.Validation;
+using Stratis.SmartContracts.CLR;
+using Stratis.SmartContracts.CLR.Compilation;
+using Stratis.SmartContracts.CLR.Loader;
+using Stratis.SmartContracts.CLR.ResultProcessors;
+using Stratis.SmartContracts.CLR.Serialization;
+using Stratis.SmartContracts.Networks;
 using Xunit;
 using Key = NBitcoin.Key;
 
@@ -210,6 +210,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
                 InitializeSmartContractComponents(callingMethod);
 
                 this.consensusRules = new SmartContractPowConsensusRuleEngine(
+                    this.callDataSerializer,
                     this.chain,
                     new Checkpoints(),
                     consensusSettings,
@@ -329,7 +330,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas) SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas) SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/Token.cs");
@@ -356,7 +357,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/TransferTest.cs");
@@ -418,7 +419,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/TransferTest.cs");
@@ -470,7 +471,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas) SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas) SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/StorageDemo.cs");
@@ -496,7 +497,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/TransferTest.cs");
@@ -550,7 +551,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas) SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas) SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/TransferTest.cs");
@@ -580,7 +581,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/TransferTest.cs");
@@ -625,7 +626,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
             ulong gasPrice = 1;
             // This uses a lot of gas
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/TransferTest.cs");
@@ -661,7 +662,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
             ulong gasPrice = 1;
             // This uses a lot of gas
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/InterContract1.cs");
@@ -718,7 +719,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
             ulong gasPrice = 1;
             // This uses a lot of gas
-            Gas gasLimit = (Gas) SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas) SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             var compilationResult = ContractCompiler.CompileFile("SmartContracts/CountContract.cs");
@@ -759,7 +760,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
             ulong gasPrice = 1;
             // This uses a lot of gas
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/InterContract1.cs");
@@ -823,7 +824,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
             // Add the smart contract transaction to the mempool and mine as normal.
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas)1000000;
+            var gasLimit = (RuntimeObserver.Gas) SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
             ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/InterContract1.cs");
             Assert.True(compilationResult.Success);
@@ -846,7 +847,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             await context.InitializeAsync();
 
             ulong gasPrice = 1;
-            Gas gasLimit = (Gas)SmartContractFormatRule.GasLimitMaximum;
+            var gasLimit = (RuntimeObserver.Gas)SmartContractFormatLogic.GasLimitMaximum;
             var gasBudget = gasPrice * gasLimit;
 
             var receiveContract = Path.Combine("SmartContracts", "ReceiveHandlerContract.cs");

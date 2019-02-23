@@ -51,12 +51,14 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                 {
                     if (!tx.IsCoinBase && !view.HaveInputs(tx))
                     {
+                        this.Logger.LogTrace("Transaction '{0}' has not inputs", tx.GetHash());
                         this.Logger.LogTrace("(-)[BAD_TX_NO_INPUT]");
                         ConsensusErrors.BadTransactionMissingInput.Throw();
                     }
 
                     if (!this.IsTxFinal(tx, context))
                     {
+                        this.Logger.LogTrace("Transaction '{0}' is not final", tx.GetHash());
                         this.Logger.LogTrace("(-)[BAD_TX_NON_FINAL]");
                         ConsensusErrors.BadTransactionNonFinal.Throw();
                     }
@@ -72,10 +74,13 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                         ConsensusErrors.BadBlockSigOps.Throw();
                     }
 
-                    if (!this.IsProtocolTransaction(tx))
+                    if (!tx.IsCoinBase)
                     {
                         this.CheckInputs(tx, view, index.Height);
-                        fees += view.GetValueIn(tx) - tx.TotalOut;
+
+                        if (!tx.IsCoinStake)
+                            fees += view.GetValueIn(tx) - tx.TotalOut;
+
                         var txData = new PrecomputedTransactionData(tx);
                         for (int inputIndex = 0; inputIndex < tx.Inputs.Count; inputIndex++)
                         {
@@ -205,6 +210,15 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         public abstract void CheckMaturity(UnspentOutputs coins, int spendHeight);
 
         /// <summary>
+        /// Contains checks that need to be performed on each input once UTXO data is available.
+        /// </summary>
+        /// <param name="transaction">The transaction that is having its input examined.</param>
+        /// <param name="coins">The unspent output consumed by the input being examined.</param>
+        protected virtual void CheckInputValidity(Transaction transaction, UnspentOutputs coins)
+        {
+        }
+
+        /// <summary>
         /// Checks that transaction's inputs are valid.
         /// </summary>
         /// <param name="transaction">Transaction to check.</param>
@@ -229,6 +243,8 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
 
                 this.CheckMaturity(coins, spendHeight);
 
+                this.CheckInputValidity(transaction, coins);
+
                 // Check for negative or overflow input values.
                 valueIn += coins.TryGetOutput(prevout.N).Value;
                 if (!this.MoneyRange(coins.TryGetOutput(prevout.N).Value) || !this.MoneyRange(valueIn))
@@ -238,25 +254,28 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                 }
             }
 
-            if (valueIn < transaction.TotalOut)
+            if (!transaction.IsProtocolTransaction())
             {
-                this.Logger.LogTrace("(-)[TX_IN_BELOW_OUT]");
-                ConsensusErrors.BadTransactionInBelowOut.Throw();
-            }
+                if (valueIn < transaction.TotalOut)
+                {
+                    this.Logger.LogTrace("(-)[TX_IN_BELOW_OUT]");
+                    ConsensusErrors.BadTransactionInBelowOut.Throw();
+                }
 
-            // Tally transaction fees.
-            Money txFee = valueIn - transaction.TotalOut;
-            if (txFee < 0)
-            {
-                this.Logger.LogTrace("(-)[NEGATIVE_FEE]");
-                ConsensusErrors.BadTransactionNegativeFee.Throw();
-            }
+                // Check transaction fees.
+                Money txFee = valueIn - transaction.TotalOut;
+                if (txFee < 0)
+                {
+                    this.Logger.LogTrace("(-)[NEGATIVE_FEE]");
+                    ConsensusErrors.BadTransactionNegativeFee.Throw();
+                }
 
-            fees += txFee;
-            if (!this.MoneyRange(fees))
-            {
-                this.Logger.LogTrace("(-)[BAD_FEE]");
-                ConsensusErrors.BadTransactionFeeOutOfRange.Throw();
+                fees += txFee;
+                if (!this.MoneyRange(fees))
+                {
+                    this.Logger.LogTrace("(-)[BAD_FEE]");
+                    ConsensusErrors.BadTransactionFeeOutOfRange.Throw();
+                }
             }
         }
 

@@ -108,6 +108,21 @@ namespace Stratis.Bitcoin.Utilities
         }
 
         /// <summary>
+        /// The number of items in the queue.
+        /// This property should only be used for collecting statistics.
+        /// </summary>
+        public int Count
+        {
+            get
+            {
+                lock (this.lockObject)
+                {
+                    return this.items.Count;
+                }
+            }
+        }
+
+        /// <summary>
         /// Consumer of the newly added items to the queue that waits for the signal
         /// and then executes the user-defined callback.
         /// <para>
@@ -201,7 +216,7 @@ namespace Stratis.Bitcoin.Utilities
         /// </summary>
         /// <param name="item">If the function succeeds, this is filled with the dequeued item.</param>
         /// <returns><c>true</c> if an item was dequeued, <c>false</c> if the queue was empty.</returns>
-        private bool TryDequeue(out T item)
+        public bool TryDequeue(out T item)
         {
             item = default(T);
             lock (this.lockObject)

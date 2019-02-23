@@ -174,13 +174,7 @@ namespace Stratis.Bitcoin.Features.ColdStaking
             this.logger.LogTrace("({0}:'{1}',{2}:{3})", nameof(wallet), wallet.Name, nameof(isColdWalletAccount), isColdWalletAccount);
 
             var coinType = (CoinType)wallet.Network.Consensus.CoinType;
-            HdAccount account = null;
-            try
-            {
-                account = wallet.GetAccountByCoinType(isColdWalletAccount ? ColdWalletAccountName : HotWalletAccountName, coinType);
-            }
-            catch (Exception) { }
-
+            HdAccount account = wallet.GetAccountByCoinType(isColdWalletAccount ? ColdWalletAccountName : HotWalletAccountName, coinType);
             if (account == null)
             {
                 this.logger.LogTrace("(-)[ACCOUNT_DOES_NOT_EXIST]:null");
@@ -220,23 +214,29 @@ namespace Stratis.Bitcoin.Features.ColdStaking
                 return account;
             }
 
-            int accountIndex = isColdWalletAccount ? ColdWalletAccountIndex : HotWalletAccountIndex;
-            var coinType = (CoinType)wallet.Network.Consensus.CoinType;
-
             this.logger.LogTrace("The {0} wallet account for '{1}' does not exist and will now be created.", isColdWalletAccount ? "cold" : "hot", wallet.Name);
 
-            AccountRoot accountRoot = wallet.AccountsRoot.Single(a => a.CoinType == coinType);
+            int accountIndex;
+            string accountName;
 
-            account = accountRoot.CreateAccount(walletPassword, wallet.EncryptedSeed,
-                wallet.ChainCode, wallet.Network, this.dateTimeProvider.GetTimeOffset(), accountIndex,
-                isColdWalletAccount ? ColdWalletAccountName : HotWalletAccountName);
+            if (isColdWalletAccount)
+            {
+                accountIndex = ColdWalletAccountIndex;
+                accountName = ColdWalletAccountName;
+            }
+            else
+            {
+                accountIndex = HotWalletAccountIndex;
+                accountName = HotWalletAccountName;
+            }
+
+            account = wallet.AddNewAccount(walletPassword, this.coinType, this.dateTimeProvider.GetTimeOffset(), accountIndex, accountName);
 
             // Maintain at least one unused address at all times. This will ensure that wallet recovery will also work.
             account.CreateAddresses(wallet.Network, 1, false);
 
-            ICollection<HdAccount> hdAccounts = accountRoot.Accounts.ToList();
-            hdAccounts.Add(account);
-            accountRoot.Accounts = hdAccounts;
+            // Save the changes to the file.
+            this.SaveWallet(wallet);
 
             this.logger.LogTrace("(-):'{0}'", account.Name);
             return account;
@@ -441,6 +441,7 @@ namespace Stratis.Bitcoin.Features.ColdStaking
                 TransactionFee = feeAmount,
                 MinConfirmations = 0,
                 Shuffle = false,
+                Sign = false,
                 Recipients = new[] { new Recipient { Amount = amount, ScriptPubKey = destination } }.ToList()
             };
 

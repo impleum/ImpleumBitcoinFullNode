@@ -7,8 +7,8 @@ using Stratis.Bitcoin.Features.SmartContracts.PoW.Rules;
 using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Consensus.Rules;
 using Stratis.Bitcoin.Features.SmartContracts.Rules;
 using Stratis.SmartContracts.Core.Util;
-using Stratis.SmartContracts.Executor.Reflection;
-using Stratis.SmartContracts.Executor.Reflection.Serialization;
+using Stratis.SmartContracts.CLR;
+using Stratis.SmartContracts.CLR.Serialization;
 
 namespace Stratis.Bitcoin.Features.SmartContracts.PoW
 {
@@ -49,7 +49,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts.PoW
                 new EnsureCoinbaseRule(),
                 new CheckPowTransactionRule(),
                 new CheckSigOpsRule(),
-                new AllowedScriptTypeRule()
+                new AllowedScriptTypeRule(),
+                new ContractTransactionValidationRule(new CallDataSerializer(new ContractPrimitiveSerializer(this.network)), new List<IContractTransactionValidationLogic>
+                {
+                    new SmartContractFormatLogic()
+                })
             };
 
             consensus.FullValidationRules = new List<IFullValidationConsensusRule>()
@@ -61,7 +65,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.PoW
                 new TxOutSmartContractExecRule(),
                 new OpSpendRule(),
                 new CanGetSenderRule(new SenderRetriever()),
-                new SmartContractFormatRule(new CallDataSerializer(new ContractPrimitiveSerializer(this.network))), // Can we inject these serializers?
                 new P2PKHNotContractRule(),
                 new SmartContractPowCoinviewRule(), // implements BIP68, MaxSigOps and BlockReward 
                 new SaveCoinviewRule()

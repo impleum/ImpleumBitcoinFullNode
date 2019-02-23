@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NBitcoin;
 using Stratis.Bitcoin.Connection;
-using Stratis.Bitcoin.Features.SmartContracts.Networks;
 using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Consensus.Rules;
 using Stratis.Bitcoin.Features.SmartContracts.Wallet;
 using Stratis.Bitcoin.Features.Wallet;
@@ -15,8 +14,9 @@ using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Tests.Wallet.Common;
 using Stratis.SmartContracts;
 using Stratis.SmartContracts.Core.Receipts;
-using Stratis.SmartContracts.Executor.Reflection;
-using Stratis.SmartContracts.Executor.Reflection.Serialization;
+using Stratis.SmartContracts.CLR;
+using Stratis.SmartContracts.CLR.Serialization;
+using Stratis.SmartContracts.Networks;
 using Xunit;
 
 namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Controllers
@@ -49,8 +49,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Controllers
         {
             ulong gasPrice = SmartContractMempoolValidator.MinGasPrice;
             int vmVersion = 1;
-            Gas gasLimit = (Gas)(SmartContractFormatRule.GasLimitMaximum / 2);
-            var contractTxData = new ContractTxData(vmVersion, gasPrice, gasLimit,new byte[]{0, 1, 2, 3});
+            var gasLimit = (Stratis.SmartContracts.RuntimeObserver.Gas)(SmartContractFormatLogic.GasLimitMaximum / 2);
+            var contractTxData = new ContractTxData(vmVersion, gasPrice, gasLimit, new byte[]{0, 1, 2, 3});
             var callDataSerializer = new CallDataSerializer(new ContractPrimitiveSerializer(new SmartContractsRegTest()));
             var contractCreateScript = new Script(callDataSerializer.Serialize(contractTxData));
 
@@ -94,7 +94,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Controllers
             this.receiptRepository.Setup(x => x.Retrieve(It.IsAny<uint256>()))
                 .Returns(new Receipt(null, 0, new Log[0], null, null, null, uint160.Zero, true, null, null));
             this.callDataSerializer.Setup(x => x.Deserialize(It.IsAny<byte[]>()))
-                .Returns(Result.Ok(new ContractTxData(0, 0, (Gas) 0, new uint160(0), null, null)));
+                .Returns(Result.Ok(new ContractTxData(0, 0, (Stratis.SmartContracts.RuntimeObserver.Gas) 0, new uint160(0), null, null)));
 
             var controller = new SmartContractWalletController(
                 this.broadcasterManager.Object,
@@ -128,6 +128,50 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Controllers
             Assert.Equal(normalTransaction.Id, resultingTransaction.Hash);
             Assert.Equal(normalTransaction.Amount.ToUnit(MoneyUnit.Satoshi), resultingTransaction.Amount);
             Assert.Equal(1, resultingTransaction.BlockHeight);
+        }
+
+        [Fact]
+        public void ReceivedType_Is_Receive()
+        {
+            var transactionData = new TransactionData();
+            transactionData.IsCoinBase = false;
+            transactionData.Index = 1;
+
+            Assert.Equal(ContractTransactionItemType.Received, SmartContractWalletController.ReceivedTransactionType(transactionData));
+        }
+
+        [Fact]
+        public void ReceivedType_Is_Receive_Null_Coinbase()
+        {
+            var transactionData = new TransactionData();
+            transactionData.IsCoinBase = null;
+
+            // Should be true for all indexes
+            for (var i = 0; i < 10; i++)
+            {
+                transactionData.Index = i;
+                Assert.Equal(ContractTransactionItemType.Received, SmartContractWalletController.ReceivedTransactionType(transactionData));
+            }
+        }
+
+        [Fact]
+        public void ReceivedType_Is_GasRefund()
+        {
+            var transactionData = new TransactionData();
+            transactionData.IsCoinBase = true;
+            transactionData.Index = 1;
+
+            Assert.Equal(ContractTransactionItemType.GasRefund, SmartContractWalletController.ReceivedTransactionType(transactionData));
+        }
+
+        [Fact]
+        public void ReceivedType_Is_MiningReward()
+        {
+            var transactionData = new TransactionData();
+            transactionData.IsCoinBase = true;
+            transactionData.Index = 0;
+
+            Assert.Equal(ContractTransactionItemType.Staked, SmartContractWalletController.ReceivedTransactionType(transactionData));
         }
     }
 }

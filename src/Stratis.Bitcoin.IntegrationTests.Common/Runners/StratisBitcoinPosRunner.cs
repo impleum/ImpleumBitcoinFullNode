@@ -1,5 +1,6 @@
 ﻿using NBitcoin;
 using NBitcoin.Protocol;
+using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Builder;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Features.Api;
@@ -9,6 +10,8 @@ using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Miner;
 using Stratis.Bitcoin.Features.RPC;
 using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
+using Stratis.Bitcoin.P2P;
 
 namespace Stratis.Bitcoin.IntegrationTests.Common.Runners
 {
@@ -33,16 +36,17 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.Runners
                 .AddPowPosMining()
                 .AddRPC()
                 .UseApi()
+                .UseTestChainedHeaderTree()
                 .MockIBD();
 
             if (this.OverrideDateTimeProvider)
                 builder.OverrideDateTimeProviderFor<MiningFeature>();
 
-            if (this.InterceptorDisconnect != null)
-                builder = builder.InterceptBlockDisconnected(this.InterceptorDisconnect);
-
-            if (this.InterceptorConnect != null)
-                builder = builder.InterceptBlockConnected(this.InterceptorConnect);
+            if (!this.EnablePeerDiscovery)
+            {
+                builder.RemoveImplementation<PeerConnectorDiscovery>();
+                builder.ReplaceService<IPeerDiscovery, BaseFeature>(new PeerDiscoveryDisabled());
+            }
 
             this.FullNode = (FullNode)builder.Build();
         }
@@ -67,6 +71,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.Runners
                                 .AddPowPosMining()
                                 .AddRPC()
                                 .MockIBD()
+                                .UseTestChainedHeaderTree()
                                 .Build();
 
             return fullNode;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -11,7 +10,7 @@ using Stratis.Bitcoin.Configuration.Settings;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.P2P.Peer;
 using Stratis.Bitcoin.Utilities;
-using Stratis.Bitcoin.Utilities.Extensions;
+using TracerAttributes;
 
 namespace Stratis.Bitcoin.P2P
 {
@@ -56,7 +55,7 @@ namespace Stratis.Bitcoin.P2P
         /// <summary>
         /// Collection of connected peers that is managed by the <see cref="ConnectionManager"/>.
         /// </summary>
-        private IReadOnlyNetworkPeerCollection connectedPeers;
+        protected IConnectionManager connectionManager;
 
         /// <inheritdoc/>
         public NetworkPeerCollection ConnectorPeers { get; private set; }
@@ -95,10 +94,7 @@ namespace Stratis.Bitcoin.P2P
         public NetworkPeerRequirement Requirements { get; internal set; }
 
         /// <summary>Default time interval between making a connection attempt.</summary>
-        private readonly TimeSpan defaultConnectionInterval;
-
-        /// <summary>Burst time interval between making a connection attempt.</summary>
-        protected TimeSpan burstConnectionInterval;
+        private readonly TimeSpan connectionInterval;
 
         /// <summary>Maintains a list of connected peers and ensures their proper disposal.</summary>
         private readonly NetworkPeerDisposer networkPeerDisposer;
@@ -130,14 +126,13 @@ namespace Stratis.Bitcoin.P2P
             this.selfEndpointTracker = selfEndpointTracker;
             this.Requirements = new NetworkPeerRequirement { MinVersion = nodeSettings.MinProtocolVersion ?? nodeSettings.ProtocolVersion };
 
-            this.defaultConnectionInterval = TimeSpans.Second;
-            this.burstConnectionInterval = TimeSpan.Zero;
+            this.connectionInterval = this.CalculateConnectionInterval();
         }
 
         /// <inheritdoc/>
         public void Initialize(IConnectionManager connectionManager)
         {
-            this.connectedPeers = connectionManager.ConnectedPeers;
+            this.connectionManager = connectionManager;
 
             this.CurrentParameters = connectionManager.Parameters.Clone();
 
@@ -157,8 +152,8 @@ namespace Stratis.Bitcoin.P2P
 
             this.ConnectorPeers.Add(peer);
 
-            if ((this.asyncLoop != null) && (this.ConnectorPeers.Count >= this.ConnectionSettings.BurstModeTargetConnections))
-                this.asyncLoop.RepeatEvery = this.defaultConnectionInterval;
+            if (this.asyncLoop != null)
+                this.asyncLoop.RepeatEvery = this.CalculateConnectionInterval();
         }
 
         /// <summary>
@@ -172,8 +167,8 @@ namespace Stratis.Bitcoin.P2P
         {
             this.ConnectorPeers.Remove(peer);
 
-            if (this.asyncLoop != null && this.ConnectorPeers.Count < this.ConnectionSettings.BurstModeTargetConnections)
-                this.asyncLoop.RepeatEvery = this.burstConnectionInterval;
+            if (this.asyncLoop != null)
+                this.asyncLoop.RepeatEvery = this.CalculateConnectionInterval();
         }
 
         /// <summary>Determines whether or not a connector can be started.</summary>
@@ -194,7 +189,7 @@ namespace Stratis.Bitcoin.P2P
         /// <param name="ipEndpoint">The endpoint to check.</param>
         internal bool IsPeerConnected(IPEndPoint ipEndpoint)
         {
-            return this.connectedPeers.FindByEndpoint(ipEndpoint) != null;
+            return this.connectionManager.ConnectedPeers.FindByEndpoint(ipEndpoint) != null;
         }
 
         /// <inheritdoc/>
@@ -208,15 +203,12 @@ namespace Stratis.Bitcoin.P2P
             this.asyncLoop = this.asyncLoopFactory.Run($"{this.GetType().Name}.{nameof(this.ConnectAsync)}", async token =>
             {
                 if (!this.peerAddressManager.Peers.Any() || (this.ConnectorPeers.Count >= this.MaxOutboundConnections))
-                {
-                    await Task.Delay(2000, this.nodeLifetime.ApplicationStopping).ConfigureAwait(false);
                     return;
-                }
 
                 await this.OnConnectAsync().ConfigureAwait(false);
             },
             this.nodeLifetime.ApplicationStopping,
-            repeatEvery: this.burstConnectionInterval);
+            repeatEvery: this.connectionInterval);
         }
 
         /// <summary>Attempts to connect to a random peer.</summary>
@@ -225,13 +217,6 @@ namespace Stratis.Bitcoin.P2P
             if (this.selfEndpointTracker.IsSelf(peerAddress.Endpoint))
             {
                 this.logger.LogTrace("{0} is self. Therefore not connecting.", peerAddress.Endpoint);
-                return;
-            }
-
-            // Connect if local, ip range filtering disabled or ip range filtering enabled and peer in a different group.
-            if (peerAddress.Endpoint.Address.IsRoutable(false) && this.ConnectionSettings.IpRangeFiltering && this.PeerIsPartOfExistingGroup(peerAddress))
-            {
-                this.logger.LogTrace("(-)[RANGE_FILTERED]");
                 return;
             }
 
@@ -281,21 +266,13 @@ namespace Stratis.Bitcoin.P2P
             }
         }
 
-        private bool PeerIsPartOfExistingGroup(PeerAddress peerAddress)
+        /// <summary>
+        /// Determines how often the connector should try and connect to an address from it's list.
+        /// </summary>
+        [NoTrace]
+        public virtual TimeSpan CalculateConnectionInterval()
         {
-            if (this.connectedPeers == null)
-                return false;
-
-            byte[] peerAddressGroup = peerAddress.Endpoint.MapToIpv6().Address.GetGroup();
-
-            foreach (INetworkPeer endPoint in this.connectedPeers)
-            {
-                byte[] endPointGroup = endPoint.PeerEndPoint.MapToIpv6().Address.GetGroup();
-                if (endPointGroup.SequenceEqual(peerAddressGroup))
-                    return true;
-            }
-
-            return false;
+            return this.ConnectorPeers.Count < this.ConnectionSettings.InitialConnectionTarget ? TimeSpans.Ms100 : TimeSpans.Second;
         }
 
         /// <summary>

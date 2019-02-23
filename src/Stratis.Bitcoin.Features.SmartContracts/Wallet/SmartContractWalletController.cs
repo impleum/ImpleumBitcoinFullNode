@@ -18,7 +18,7 @@ using Stratis.Bitcoin.Utilities.JsonErrors;
 using Stratis.Bitcoin.Utilities.ModelStateErrors;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Receipts;
-using Stratis.SmartContracts.Executor.Reflection;
+using Stratis.SmartContracts.CLR;
 
 namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
 {
@@ -72,16 +72,16 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
 
             try
             {
-                var addresses = this.GetAccountAddressesWithBalance(walletName)
+                IEnumerable<string> addresses = this.GetAccountAddressesWithBalance(walletName)
                     .Select(a => a.Address);
 
                 if (!addresses.Any())
                 {
-                    var account = this.walletManager.GetAccounts(walletName).First();
+                    HdAccount account = this.walletManager.GetAccounts(walletName).First();
 
                     var walletAccountReference = new WalletAccountReference(walletName, account.Name);
 
-                    var nextAddress = this.walletManager.GetUnusedAddress(walletAccountReference);
+                    HdAddress nextAddress = this.walletManager.GetUnusedAddress(walletAccountReference);
 
                     return this.Json(new[] { nextAddress.Address });
                 }
@@ -98,7 +98,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
         [HttpGet]
         public IActionResult GetAddressBalance(string address)
         {
-            var balance = this.walletManager.GetAddressBalance(address);
+            AddressBalance balance = this.walletManager.GetAddressBalance(address);
 
             return this.Json(balance.AmountConfirmed.ToUnit(MoneyUnit.Satoshi));
         }
@@ -117,7 +117,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
             {
                 var transactionItems = new List<ContractTransactionItem>();
 
-                var account = this.walletManager.GetAccounts(walletName).First();
+                HdAccount account = this.walletManager.GetAccounts(walletName).First();
 
                 // Get a list of all the transactions found in an account (or in a wallet if no account is specified), with the addresses associated with them.
                 IEnumerable<AccountHistory> accountsHistory = this.walletManager.GetHistory(walletName, account.Name);
@@ -141,7 +141,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
                         Amount = transaction.Amount.ToUnit(MoneyUnit.Satoshi),
                         BlockHeight = transaction.BlockHeight,
                         Hash = transaction.Id,
-                        Type = ContractTransactionItemType.Received,
+                        Type = ReceivedTransactionType(transaction),
                         To = address
                     });
 
@@ -202,7 +202,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
                     }
                 }
 
-                return this.Json(transactionItems.OrderByDescending(x=>x.BlockHeight));
+                return this.Json(transactionItems.OrderByDescending(x => x.BlockHeight ?? Int32.MaxValue).ThenBy(x => x.Hash.ToString()));
             }
             catch (Exception e)
             {
@@ -299,6 +299,23 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
                 this.logger.LogError("Exception occurred: {0}", e.ToString());
                 return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, e.Message, e.ToString());
             }
+        }
+
+        public static ContractTransactionItemType ReceivedTransactionType(TransactionData transaction)
+        {
+            bool isCoinBase = transaction.IsCoinBase.HasValue && transaction.IsCoinBase.Value;
+
+            bool isMiningReward = isCoinBase && transaction.Index == 0;
+
+            bool isGasRefund = isCoinBase && transaction.Index != 0;
+
+            if (isGasRefund)
+                return ContractTransactionItemType.GasRefund;
+
+            if (isMiningReward)
+                return ContractTransactionItemType.Staked;
+
+            return ContractTransactionItemType.Received;
         }
 
         /// <summary>
