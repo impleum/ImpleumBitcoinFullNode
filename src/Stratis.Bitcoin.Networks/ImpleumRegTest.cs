@@ -25,6 +25,8 @@ namespace Stratis.Bitcoin.Networks
             this.Name = nameof(ImpleumRegTest);
             this.Magic = magic;
             this.DefaultPort = 19444;
+            this.DefaultMaxOutboundConnections = 16;
+            this.DefaultMaxInboundConnections = 109;
             this.RPCPort = 19442;
             this.CoinTicker = "TIMPL";
             this.MinTxFee = 0;
@@ -67,7 +69,11 @@ namespace Stratis.Bitcoin.Networks
             };
 
 
-            var bip9Deployments = new ImpleumBIP9Deployments();
+            var bip9Deployments = new ImpleumBIP9Deployments()
+            {
+                // Always active on StratisRegTest.
+                [ImpleumBIP9Deployments.ColdStaking] = new BIP9DeploymentsParameters(1, BIP9DeploymentsParameters.AlwaysActive, 999999999)
+            };
 
             this.Consensus = new NBitcoin.Consensus(
                 consensusFactory: consensusFactory,

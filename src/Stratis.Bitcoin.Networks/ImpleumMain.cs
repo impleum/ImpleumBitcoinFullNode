@@ -39,6 +39,8 @@ namespace Stratis.Bitcoin.Networks
             this.DefaultConfigFilename = ImpleumDefaultConfigFilename;
             this.Magic = magic;
             this.DefaultPort = 16171;
+            this.DefaultMaxOutboundConnections = 16;
+            this.DefaultMaxInboundConnections = 109;
             this.RPCPort = 16172;
             this.MinTxFee = 10000;
             this.FallbackFee = 60000;
@@ -77,8 +79,13 @@ namespace Stratis.Bitcoin.Networks
                 [BuriedDeployments.BIP66] = 0
             };
 
+            var bip9Deployments = new ImpleumBIP9Deployments()
+            {
+                [StratisBIP9Deployments.ColdStaking] = new BIP9DeploymentsParameters(2,
+                    new DateTime(2018, 12, 1, 0, 0, 0, DateTimeKind.Utc),
+                    new DateTime(2019, 12, 1, 0, 0, 0, DateTimeKind.Utc))
+            };
 
-            var bip9Deployments = new ImpleumBIP9Deployments();
 
             this.Consensus = new NBitcoin.Consensus(
                 consensusFactory: consensusFactory,
