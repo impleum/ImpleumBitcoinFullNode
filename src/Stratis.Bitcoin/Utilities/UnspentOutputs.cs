@@ -55,6 +55,15 @@ namespace Stratis.Bitcoin.Utilities
             this.Outputs = unspent.Outputs.ToArray();
         }
 
+        /// <summary>
+        /// The outputs of a transaction.
+        /// </summary>
+        /// <remarks>
+        /// The behaviour of this collection is as following:
+        /// If a UTXO is spent it will be set to null, but the size of the collection will not change.
+        /// If the last item in the collection is spent (and set to null) when storing to disk the size
+        /// of the collection will change and be reduced by the number of last items that are null.
+        /// </remarks>
         public TxOut[] Outputs;
 
         private uint256 transactionId;
@@ -181,8 +190,14 @@ namespace Stratis.Bitcoin.Utilities
             builder.AppendLine($"{nameof(this.Time)}={this.Time}");
             builder.AppendLine($"{nameof(this.Outputs)}.{nameof(this.Outputs.Length)}={this.Outputs.Length}");
 
-            foreach (TxOut output in this.Outputs)
+            foreach (TxOut output in this.Outputs.Take(5))
                 builder.AppendLine(output == null ? "null" : output.ToString());
+
+            if (this.Outputs.Length > 5)
+            {
+                // Only log out the first 5 outputs to avoid cluttering the logs.
+                builder.AppendLine($"{this.Outputs.Length - 5} more outputs...");
+            }
 
             return builder.ToString();
         }

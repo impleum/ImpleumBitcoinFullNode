@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NBitcoin;
 using Stratis.Bitcoin.Connection;
+using Stratis.Bitcoin.Features.Wallet.Broadcasting;
 using Stratis.Bitcoin.Features.Wallet.Controllers;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Features.Wallet.Models;
@@ -940,17 +941,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
             Assert.Equal(2, historyModel.TransactionsHistory.Count);
             TransactionItemModel resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(0);
 
-            Assert.Equal(TransactionItemType.Received, resultingTransactionModel.Type);
-            Assert.Equal(address.Address, resultingTransactionModel.ToAddress);
-            Assert.Equal(transaction.Id, resultingTransactionModel.Id);
-            Assert.Equal(transaction.Amount, resultingTransactionModel.Amount);
-            Assert.Equal(transaction.CreationTime, resultingTransactionModel.Timestamp);
-            Assert.Equal(transaction.BlockHeight, resultingTransactionModel.ConfirmedInBlock);
-            Assert.Null(resultingTransactionModel.Fee);
-            Assert.Equal(0, resultingTransactionModel.Payments.Count);
-
-            resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(1);
-
             Assert.Equal(TransactionItemType.Send, resultingTransactionModel.Type);
             Assert.Null(resultingTransactionModel.ToAddress);
             Assert.Equal(spendingDetails.TransactionId, resultingTransactionModel.Id);
@@ -963,6 +953,17 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
             PaymentDetailModel resultingPayment = resultingTransactionModel.Payments.ElementAt(0);
             Assert.Equal(paymentDetails.DestinationAddress, resultingPayment.DestinationAddress);
             Assert.Equal(paymentDetails.Amount, resultingPayment.Amount);
+
+            resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(1);
+
+            Assert.Equal(TransactionItemType.Received, resultingTransactionModel.Type);
+            Assert.Equal(address.Address, resultingTransactionModel.ToAddress);
+            Assert.Equal(transaction.Id, resultingTransactionModel.Id);
+            Assert.Equal(transaction.Amount, resultingTransactionModel.Amount);
+            Assert.Equal(transaction.CreationTime, resultingTransactionModel.Timestamp);
+            Assert.Equal(transaction.BlockHeight, resultingTransactionModel.ConfirmedInBlock);
+            Assert.Null(resultingTransactionModel.Fee);
+            Assert.Equal(0, resultingTransactionModel.Payments.Count);
         }
 
         [Fact]
@@ -1014,7 +1015,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
             AccountHistoryModel historyModel = model.AccountsHistoryModel.ElementAt(0);
             Assert.Equal(2, historyModel.TransactionsHistory.Count);
 
-            TransactionItemModel resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(1);
+            TransactionItemModel resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(0);
             Assert.Equal(0, resultingTransactionModel.Fee);
         }
 
@@ -1211,17 +1212,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
 
             TransactionItemModel resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(0);
 
-            Assert.Equal(TransactionItemType.Received, resultingTransactionModel.Type);
-            Assert.Equal(address.Address, resultingTransactionModel.ToAddress);
-            Assert.Equal(transaction.Id, resultingTransactionModel.Id);
-            Assert.Equal(transaction.Amount, resultingTransactionModel.Amount);
-            Assert.Equal(transaction.CreationTime, resultingTransactionModel.Timestamp);
-            Assert.Equal(transaction.BlockHeight, resultingTransactionModel.ConfirmedInBlock);
-            Assert.Null(resultingTransactionModel.Fee);
-            Assert.Equal(0, resultingTransactionModel.Payments.Count);
-
-            resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(1);
-
             Assert.Equal(TransactionItemType.Send, resultingTransactionModel.Type);
             Assert.Null(resultingTransactionModel.ToAddress);
             Assert.Equal(spendingDetails.TransactionId, resultingTransactionModel.Id);
@@ -1235,6 +1225,17 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
             Assert.Equal(paymentDetails.DestinationAddress, resultingPayment.DestinationAddress);
             Assert.Equal(paymentDetails.Amount, resultingPayment.Amount);
 
+            resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(1);
+
+            Assert.Equal(TransactionItemType.Received, resultingTransactionModel.Type);
+            Assert.Equal(address.Address, resultingTransactionModel.ToAddress);
+            Assert.Equal(transaction.Id, resultingTransactionModel.Id);
+            Assert.Equal(transaction.Amount, resultingTransactionModel.Amount);
+            Assert.Equal(transaction.CreationTime, resultingTransactionModel.Timestamp);
+            Assert.Equal(transaction.BlockHeight, resultingTransactionModel.ConfirmedInBlock);
+            Assert.Null(resultingTransactionModel.Fee);
+            Assert.Equal(0, resultingTransactionModel.Payments.Count);
+            
             resultingTransactionModel = historyModel.TransactionsHistory.ElementAt(2);
 
             Assert.Equal(TransactionItemType.Send, resultingTransactionModel.Type);
@@ -1280,8 +1281,8 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
 
             var accountsBalances = new List<AccountBalance>
             {
-                new AccountBalance { Account = account, AmountConfirmed = new Money(130000), AmountUnconfirmed = new Money(35000) },
-                new AccountBalance { Account = account2, AmountConfirmed = new Money(108000), AmountUnconfirmed = new Money(139000) }
+                new AccountBalance { Account = account, AmountConfirmed = new Money(130000), AmountUnconfirmed = new Money(35000), SpendableAmount = new Money(130000) },
+                new AccountBalance { Account = account2, AmountConfirmed = new Money(108000), AmountUnconfirmed = new Money(139000), SpendableAmount = new Money(108000) }
             };
 
             var mockWalletManager = new Mock<IWalletManager>();
@@ -1305,6 +1306,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
             Assert.Equal(account.HdPath, resultingBalance.HdPath);
             Assert.Equal(new Money(130000), resultingBalance.AmountConfirmed);
             Assert.Equal(new Money(35000), resultingBalance.AmountUnconfirmed);
+            Assert.Equal(new Money(130000), resultingBalance.SpendableAmount);
 
             resultingBalance = model.AccountsBalances[1];
             Assert.Equal(this.Network.Consensus.CoinType, (int)resultingBalance.CoinType);
@@ -1312,6 +1314,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
             Assert.Equal(account2.HdPath, resultingBalance.HdPath);
             Assert.Equal(new Money(108000), resultingBalance.AmountConfirmed);
             Assert.Equal(new Money(139000), resultingBalance.AmountUnconfirmed);
+            Assert.Equal(new Money(108000), resultingBalance.SpendableAmount);
         }
 
         [Fact]
@@ -1625,6 +1628,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Tests
             string transactionHex = "010000000189c041f79aac3aa7e7a72804a9a55cd9eceba41a0586640f602eb9823540ce89010000006b483045022100ab9597b37cb8796aefa30b207abb248c8003d4d153076997e375b0daf4f9f7050220546397fee1cefe54c49210ea653e9e61fb88adf51b68d2c04ad6d2b46ddf97a30121035cc9de1f233469dad8a3bbd1e61b699a7dd8e0d8370c6f3b1f2a16167da83546ffffffff02f6400a00000000001976a914accf603142aaa5e22dc82500d3e187caf712f11588ac3cf61700000000001976a91467872601dda216fbf4cab7891a03ebace87d8e7488ac00000000";
 
             var mockBroadcasterManager = new Mock<IBroadcasterManager>();
+
+            mockBroadcasterManager.Setup(m => m.GetTransaction(It.IsAny<uint256>())).Returns(new TransactionBroadcastEntry(this.Network.CreateTransaction(transactionHex), State.Broadcasted, string.Empty));
+
             var connectionManagerMock = new Mock<IConnectionManager>();
             var peers = new List<INetworkPeer>();
             peers.Add(null);

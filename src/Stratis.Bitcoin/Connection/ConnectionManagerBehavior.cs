@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Stratis.Bitcoin.P2P.Peer;
@@ -22,7 +20,7 @@ namespace Stratis.Bitcoin.Connection
     public class ConnectionManagerBehavior : NetworkPeerBehavior, IConnectionManagerBehavior
     {
         /// <summary>Logger factory to create loggers.</summary>
-        protected readonly ILoggerFactory loggerFactory;
+        private readonly ILoggerFactory loggerFactory;
 
         /// <summary>Instance logger.</summary>
         private readonly ILogger logger;
@@ -33,7 +31,7 @@ namespace Stratis.Bitcoin.Connection
         /// </summary>
         private readonly ILogger infoLogger;
 
-        protected readonly IConnectionManager connectionManager;
+        private readonly IConnectionManager connectionManager;
 
         public bool Whitelisted { get; internal set; }
 
@@ -82,7 +80,7 @@ namespace Stratis.Bitcoin.Connection
                     this.connectionManager.AddConnectedPeer(peer);
                     this.infoLogger.LogInformation("Peer '{0}' connected ({1}), agent '{2}', height {3}", peer.RemoteSocketEndpoint, peer.Inbound ? "inbound" : "outbound", peer.PeerVersion.UserAgent, peer.PeerVersion.StartHeight);
 
-                    await peer.SendMessageAsync(new SendHeadersPayload()).ConfigureAwait(false);
+                    peer.SendMessage(new SendHeadersPayload());
                 }
 
                 if ((peer.State == NetworkPeerState.Failed) || (peer.State == NetworkPeerState.Offline))

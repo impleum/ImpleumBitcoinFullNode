@@ -9,6 +9,7 @@ using Stratis.Bitcoin.P2P.Peer;
 using Stratis.Bitcoin.P2P.Protocol.Payloads;
 using Stratis.Bitcoin.Utilities;
 using Stratis.Bitcoin.Utilities.Extensions;
+using TracerAttributes;
 
 namespace Stratis.Bitcoin.P2P
 {
@@ -17,7 +18,8 @@ namespace Stratis.Bitcoin.P2P
     /// </summary>
     public sealed class PeerConnectorAddNode : PeerConnector
     {
-        /// <summary>Constructor for dependency injection.</summary>
+        private readonly ILogger logger;
+
         public PeerConnectorAddNode(
             IAsyncLoopFactory asyncLoopFactory,
             IDateTimeProvider dateTimeProvider,
@@ -31,17 +33,14 @@ namespace Stratis.Bitcoin.P2P
             ISelfEndpointTracker selfEndpointTracker) :
             base(asyncLoopFactory, dateTimeProvider, loggerFactory, network, networkPeerFactory, nodeLifetime, nodeSettings, connectionSettings, peerAddressManager, selfEndpointTracker)
         {
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+
             this.Requirements.RequiredServices = NetworkPeerServices.Nothing;
         }
 
         /// <inheritdoc/>
         public override void OnInitialize()
         {
-            // For the -addnode connector, effectively disable burst mode by preventing high frequency connection attempts.
-            // The initial -addnode list will all have their connection attempts made in parallel regardless, so this
-            // does not slow down the startup.
-            this.burstConnectionInterval = TimeSpans.Second;
-
             this.MaxOutboundConnections = this.ConnectionSettings.AddNode.Count;
 
             // Add the endpoints from the -addnode arg to the address manager.
@@ -58,9 +57,17 @@ namespace Stratis.Bitcoin.P2P
         }
 
         /// <inheritdoc/>
+        [NoTrace]
         public override void OnStartConnect()
         {
             this.CurrentParameters.PeerAddressManagerBehaviour().Mode = PeerAddressManagerBehaviourMode.AdvertiseDiscover;
+        }
+
+        /// <inheritdoc/>
+        [NoTrace]
+        public override TimeSpan CalculateConnectionInterval()
+        {
+            return TimeSpans.Second;
         }
 
         /// <summary>
@@ -77,6 +84,8 @@ namespace Stratis.Bitcoin.P2P
                     PeerAddress peerAddress = this.peerAddressManager.FindPeer(ipEndpoint);
                     if (peerAddress != null && !this.IsPeerConnected(peerAddress.Endpoint))
                     {
+                        this.logger.LogDebug("Attempting connection to {0}.", peerAddress.Endpoint);
+
                         await this.ConnectAsync(peerAddress).ConfigureAwait(false);
                     }
                 }).ConfigureAwait(false);

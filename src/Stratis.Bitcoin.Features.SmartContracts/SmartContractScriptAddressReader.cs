@@ -2,8 +2,8 @@
 using NBitcoin;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Interfaces;
+using Stratis.SmartContracts.CLR;
 using Stratis.SmartContracts.Core;
-using Stratis.SmartContracts.Executor.Reflection;
 
 namespace Stratis.Bitcoin.Features.SmartContracts
 {

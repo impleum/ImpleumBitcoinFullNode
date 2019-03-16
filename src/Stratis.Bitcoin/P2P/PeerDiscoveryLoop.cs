@@ -53,9 +53,6 @@ namespace Stratis.Bitcoin.P2P
         /// <summary>Peer address manager instance, see <see cref="IPeerAddressManager"/>.</summary>
         private readonly IPeerAddressManager peerAddressManager;
 
-        /// <summary>The amount of peers to find.</summary>
-        private int peersToFind;
-
         /// <summary>The network the node is running on.</summary>
         private readonly Network network;
 
@@ -64,6 +61,8 @@ namespace Stratis.Bitcoin.P2P
 
         /// <summary>Indicates the dns and seed nodes were attempted.</summary>
         private bool isSeedAndDnsAttempted;
+
+        private const int TargetAmountOfPeersToDiscover = 2000;
 
         public PeerDiscovery(
             IAsyncLoopFactory asyncLoopFactory,
@@ -96,11 +95,9 @@ namespace Stratis.Bitcoin.P2P
 
             this.currentParameters = connectionManager.Parameters.Clone(); // TODO we shouldn't add all the behaviors, only those that we need.
 
-            this.peersToFind = this.currentParameters.PeerAddressManagerBehaviour().PeersToDiscover;
-
             this.asyncLoop = this.asyncLoopFactory.Run(nameof(this.DiscoverPeersAsync), async token =>
             {
-                if (this.peerAddressManager.Peers.Count < this.peersToFind)
+                if (this.peerAddressManager.Peers.Count < TargetAmountOfPeersToDiscover)
                     await this.DiscoverPeersAsync();
             },
             this.nodeLifetime.ApplicationStopping,
@@ -108,7 +105,7 @@ namespace Stratis.Bitcoin.P2P
         }
 
         /// <summary>
-        /// See <see cref="DiscoverPeers"/>
+        /// See <see cref="DiscoverPeers"/>.
         /// </summary>
         private async Task DiscoverPeersAsync()
         {

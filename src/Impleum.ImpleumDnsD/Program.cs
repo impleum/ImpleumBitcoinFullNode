@@ -39,7 +39,7 @@ namespace Impleum.ImpleumDnsD
             try
             {
                 // Network network = args.Contains("-testnet") ? Network.ImpleumTest : Network.ImpleumMain;
-                NodeSettings nodeSettings = new NodeSettings(protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args);
+                NodeSettings nodeSettings = new NodeSettings(protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args, agent: "ImpleumNode");
                 var dnsSettings = new DnsSettings(nodeSettings);
 
                 if (string.IsNullOrWhiteSpace(dnsSettings.DnsHostName) || string.IsNullOrWhiteSpace(dnsSettings.DnsNameServer) || string.IsNullOrWhiteSpace(dnsSettings.DnsMailBox))

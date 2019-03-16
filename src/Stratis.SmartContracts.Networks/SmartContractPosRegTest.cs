@@ -4,10 +4,10 @@ using NBitcoin;
 using NBitcoin.BouncyCastle.Math;
 using NBitcoin.DataEncoders;
 using NBitcoin.Protocol;
-using Stratis.Bitcoin.Networks.Deployments;
 using Stratis.Bitcoin.Features.SmartContracts.PoS;
+using Stratis.SmartContracts.Networks.Policies;
 
-namespace Stratis.Bitcoin.Features.SmartContracts.Networks
+namespace Stratis.SmartContracts.Networks
 {
     public sealed class SmartContractPosRegTest : Network
     {
@@ -21,6 +21,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Networks
             this.DefaultConfigFilename = SmartContractNetwork.StratisDefaultConfigFilename;
             this.Magic = 0xDAB5BFFA;
             this.DefaultPort = 18444;
+            this.DefaultMaxOutboundConnections = 16;
+            this.DefaultMaxInboundConnections = 109;
             this.RPCPort = 18332;
             this.MaxTipAge = SmartContractNetwork.BitcoinDefaultMaxTipAgeInSeconds;
             this.MinTxFee = 1000;
@@ -74,6 +76,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Networks
                 powTargetTimespan: TimeSpan.FromSeconds(14 * 24 * 60 * 60), // two weeks
                 powTargetSpacing: TimeSpan.FromSeconds(10 * 60),
                 powAllowMinDifficultyBlocks: true,
+                posNoRetargeting: true,
                 powNoRetargeting: true,
                 powLimit: new Target(new uint256("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")),
                 minimumChainWork: uint256.Zero,
@@ -107,6 +110,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Networks
 
             this.DNSSeeds = new List<DNSSeedData>();
             this.SeedNodes = new List<NetworkAddress>();
+
+            this.StandardScriptsRegistry = new SmartContractsStandardScriptsRegistry();
         }
     }
 }

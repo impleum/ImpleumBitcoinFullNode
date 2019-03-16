@@ -107,6 +107,16 @@ namespace NBitcoin
         public int DefaultPort { get; protected set; }
 
         /// <summary>
+        /// The default maximum number of outbound connections a node on this network will form.
+        /// </summary>
+        public int DefaultMaxOutboundConnections { get; protected set; }
+
+        /// <summary>
+        /// The default maximum number of inbound connections a node on this network will accept.
+        /// </summary>
+        public int DefaultMaxInboundConnections { get; protected set; }
+
+        /// <summary>
         /// The consensus for this network.
         /// </summary>
         public IConsensus Consensus { get; protected set; }
@@ -225,6 +235,14 @@ namespace NBitcoin
         /// The reward for the genesis block, which is unspendable.
         /// </summary>
         public Money GenesisReward { get; protected set; }
+
+        /// <summary>
+        /// The list of script templates regarded as standard.
+        /// Standardness is a distinct property from consensus validity.
+        /// A non-standard transaction can still be mined/staked by a willing node and the resulting block will be accepted by the network.
+        /// However, a non-standard transaction will typically not be relayed between nodes.
+        /// </summary>
+        public IStandardScriptsRegistry StandardScriptsRegistry { get; protected set; }
 
         /// <summary>
         /// Mines a new genesis block, to use with a new network.

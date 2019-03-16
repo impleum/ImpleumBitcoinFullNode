@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using NBitcoin;
 using Stratis.Bitcoin.Configuration;
 
 namespace Stratis.Bitcoin.P2P
@@ -12,10 +13,10 @@ namespace Stratis.Bitcoin.P2P
         DataFolder PeerFilePath { get; set; }
 
         /// <summary>A collection of all discovered peers.</summary>
-        List<PeerAddress> Peers { get; }
+        ICollection<PeerAddress> Peers { get; }
 
         /// <summary>
-        /// Adds a peer to the <see cref="Peers"/> dictionary.
+        /// Adds a peer to the <see cref="Peers"/> dictionary if it doesn't exist yet.
         /// <para>
         /// Only routable IP addresses will be added. See <see cref="IpExtensions.IsRoutable"/>.
         /// </para>
@@ -28,7 +29,7 @@ namespace Stratis.Bitcoin.P2P
         /// Only routable IP addresses will be added. <see cref="IpExtensions.IsRoutable(IPAddress, bool)"/>
         /// </para>
         /// </summary>
-        void AddPeers(IPEndPoint[] endPoints, IPAddress source);
+        void AddPeers(IEnumerable<IPEndPoint> endPoints, IPAddress source);
 
         /// <summary>
         /// Remove a peer from the <see cref="Peers"/> dictionary.
