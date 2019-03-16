@@ -107,7 +107,8 @@ namespace Stratis.Bitcoin.Features.BlockStore
             }
 
             // Use ProvenHeadersBlockStoreBehavior for PoS Networks
-            if (this.network.Consensus.IsProofOfStake)
+            // Temporary disabled in impleum until soft fork is done
+            if (this.network.Consensus.IsProofOfStake && !this.network.IsImpleum())
             {
                 this.connectionManager.Parameters.TemplateBehaviors.Add(new ProvenHeadersBlockStoreBehavior(this.network, this.chain, this.chainState, this.loggerFactory, this.consensusManager, this.checkpoints, this.blockStoreQueue));
             }
@@ -163,7 +164,8 @@ namespace Stratis.Bitcoin.Features.BlockStore
                         services.AddSingleton<IBlockRepository, BlockRepository>();
                         services.AddSingleton<IPrunedBlockRepository, PrunedBlockRepository>();
 
-                        if (fullNodeBuilder.Network.Consensus.IsProofOfStake)
+                        // Temporary disabled in impleum until soft fork is done
+                        if (fullNodeBuilder.Network.Consensus.IsProofOfStake && !fullNodeBuilder.Network.IsImpleum())
                             services.AddSingleton<BlockStoreSignaled, ProvenHeadersBlockStoreSignaled>();
                         else
                             services.AddSingleton<BlockStoreSignaled>();

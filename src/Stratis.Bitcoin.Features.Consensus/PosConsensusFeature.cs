@@ -77,6 +77,9 @@ namespace Stratis.Bitcoin.Features.Consensus
             }
 
             // Replace default ConsensusManagerBehavior with ProvenHeadersConsensusManagerBehavior
+            // Temporary disabled in impleum until soft fork is done
+            if (this.network.IsImpleum())
+                return Task.CompletedTask;
             connectionParameters.TemplateBehaviors.Remove(defaultConsensusManagerBehavior);
             connectionParameters.TemplateBehaviors.Add(new ProvenHeadersConsensusManagerBehavior(this.chain, this.initialBlockDownloadState, this.consensusManager, this.peerBanning, this.loggerFactory, this.network, this.chainState, this.checkpoints, this.provenBlockHeaderStore, this.connectionManagerSettings));
 

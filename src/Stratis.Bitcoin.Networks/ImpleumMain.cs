@@ -102,7 +102,7 @@ namespace Stratis.Bitcoin.Networks
                 ruleChangeActivationThreshold: 1916,// 95% of 2016
                 minerConfirmationWindow: 2016, // nPowTargetTimespan / nPowTargetSpacing
                 maxReorgLength: 500,
-                defaultAssumeValid: new uint256("0x04c2b9fe7e52e0c6d54fbdf5018fcda8709457b1c12b0dc8eae185b2018de19a"), // 215001
+                defaultAssumeValid: new uint256("0x5438e23dda186146b0e58de04206ff455392501474d3907c615a6e55116b02fd"), // 215001
                 maxMoney: 100000000 * Money.COIN,
                 coinbaseMaturity: 50,
                 premineHeight: 2,
@@ -151,7 +151,7 @@ namespace Stratis.Bitcoin.Networks
                 { 200000, new CheckpointInfo(new uint256("0xa8c3901f1752cea4defdea41ee94221eb9b43c8836b995eb1bb873538b7d18b4"), new uint256("0x68b02912f24bc15e776c2f9655c012d177f2473bcc51b1a1842d56e617e90a3c")) },
                 { 215001, new CheckpointInfo(new uint256("0x04c2b9fe7e52e0c6d54fbdf5018fcda8709457b1c12b0dc8eae185b2018de19a"), new uint256("0xe24b26116717993c4a97f4c4f4487695eba8f53fab5f8c023f1fb6c2d3d4c179")) },
                 { 250000, new CheckpointInfo(new uint256("0x36bca99e22d680d6bb4b2dd7b844e1a939925d5bebe320f1d9f5c7c8adb87882"), new uint256("0xc099f94116a37d314688a75afc6a3a15cc7b04e0fec0383db28647243200c5e5")) },
-                { 475000, new CheckpointInfo(new uint256("0x5438e23dda186146b0e58de04206ff455392501474d3907c615a6e55116b02fd"), new uint256("0x615285eae6d269e32898fdcac811278ddefb4bde759fa061cde4aa2053cd6585")) },
+                { 475000, new CheckpointInfo(new uint256("0x5438e23dda186146b0e58de04206ff455392501474d3907c615a6e55116b02fd"), new uint256("0x615285eae6d269e32898fdcac811278ddefb4bde759fa061cde4aa2053cd6585")) }
             };
 
 
