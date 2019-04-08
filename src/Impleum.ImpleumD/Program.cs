@@ -28,7 +28,10 @@ namespace Impleum.ImpleumD
         {
             try
             {
-                var nodeSettings = new NodeSettings(networksSelector: Networks.Impleum, protocolVersion: ProtocolVersion.ALT_PROTOCOL_VERSION, args: args, agent: "ImpleumNode");
+                var nodeSettings = new NodeSettings(networksSelector: Networks.Impleum, protocolVersion: ProtocolVersion.PROVEN_HEADER_VERSION, args: args, agent: "ImpleumNode")
+                {
+                    MinProtocolVersion = ProtocolVersion.ALT_PROTOCOL_VERSION
+                };
 
                 IFullNode node = new FullNodeBuilder()
                     .UseNodeSettings(nodeSettings)

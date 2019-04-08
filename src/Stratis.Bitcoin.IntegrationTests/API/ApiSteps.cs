@@ -39,7 +39,8 @@ namespace Stratis.Bitcoin.IntegrationTests.API
         private const string WalletAccountName = "account 0";
         private const string WalletPassword = "password";
         private const string WalletPassphrase = "wallet_passphrase";
-        private const string StratisRegTest = "StratisRegTest";
+        //private const string StratisRegTest = "StratisRegTest";
+        private const string StratisRegTest = "ImpleumRegTest";
 
         // BlockStore
         private const string BlockUri = "api/blockstore/block";

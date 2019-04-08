@@ -5,6 +5,7 @@ using NBitcoin;
 using NBitcoin.BouncyCastle.Math;
 using NBitcoin.DataEncoders;
 using Stratis.Bitcoin.Networks.Deployments;
+using Stratis.Bitcoin.Networks.Policies;
 
 namespace Stratis.Bitcoin.Networks
 {
@@ -35,15 +36,19 @@ namespace Stratis.Bitcoin.Networks
             var magic = BitConverter.ToUInt32(messageStart, 0); //0x5223570;
 
             this.Name = nameof(ImpleumMain);
+            this.NetworkType = NetworkType.Mainnet;
+            this.DefaultMaxOutboundConnections = 16;
+            this.DefaultMaxInboundConnections = 109;
             this.RootFolderName = ImpleumRootFolderName;
             this.DefaultConfigFilename = ImpleumDefaultConfigFilename;
             this.Magic = magic;
+            this.DefaultAPIPort = 38222;
             this.DefaultPort = 16171;
             this.DefaultMaxOutboundConnections = 16;
             this.DefaultMaxInboundConnections = 109;
-            this.RPCPort = 16172;
+            this.DefaultRPCPort = 16172;
             this.MinTxFee = 10000;
-            this.FallbackFee = 60000;
+            this.FallbackFee = 10000;
             this.MinRelayTxFee = 10000;
             this.MaxTimeOffsetSeconds = ImpleumMaxTimeOffsetSeconds;
             this.MaxTipAge = ImpleumDefaultMaxTipAgeInSeconds;
@@ -171,6 +176,7 @@ namespace Stratis.Bitcoin.Networks
 
 
 
+            this.StandardScriptsRegistry = new StratisStandardScriptsRegistry();
             //MineGenesis(genesis,consensus);
 
             Assert(this.Consensus.HashGenesisBlock == uint256.Parse("0x02a8be139ec629b13df22e7abc7f9ad5239df39efaf2f5bf3ab5e4d102425dbe"));

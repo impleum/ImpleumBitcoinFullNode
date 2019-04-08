@@ -498,7 +498,7 @@ namespace Stratis.Bitcoin.Features.Consensus
             BigInteger bnCentSecond = BigInteger.Zero;  // coin age in the unit of cent-seconds
             foreach (TxIn input in coinstakeTx.Inputs)
             {
-                var inputCoins = this.coinView.FetchCoinsAsync(new[] { input.PrevOut.Hash }).GetAwaiter().GetResult();
+                var inputCoins = this.coinView.FetchCoins(new[] { input.PrevOut.Hash });
                 if ((inputCoins == null) || (inputCoins.UnspentOutputs.Length != 1))
                     continue;
                 if (this.IsConfirmedInNPrevBlocks(inputCoins.UnspentOutputs[0], prevBlock, (this.network.Consensus.Options as PosConsensusOptions)?.GetStakeMinConfirmations(prevBlock.Height + 1, this.network) - 1 ?? 1))

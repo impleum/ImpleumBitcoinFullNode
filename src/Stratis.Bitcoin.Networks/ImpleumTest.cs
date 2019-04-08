@@ -5,6 +5,7 @@ using NBitcoin;
 using NBitcoin.BouncyCastle.Math;
 using NBitcoin.Protocol;
 using Stratis.Bitcoin.Networks.Deployments;
+using Stratis.Bitcoin.Networks.Policies;
 
 namespace Stratis.Bitcoin.Networks
 {
@@ -23,11 +24,13 @@ namespace Stratis.Bitcoin.Networks
             uint magic = BitConverter.ToUInt32(messageStart, 0); // 0x11213171;
 
             this.Name = nameof(ImpleumTest);
+            this.NetworkType = NetworkType.Testnet;
             this.Magic = magic;
             this.DefaultPort = 16271;
+            this.DefaultAPIPort = 39222;
             this.DefaultMaxOutboundConnections = 16;
             this.DefaultMaxInboundConnections = 109;
-            this.RPCPort = 16272;
+            this.DefaultRPCPort = 16272;
             this.CoinTicker = "TIMPL";
 
             var powLimit = new Target(new uint256("0000ffff00000000000000000000000000000000000000000000000000000000"));
@@ -108,7 +111,7 @@ namespace Stratis.Bitcoin.Networks
                 proofOfStakeReward: Money.Coins(5m)
             );
 
-            this.Base58Prefixes[(int)Base58Type.PUBKEY_ADDRESS] = new byte[] { (102) };
+            this.Base58Prefixes[(int)Base58Type.PUBKEY_ADDRESS] = new byte[] { (65) };
             this.Base58Prefixes[(int)Base58Type.SCRIPT_ADDRESS] = new byte[] { (196) };
             this.Base58Prefixes[(int)Base58Type.SECRET_KEY] = new byte[] { (65 + 128) };
 
@@ -126,6 +129,7 @@ namespace Stratis.Bitcoin.Networks
                 new NetworkAddress(IPAddress.Parse("62.80.181.141"), this.DefaultPort)
             };
 
+            this.StandardScriptsRegistry = new StratisStandardScriptsRegistry();
             Assert(this.Consensus.HashGenesisBlock == uint256.Parse("dab06c78af72a1fb8a17581c631ec2d3df60a8029142962de5448b992b47467e"));
         }
     }
