@@ -31,14 +31,14 @@ namespace Stratis.Features.FederatedPeg.IntegrationTests.Utils
         public CoreNode CreateSidechainNode(Network network)
         {
             string agentName = $"sideuser{Interlocked.Increment(ref agentCount)}";
-            return this.CreateNode(new SidechainUserNodeRunner(this.GetNextDataFolderName(agentName), agentName, network), "poa.conf");
+            return this.CreateNode(new SidechainUserNodeRunner(this.GetNextDataFolderName(agentName), agentName, network, this.TimeProvider), "poa.conf");
         }
 
-        public CoreNode CreateSidechainFederationNode(Network network, Key key, bool testingFederation = true)
+        public CoreNode CreateSidechainFederationNode(Network network, Network counterChainNetwork, Key key, bool testingFederation = true)
         {
             string agentName = $"sidefed{Interlocked.Increment(ref agentCount)}";
             string dataFolder = this.GetNextDataFolderName(agentName);
-            CoreNode node = this.CreateNode(new SidechainFederationNodeRunner(dataFolder, agentName, network, testingFederation), "poa.conf");
+            CoreNode node = this.CreateNode(new SidechainFederationNodeRunner(dataFolder, agentName, network, counterChainNetwork, testingFederation, this.TimeProvider), "poa.conf");
 
             var settings = new NodeSettings(network, args: new string[] { "-conf=poa.conf", "-datadir=" + dataFolder });
             var tool = new KeyTool(settings.DataFolder);
@@ -47,11 +47,11 @@ namespace Stratis.Features.FederatedPeg.IntegrationTests.Utils
             return node;
         }
 
-        public CoreNode CreateMainChainFederationNode(Network network)
+        public CoreNode CreateMainChainFederationNode(Network network, Network counterChainNetwork)
         {
             string agentName = $"mainfed{Interlocked.Increment(ref agentCount)}";
             string dataFolder = this.GetNextDataFolderName(agentName);
-            CoreNode node = this.CreateNode(new MainChainFederationNodeRunner(dataFolder, agentName, network), "stratis.conf");
+            CoreNode node = this.CreateNode(new MainChainFederationNodeRunner(dataFolder, agentName, network, counterChainNetwork), "stratis.conf");
 
             return node;
         }

@@ -72,6 +72,7 @@ namespace Stratis.Bitcoin.Connection
             get { return this.connectedPeers; }
         }
 
+        /// <inheritdoc/>
         public List<NetworkPeerServer> Servers { get; }
 
         /// <summary>Maintains a list of connected peers and ensures their proper disposal.</summary>
@@ -81,7 +82,10 @@ namespace Stratis.Bitcoin.Connection
 
         private IConsensusManager consensusManager;
 
-        private AsyncQueue<INetworkPeer> connectedPeersQueue;
+        private readonly AsyncQueue<INetworkPeer> connectedPeersQueue;
+
+        /// <summary>Traffic statistics from peers that have been disconnected.</summary>
+        private readonly PerformanceCounter disconnectedPerfCounter;
 
         public ConnectionManager(IDateTimeProvider dateTimeProvider,
             ILoggerFactory loggerFactory,
@@ -118,6 +122,7 @@ namespace Stratis.Bitcoin.Connection
             this.selfEndpointTracker = selfEndpointTracker;
             this.versionProvider = versionProvider;
             this.connectedPeersQueue = new AsyncQueue<INetworkPeer>(this.OnPeerAdded);
+            this.disconnectedPerfCounter = new PerformanceCounter();
 
             this.Parameters.UserAgent = $"{this.ConnectionSettings.Agent}:{versionProvider.GetVersion()} ({(int)this.NodeSettings.ProtocolVersion})";
 
@@ -227,19 +232,20 @@ namespace Stratis.Bitcoin.Connection
 
         private void AddComponentStats(StringBuilder builder)
         {
-            long totalRead = 0;
-            long totalWritten = 0;
-            var peerBuilder = new StringBuilder();
-            foreach (INetworkPeer peer in this.ConnectedPeers)
+            // The total traffic will be the sum of the disconnected peers' traffic and the currently connected peers' traffic.
+            long totalRead = this.disconnectedPerfCounter.ReadBytes;
+            long totalWritten = this.disconnectedPerfCounter.WrittenBytes;
+
+            void AddPeerInfo(StringBuilder peerBuilder, INetworkPeer peer)
             {
                 var chainHeadersBehavior = peer.Behavior<ConsensusManagerBehavior>();
+                var connectionManagerBehavior = peer.Behavior<ConnectionManagerBehavior>();
 
                 string peerHeights = $"(r/s/c):" +
                                      $"{(chainHeadersBehavior.BestReceivedTip != null ? chainHeadersBehavior.BestReceivedTip.Height.ToString() : peer.PeerVersion != null ? peer.PeerVersion.StartHeight + "*" : "-")}" +
                                      $"/{(chainHeadersBehavior.BestSentHeader != null ? chainHeadersBehavior.BestSentHeader.Height.ToString() : peer.PeerVersion != null ? peer.PeerVersion.StartHeight + "*" : "-")}" +
                                      $"/{chainHeadersBehavior.GetCachedItemsCount()}";
 
-                // TODO: Need a snapshot cache so that not only currently connected peers are summed
                 string peerTraffic = $"R/S MB: {peer.Counter.ReadBytes.BytesToMegaBytes()}/{peer.Counter.WrittenBytes.BytesToMegaBytes()}";
                 totalRead += peer.Counter.ReadBytes;
                 totalWritten += peer.Counter.WrittenBytes;
@@ -252,11 +258,84 @@ namespace Stratis.Bitcoin.Connection
                     + " agent:" + agent);
             }
 
+            var oneTryBuilder = new StringBuilder();
+            var whiteListedBuilder = new StringBuilder();
+            var addNodeBuilder = new StringBuilder();
+            var connectBuilder = new StringBuilder();
+            var otherBuilder = new StringBuilder();
+            var addNodeDict = this.ConnectionSettings.AddNode.ToDictionary(ep => ep.MapToIpv6(), ep => ep);
+            var connectDict = this.ConnectionSettings.Connect.ToDictionary(ep => ep.MapToIpv6(), ep => ep);
+
+            foreach (INetworkPeer peer in this.ConnectedPeers)
+            {
+                bool added = false;
+
+                var connectionManagerBehavior = peer.Behavior<ConnectionManagerBehavior>();
+                if (connectionManagerBehavior.OneTry)
+                {
+                    AddPeerInfo(oneTryBuilder, peer);
+                    added = true;
+                }
+
+                if (connectionManagerBehavior.Whitelisted)
+                {
+                    AddPeerInfo(whiteListedBuilder, peer);
+                    added = true;
+                }
+
+                if (connectDict.ContainsKey(peer.PeerEndPoint))
+                {
+                    AddPeerInfo(connectBuilder, peer);
+                    added = true;
+                }
+
+                if (addNodeDict.ContainsKey(peer.PeerEndPoint))
+                {
+                    AddPeerInfo(addNodeBuilder, peer);
+                    added = true;
+                }
+
+                if (!added)
+                {
+                    AddPeerInfo(otherBuilder, peer);
+                }
+            }
+
             int inbound = this.ConnectedPeers.Count(x => x.Inbound);
 
             builder.AppendLine();
             builder.AppendLine($"======Connection====== agent {this.Parameters.UserAgent} [in:{inbound} out:{this.ConnectedPeers.Count() - inbound}] [recv: {totalRead.BytesToMegaBytes()} MB sent: {totalWritten.BytesToMegaBytes()} MB]");
-            builder.AppendLine(peerBuilder.ToString());
+
+            if (whiteListedBuilder.Length > 0)
+            {
+                builder.AppendLine(">>> Whitelisted:");
+                builder.Append(whiteListedBuilder.ToString());
+                builder.AppendLine("<<<");
+            }
+
+            if (addNodeBuilder.Length > 0)
+            {
+                builder.AppendLine(">>> AddNode:");
+                builder.Append(addNodeBuilder.ToString());
+                builder.AppendLine("<<<");
+            }
+
+            if (oneTryBuilder.Length > 0)
+            {
+                builder.AppendLine(">>> OneTry:");
+                builder.Append(oneTryBuilder.ToString());
+                builder.AppendLine("<<<");
+            }
+
+            if (connectBuilder.Length > 0)
+            {
+                builder.AppendLine(">>> Connect:");
+                builder.Append(connectBuilder.ToString());
+                builder.AppendLine("<<<");
+            }
+
+            if (otherBuilder.Length > 0)
+                builder.Append(otherBuilder.ToString());
         }
 
         private string ToKBSec(ulong bytesPerSec)
@@ -359,6 +438,7 @@ namespace Stratis.Bitcoin.Connection
         public void RemoveConnectedPeer(INetworkPeer peer, string reason)
         {
             this.connectedPeers.Remove(peer);
+            this.disconnectedPerfCounter.Add(peer.Counter);
         }
 
         /// <inheritdoc />

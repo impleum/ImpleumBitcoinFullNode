@@ -6,11 +6,13 @@ using Stratis.Bitcoin.Features.Api;
 using Stratis.Bitcoin.Features.BlockStore;
 using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Notifications;
+using Stratis.Bitcoin.Features.PoA.IntegrationTests.Common;
 using Stratis.Bitcoin.Features.RPC;
 using Stratis.Bitcoin.Features.SmartContracts;
 using Stratis.Bitcoin.Features.SmartContracts.Wallet;
 using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.Runners;
+using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Features.FederatedPeg.IntegrationTests.Utils
 {
@@ -18,12 +20,20 @@ namespace Stratis.Features.FederatedPeg.IntegrationTests.Utils
     {
         private bool testingFederation;
 
-        public SidechainFederationNodeRunner(string dataDir, string agent, Network network, bool testingFederation)
+        private readonly IDateTimeProvider timeProvider;
+
+        private readonly Network counterChainNetwork;
+
+        public SidechainFederationNodeRunner(string dataDir, string agent, Network network, Network counterChainNetwork, bool testingFederation, IDateTimeProvider dateTimeProvider)
             : base(dataDir, agent)
         {
             this.Network = network;
 
+            this.counterChainNetwork = counterChainNetwork;
+
             this.testingFederation = testingFederation;
+
+            this.timeProvider = dateTimeProvider;
         }
 
         public override void BuildNode()
@@ -38,14 +48,16 @@ namespace Stratis.Features.FederatedPeg.IntegrationTests.Utils
                     options.UseReflectionExecutor();
                 })
                 .UseSmartContractWallet()
-                .AddFederationGateway()
+                .AddFederationGateway(new FederatedPegOptions(this.counterChainNetwork))
                 .UseFederatedPegPoAMining()
                 .UseMempool()
                 .UseTransactionNotification()
                 .UseBlockNotification()
                 .UseApi()
                 .AddRPC()
-                .MockIBD();
+                .MockIBD()
+                .ReplaceTimeProvider(this.timeProvider)
+                .AddFastMiningCapability();
 
             if (!this.testingFederation)
             {
