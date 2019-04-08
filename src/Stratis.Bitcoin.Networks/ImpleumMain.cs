@@ -48,7 +48,7 @@ namespace Stratis.Bitcoin.Networks
             this.DefaultMaxInboundConnections = 109;
             this.DefaultRPCPort = 16172;
             this.MinTxFee = 10000;
-            this.FallbackFee = 10000;
+            this.FallbackFee = 60000;
             this.MinRelayTxFee = 10000;
             this.MaxTimeOffsetSeconds = ImpleumMaxTimeOffsetSeconds;
             this.MaxTipAge = ImpleumDefaultMaxTipAgeInSeconds;
