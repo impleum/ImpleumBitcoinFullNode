@@ -101,7 +101,7 @@ namespace Stratis.Bitcoin.Features.Miner
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
             this.initialBlockDownloadState = initialBlockDownloadState;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.mempool = mempool;
             this.mempoolLock = mempoolLock;
             this.network = network;

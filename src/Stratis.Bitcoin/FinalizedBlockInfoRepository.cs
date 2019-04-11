@@ -62,7 +62,7 @@ namespace Stratis.Bitcoin
             Guard.NotNull(keyValueRepo, nameof(keyValueRepo));
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.keyValueRepo = keyValueRepo;
             this.finalizedBlockInfosToSave = new Queue<HashHeightPair>();

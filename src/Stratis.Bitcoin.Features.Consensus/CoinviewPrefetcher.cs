@@ -42,7 +42,7 @@ namespace Stratis.Bitcoin.Features.Consensus
 
             this.headersQueue = new AsyncQueue<ChainedHeader>(this.OnHeaderEnqueuedAsync);
             this.coinviewHelper = new CoinviewHelper();
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>

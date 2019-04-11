@@ -45,7 +45,7 @@ namespace Stratis.Bitcoin.Features.Wallet
             this.network = network;
             this.walletManager = walletManager;
             this.walletFeePolicy = walletFeePolicy;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             
             this.TransactionPolicy = transactionPolicy;
         }

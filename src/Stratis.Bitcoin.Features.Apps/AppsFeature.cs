@@ -26,7 +26,7 @@ namespace Stratis.Bitcoin.Features.Apps
             this.appsStore = appsStore;
             this.appsHost = appsHost;
             this.dataFolder = dataFolder;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public override Task InitializeAsync()

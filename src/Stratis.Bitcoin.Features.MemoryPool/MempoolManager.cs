@@ -58,7 +58,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.mempoolPersistence = mempoolPersistence;
             this.coinView = coinView;
             this.network = network;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>Lock for memory pool access.</summary>

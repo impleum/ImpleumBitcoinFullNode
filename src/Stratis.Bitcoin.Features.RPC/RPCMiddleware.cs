@@ -38,7 +38,7 @@ namespace Stratis.Bitcoin.Features.RPC
 
             this.next = next;
             this.authorization = authorization;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.httpContextFactory = httpContextFactory;
             this.dataFolder = dataFolder;
         }

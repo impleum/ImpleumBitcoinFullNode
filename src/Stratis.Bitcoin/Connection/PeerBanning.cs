@@ -72,7 +72,7 @@ namespace Stratis.Bitcoin.Connection
 
         public PeerBanning(IConnectionManager connectionManager, ILoggerFactory loggerFactory, IDateTimeProvider dateTimeProvider, IPeerAddressManager peerAddressManager)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.connectionManager = connectionManager;
             this.dateTimeProvider = dateTimeProvider;
             this.peerAddressManager = peerAddressManager;

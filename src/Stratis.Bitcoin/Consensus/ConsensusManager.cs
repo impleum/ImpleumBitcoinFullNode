@@ -175,7 +175,7 @@ namespace Stratis.Bitcoin.Consensus
             this.chainIndexer = chainIndexer;
             this.connectionManager = connectionManager;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.chainedHeaderTree = chainedHeaderTree;
 

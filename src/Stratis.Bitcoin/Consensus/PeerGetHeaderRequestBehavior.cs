@@ -58,7 +58,7 @@ namespace Stratis.Bitcoin.Consensus
         {
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.peerBanning = peerBanning;
         }
 

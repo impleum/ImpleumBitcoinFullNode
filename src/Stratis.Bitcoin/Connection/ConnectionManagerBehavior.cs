@@ -40,7 +40,7 @@ namespace Stratis.Bitcoin.Connection
         public ConnectionManagerBehavior(IConnectionManager connectionManager, ILoggerFactory loggerFactory)
         {
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName, $"[{this.GetHashCode():x}] ");
-            this.infoLogger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.infoLogger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.loggerFactory = loggerFactory;
 
             this.connectionManager = connectionManager;

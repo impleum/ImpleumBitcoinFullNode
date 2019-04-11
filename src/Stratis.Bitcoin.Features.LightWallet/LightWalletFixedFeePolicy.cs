@@ -39,7 +39,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
         /// <param name="settings">The node settings.</param>
         public LightWalletFixedFeePolicy(ILoggerFactory loggerFactory, NodeSettings settings)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.FallbackTxFeeRate = settings.FallbackTxFeeRate;
             this.TxFeeRate = this.FallbackTxFeeRate;

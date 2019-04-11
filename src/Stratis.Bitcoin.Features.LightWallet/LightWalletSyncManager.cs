@@ -71,7 +71,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
             this.chainIndexer = chainIndexer;
             this.signals = signals;
             this.blockNotification = blockNotification;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.nodeLifetime = nodeLifetime;
             this.asyncLoopFactory = asyncLoopFactory;
             this.consensusManager = consensusManager;

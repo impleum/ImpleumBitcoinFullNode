@@ -78,7 +78,7 @@ namespace Stratis.Bitcoin.Features.Consensus
         /// <param name="loggerFactory">Factory for creating loggers.</param>
         public StakeValidator(Network network, IStakeChain stakeChain, ChainIndexer chainIndexer, ICoinView coinView, ILoggerFactory loggerFactory)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.stakeChain = stakeChain;
             this.chainIndexer = chainIndexer;
             this.coinView = coinView;

@@ -101,7 +101,7 @@ namespace Stratis.Bitcoin.Consensus
             this.DateTimeProvider = dateTimeProvider;
             this.invalidBlockHashStore = invalidBlockHashStore;
             this.LoggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.NodeDeployments = nodeDeployments;
 
             this.headerValidationRules = new List<HeaderValidationConsensusRule>();

@@ -122,7 +122,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
             Directory.CreateDirectory(folder);
             this.DBreeze = new DBreezeEngine(folder);
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.dBreezeSerializer = dBreezeSerializer;
         }

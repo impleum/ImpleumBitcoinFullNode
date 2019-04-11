@@ -35,7 +35,7 @@ namespace Stratis.Bitcoin.P2P
             ISelfEndpointTracker selfEndpointTracker) :
             base(asyncLoopFactory, dateTimeProvider, loggerFactory, network, networkPeerFactory, nodeLifetime, nodeSettings, connectionSettings, peerAddressManager, selfEndpointTracker)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.Requirements.RequiredServices = NetworkPeerServices.Network;
         }
 

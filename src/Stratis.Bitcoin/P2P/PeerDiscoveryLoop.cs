@@ -75,7 +75,7 @@ namespace Stratis.Bitcoin.P2P
         {
             this.asyncLoopFactory = asyncLoopFactory;
             this.loggerFactory = loggerFactory;
-            this.logger = this.loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = this.loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.peerAddressManager = peerAddressManager;
             this.network = network;
             this.networkPeerFactory = networkPeerFactory;

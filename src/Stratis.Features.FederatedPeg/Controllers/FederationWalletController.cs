@@ -66,7 +66,7 @@ namespace Stratis.Features.FederatedPeg.Controllers
             this.withdrawalHistoryProvider = withdrawalHistoryProvider;
             this.coinType = (CoinType)network.Consensus.CoinType;
             this.chainIndexer = chainIndexer;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         [Route(FederationWalletRouteEndPoint.GeneralInfo)]

@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Stratis Bitcoin FullNode</Description>
-    <AssemblyTitle>Stratis.Bitcoin</AssemblyTitle>
+    <Description>Impleum Bitcoin FullNode</Description>
+    <AssemblyTitle>Impleum.Bitcoin</AssemblyTitle>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Stratis.Bitcoin</AssemblyName>
-    <PackageId>Stratis.Bitcoin</PackageId>
+    <AssemblyName>Impleum.Bitcoin</AssemblyName>
+    <PackageId>Impleum.Bitcoin</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>

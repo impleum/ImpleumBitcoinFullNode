@@ -1,0 +1,20 @@
+{
+  "profiles": {
+    "Bitcoin Main": {
+      "commandName": "Project",
+      "commandLineArgs": "impleum -testnet"
+    },
+    "Bitcoin Test": {
+      "commandName": "Project",
+      "commandLineArgs": "-testnet -debug=all -loglevel=debug"
+    },
+    "Impleum Main": {
+      "commandName": "Project",
+      "commandLineArgs": "impleum "
+    },
+    "Impleum Test": {
+      "commandName": "Project",
+      "commandLineArgs": "impleum -testnet -prune=2880"
+    }
+  }
+}

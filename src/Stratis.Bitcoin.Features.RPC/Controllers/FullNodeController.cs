@@ -69,7 +69,7 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
                   connectionManager: connectionManager,
                   consensusManager: consensusManager)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.pooledTransaction = pooledTransaction;
             this.pooledGetUnspentTransaction = pooledGetUnspentTransaction;
             this.getUnspentTransaction = getUnspentTransaction;

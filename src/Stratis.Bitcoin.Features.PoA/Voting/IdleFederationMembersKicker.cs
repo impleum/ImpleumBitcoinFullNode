@@ -53,7 +53,7 @@ namespace Stratis.Bitcoin.Features.PoA.Voting
             this.slotsManager = slotsManager;
             this.votingManager = votingManager;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.federationMemberMaxIdleTimeSeconds = ((PoAConsensusOptions)network.Consensus.Options).FederationMemberMaxIdleTimeSeconds;
         }
 

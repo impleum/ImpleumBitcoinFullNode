@@ -37,7 +37,7 @@ namespace Stratis.Features.FederatedPeg.SourceChain
             this.depositExtractor = depositExtractor;
             this.consensusManager = consensusManager;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />

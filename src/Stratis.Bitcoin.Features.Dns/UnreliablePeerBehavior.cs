@@ -60,7 +60,7 @@ namespace Stratis.Bitcoin.Features.Dns
             this.nodeSettings = nodeSettings;
             this.checkpoints = checkpoints;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />

@@ -39,7 +39,7 @@ namespace Stratis.Bitcoin.Configuration.Settings
         {
             Guard.NotNull(nodeSettings, nameof(nodeSettings));
 
-            this.logger = nodeSettings.LoggerFactory.CreateLogger(typeof(ConsensusSettings).FullName);
+            this.logger = nodeSettings.LoggerFactory.CreateLogger("Impleum.Bitcoin.Configuration.Settings.ConsensusSettings");
 
             TextFileConfiguration config = nodeSettings.ConfigReader;
 

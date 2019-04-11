@@ -36,7 +36,7 @@ namespace Stratis.Bitcoin.Features.Consensus
 
         public StakeChainStore(Network network, ChainIndexer chainIndexer, DBreezeCoinView dBreezeCoinView, ILoggerFactory loggerFactory)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.chainIndexer = chainIndexer;
             this.dBreezeCoinView = dBreezeCoinView;

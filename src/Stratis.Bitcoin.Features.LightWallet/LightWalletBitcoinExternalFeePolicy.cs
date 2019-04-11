@@ -41,7 +41,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
         {
             this.asyncLoopFactory = asyncLoopFactory;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.nodeSettings = settings;
             this.maxTxFee = new Money(0.1M, MoneyUnit.BTC);
             this.initializedOnce = false;

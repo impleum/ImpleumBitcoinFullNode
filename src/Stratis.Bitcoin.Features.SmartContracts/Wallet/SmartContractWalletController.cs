@@ -47,7 +47,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
             this.broadcasterManager = broadcasterManager;
             this.callDataSerializer = callDataSerializer;
             this.connectionManager = connectionManager;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.receiptRepository = receiptRepository;
             this.walletManager = walletManager;

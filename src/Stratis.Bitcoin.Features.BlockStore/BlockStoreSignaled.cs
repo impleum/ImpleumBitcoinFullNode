@@ -62,7 +62,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
             this.chainState = chainState;
             this.connection = connection;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.storeSettings = storeSettings;
             this.initialBlockDownloadState = initialBlockDownloadState;
             this.signals = signals;

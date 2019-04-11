@@ -18,7 +18,7 @@ namespace Stratis.Bitcoin.Features.PoA.Voting
 
         public VotingDataEncoder(ILoggerFactory loggerFactory)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>Decodes raw voting data.</summary>

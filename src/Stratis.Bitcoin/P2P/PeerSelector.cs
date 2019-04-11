@@ -121,7 +121,7 @@ namespace Stratis.Bitcoin.P2P
             this.selfEndpointTracker = selfEndpointTracker;
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.peerAddresses = peerAddresses;
             this.random = new Random();
         }

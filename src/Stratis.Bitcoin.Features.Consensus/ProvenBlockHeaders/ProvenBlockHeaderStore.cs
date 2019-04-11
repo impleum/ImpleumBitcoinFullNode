@@ -99,7 +99,7 @@ namespace Stratis.Bitcoin.Features.Consensus.ProvenBlockHeaders
             Guard.NotNull(provenBlockHeaderRepository, nameof(provenBlockHeaderRepository));
             Guard.NotNull(nodeStats, nameof(nodeStats));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.provenBlockHeaderRepository = provenBlockHeaderRepository;
             this.initialBlockDownloadState = initialBlockDownloadState;
 

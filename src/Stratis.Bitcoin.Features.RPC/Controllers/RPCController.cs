@@ -50,7 +50,7 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
             Guard.NotNull(rpcClientFactory, nameof(rpcClientFactory));
 
             this.fullNode = fullNode;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.rpcSettings = rpcSettings;
             this.rpcClientFactory = rpcClientFactory;
         }

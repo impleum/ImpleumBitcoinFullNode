@@ -93,7 +93,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
             this.nodeLifetime = nodeLifetime;
             this.walletFeePolicy = walletFeePolicy;
             this.broadcasterBehavior = broadcasterBehavior;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.loggerFactory = loggerFactory;
             this.storeSettings = storeSettings;
             this.walletSettings = walletSettings;

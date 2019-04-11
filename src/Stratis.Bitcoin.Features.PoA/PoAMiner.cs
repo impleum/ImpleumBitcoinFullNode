@@ -108,7 +108,7 @@ namespace Stratis.Bitcoin.Features.PoA
             this.votingManager = votingManager;
             this.settings = poAMinerSettings;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.cancellation = CancellationTokenSource.CreateLinkedTokenSource(new[] { nodeLifetime.ApplicationStopping });
             this.votingDataEncoder = new VotingDataEncoder(loggerFactory);
 

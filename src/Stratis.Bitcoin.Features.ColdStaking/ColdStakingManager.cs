@@ -95,7 +95,7 @@ namespace Stratis.Bitcoin.Features.ColdStaking
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
             Guard.NotNull(dateTimeProvider, nameof(dateTimeProvider));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.dateTimeProvider = dateTimeProvider;
         }
 

@@ -116,7 +116,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
             this.blocksCacheLock = new object();
             this.blocksQueue = new AsyncQueue<ChainedHeaderBlock>();
             this.pendingBlocksCache = new Dictionary<uint256, ChainedHeaderBlock>();
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.cancellation = new CancellationTokenSource();
             this.saveAsyncLoopException = null;
 

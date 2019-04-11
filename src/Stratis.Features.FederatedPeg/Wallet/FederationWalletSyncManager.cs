@@ -64,7 +64,7 @@ namespace Stratis.Features.FederatedPeg.Wallet
             this.coinType = (CoinType)network.Consensus.CoinType;
             this.storeSettings = storeSettings;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.blocksQueue = new AsyncQueue<Block>(this.OnProcessBlockAsync);
 
             this.blocksQueueSize = 0;

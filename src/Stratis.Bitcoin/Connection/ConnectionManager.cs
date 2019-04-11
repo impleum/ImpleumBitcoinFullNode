@@ -105,7 +105,7 @@ namespace Stratis.Bitcoin.Connection
             this.connectedPeers = new NetworkPeerCollection();
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.Network = network;
             this.NetworkPeerFactory = networkPeerFactory;
             this.NodeSettings = nodeSettings;

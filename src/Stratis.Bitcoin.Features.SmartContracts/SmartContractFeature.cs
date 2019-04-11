@@ -43,7 +43,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts
         public SmartContractFeature(IConsensusManager consensusLoop, ILoggerFactory loggerFactory, Network network, IStateRepositoryRoot stateRoot)
         {
             this.consensusManager = consensusLoop;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.stateRoot = stateRoot;
         }

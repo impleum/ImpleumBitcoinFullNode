@@ -94,7 +94,7 @@ namespace Stratis.Features.FederatedPeg.TargetChain
             this.withdrawalExtractor = withdrawalExtractor;
             this.dBreezeSerializer = dBreezeSerializer;
             this.lockObj = new object();
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.TipHashAndHeight = this.chainIndexer.GetHeader(0);
             this.NextMatureDepositHeight = 1;
             this.cancellation = new CancellationTokenSource();

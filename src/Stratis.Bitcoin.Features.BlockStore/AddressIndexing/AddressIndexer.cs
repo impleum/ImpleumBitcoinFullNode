@@ -66,7 +66,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.AddressIndexing
             this.dataFolder = dataFolder;
             this.consensusManager = consensusManager;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public void Initialize()

@@ -64,7 +64,7 @@ namespace Stratis.Bitcoin.Features.PoA.Voting
             this.votingDataEncoder = new VotingDataEncoder(loggerFactory);
             this.scheduledVotingData = new List<VotingData>();
             this.pollsRepository = new PollsRepository(dataFolder, loggerFactory, dBreezeSerializer);
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.isInitialized = false;
         }

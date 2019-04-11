@@ -41,7 +41,7 @@ namespace Stratis.Features.FederatedPeg
 
         public OpReturnDataReader(ILoggerFactory loggerFactory, FederatedPegOptions federatedPegOptions)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.counterChainNetwork = federatedPegOptions.CounterChainNetwork;
         }
 

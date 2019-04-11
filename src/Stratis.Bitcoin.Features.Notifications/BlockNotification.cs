@@ -54,7 +54,7 @@ namespace Stratis.Bitcoin.Features.Notifications
             this.signals = signals;
             this.asyncLoopFactory = asyncLoopFactory;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public ChainIndexer ChainIndexer { get; }

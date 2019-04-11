@@ -34,7 +34,7 @@ namespace Stratis.Features.FederatedPeg.RestClients
         public RestApiClientBase(ILoggerFactory loggerFactory, IFederationGatewaySettings settings, IHttpClientFactory httpClientFactory)
         {
             this.httpClientFactory = httpClientFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.endpointUrl = $"http://localhost:{settings.CounterChainApiPort}/api/FederationGateway";
 

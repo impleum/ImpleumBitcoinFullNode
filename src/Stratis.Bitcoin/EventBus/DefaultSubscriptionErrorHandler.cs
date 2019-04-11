@@ -19,7 +19,7 @@ namespace Stratis.Bitcoin.EventBus
 
         public DefaultSubscriptionErrorHandler(ILoggerFactory loggerFactory)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />

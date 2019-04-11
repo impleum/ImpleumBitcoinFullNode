@@ -66,7 +66,7 @@ namespace Stratis.Features.FederatedPeg.TargetChain
 
 
             this.asyncLoopFactory = asyncLoopFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.store = store;
             this.nodeLifetime = nodeLifetime;
             this.mempoolManager = mempoolManager;

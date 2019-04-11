@@ -32,7 +32,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             Guard.NotNull(addressBookManager, nameof(addressBookManager));
 
             this.addressBookManager = addressBookManager;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>

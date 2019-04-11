@@ -146,7 +146,7 @@ namespace Stratis.Features.FederatedPeg.Wallet
 
             this.lockObject = new object();
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.network = network;
             this.coinType = (CoinType)network.Consensus.CoinType;

@@ -37,7 +37,7 @@ namespace Stratis.Bitcoin.P2P
             this.lockObject = new object();
             this.IsMyExternalAddressFinal = false;
             this.MyExternalAddress = connectionManagerSettings.ExternalEndpoint;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc/>

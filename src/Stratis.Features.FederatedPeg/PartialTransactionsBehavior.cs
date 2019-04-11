@@ -41,7 +41,7 @@ namespace Stratis.Features.FederatedPeg
             Guard.NotNull(federationGatewaySettings, nameof(federationGatewaySettings));
             Guard.NotNull(crossChainTransferStore, nameof(crossChainTransferStore));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.loggerFactory = loggerFactory;
             this.federationWalletManager = federationWalletManager;
             this.network = network;

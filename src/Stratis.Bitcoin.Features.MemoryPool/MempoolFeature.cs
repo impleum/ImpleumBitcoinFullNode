@@ -68,7 +68,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.blocksDisconnectedSignaled = blocksDisconnectedSignaled;
             this.mempoolBehavior = mempoolBehavior;
             this.mempoolManager = mempoolManager;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             nodeStats.RegisterStats(this.AddComponentStats, StatsType.Component);
         }

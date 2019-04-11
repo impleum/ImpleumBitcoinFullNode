@@ -43,7 +43,7 @@ namespace Stratis.Bitcoin.Features.Miner.Controllers
             Guard.NotNull(walletManager, nameof(walletManager));
 
             this.fullNode = fullNode;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.walletManager = walletManager;
             this.posMinting = posMinting;
         }

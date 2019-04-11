@@ -35,7 +35,7 @@ namespace Stratis.Features.FederatedPeg.TargetChain
             IOpReturnDataReader opReturnDataReader,
             Network network)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.multisigAddress = federationGatewaySettings.MultiSigAddress;
             this.opReturnDataReader = opReturnDataReader;
             this.network = network;

@@ -44,7 +44,7 @@ namespace Stratis.Bitcoin.Features.PoA
             this.keyValueRepo = Guard.NotNull(keyValueRepo, nameof(keyValueRepo));
             this.signals = Guard.NotNull(signals, nameof(signals));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.locker = new object();
         }
 

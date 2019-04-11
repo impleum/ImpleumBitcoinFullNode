@@ -124,7 +124,7 @@ namespace Stratis.Bitcoin.Features.Wallet
             this.walletSettings = walletSettings;
             this.lockObject = new object();
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.Wallets = new ConcurrentBag<Wallet>();
 
             this.network = network;

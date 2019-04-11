@@ -25,7 +25,7 @@ namespace Stratis.Bitcoin.Features.PoA
             this.federationManager = Guard.NotNull(federationManager, nameof(federationManager));
 
             this.consensusOptions = (network as PoANetwork).ConsensusOptions;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>Gets the public key for specified timestamp.</summary>

@@ -237,7 +237,7 @@ namespace Stratis.Bitcoin.BlockPulling
 
             this.chainState = chainState;
             this.dateTimeProvider = dateTimeProvider;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             nodeStats.RegisterStats(this.AddComponentStats, StatsType.Component);
         }

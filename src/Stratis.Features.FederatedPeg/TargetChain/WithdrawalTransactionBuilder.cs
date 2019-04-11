@@ -32,7 +32,7 @@ namespace Stratis.Features.FederatedPeg.TargetChain
             IFederationWalletTransactionHandler federationWalletTransactionHandler,
             IFederationGatewaySettings federationGatewaySettings)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.federationWalletManager = federationWalletManager;
             this.federationWalletTransactionHandler = federationWalletTransactionHandler;

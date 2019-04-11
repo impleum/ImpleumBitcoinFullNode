@@ -68,7 +68,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             this.network = network;
             this.coinType = (CoinType)network.Consensus.CoinType;
             this.chainIndexer = chainIndexer;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.broadcasterManager = broadcasterManager;
             this.dateTimeProvider = dateTimeProvider;
         }

@@ -26,7 +26,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.mempoolValidator = mempoolValidator;
             this.mempoolLock = mempoolLock;
             this.signals = signals;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public void Initialize()

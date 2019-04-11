@@ -45,7 +45,7 @@ namespace Stratis.Features.FederatedPeg.Controllers
             IFederationWalletManager federationWalletManager,
             FederationManager federationManager = null)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.maturedBlocksProvider = maturedBlocksProvider;
             this.federationGatewaySettings = federationGatewaySettings;
             this.federationWalletManager = federationWalletManager;

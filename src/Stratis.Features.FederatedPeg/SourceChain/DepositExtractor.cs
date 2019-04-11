@@ -25,7 +25,7 @@ namespace Stratis.Features.FederatedPeg.SourceChain
             IFederationGatewaySettings federationGatewaySettings,
             IOpReturnDataReader opReturnDataReader)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             // Note: MultiSigRedeemScript.PaymentScript equals MultiSigAddress.ScriptPubKey
             this.depositScript =
                 federationGatewaySettings?.MultiSigRedeemScript?.PaymentScript ??

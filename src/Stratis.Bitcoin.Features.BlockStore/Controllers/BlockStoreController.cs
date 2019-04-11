@@ -53,7 +53,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Controllers
             this.blockStore = blockStore;
             this.chainState = chainState;
             this.chainIndexer = chainIndexer;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>

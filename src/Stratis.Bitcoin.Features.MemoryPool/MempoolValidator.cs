@@ -165,7 +165,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.chainIndexer = chainIndexer;
             this.network = chainIndexer.Network;
             this.coinView = coinView;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             // TODO: Implement later with CheckRateLimit()
             // this.freeLimiter = new FreeLimiterSection();
             this.PerformanceCounter = new MempoolPerformanceCounter(this.dateTimeProvider);

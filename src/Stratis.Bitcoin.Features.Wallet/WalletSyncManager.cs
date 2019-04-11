@@ -66,7 +66,7 @@ namespace Stratis.Bitcoin.Features.Wallet
             this.blockStore = blockStore;
             this.storeSettings = storeSettings;
             this.signals = signals;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.blocksQueue = new AsyncQueue<Block>(this.OnProcessBlockAsync);
 
             this.blocksQueueSize = 0;

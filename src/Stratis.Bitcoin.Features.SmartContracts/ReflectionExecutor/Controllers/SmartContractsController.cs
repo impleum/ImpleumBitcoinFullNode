@@ -66,7 +66,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
         {
             this.stateRoot = stateRoot;
             this.contractDecompiler = contractDecompiler;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.chainIndexer = chainIndexer;
             this.blockStore = blockStore;

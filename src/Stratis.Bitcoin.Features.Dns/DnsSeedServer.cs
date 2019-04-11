@@ -137,7 +137,7 @@ namespace Stratis.Bitcoin.Features.Dns
             this.masterFile = masterFile;
             this.asyncLoopFactory = asyncLoopFactory;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.dateTimeProvider = dateTimeProvider;
             this.dnsSettings = dnsSettings;
             this.dataFolders = dataFolders;

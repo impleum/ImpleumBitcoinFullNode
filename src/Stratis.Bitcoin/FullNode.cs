@@ -160,7 +160,8 @@ namespace Stratis.Bitcoin
 
             this.Services = serviceProvider;
 
-            this.logger = this.Services.ServiceProvider.GetService<ILoggerFactory>().CreateLogger(this.GetType().FullName);
+            //this.logger = this.Services.ServiceProvider.GetService<ILoggerFactory>().CreateLogger(this.GetType().FullName);
+            this.logger = this.Services.ServiceProvider.GetService<ILoggerFactory>().CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.DataFolder = this.Services.ServiceProvider.GetService<DataFolder>();
             this.DateTimeProvider = this.Services.ServiceProvider.GetService<IDateTimeProvider>();

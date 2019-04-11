@@ -102,7 +102,7 @@ namespace Stratis.Bitcoin.Controllers
             this.connectionManager = connectionManager;
             this.dateTimeProvider = dateTimeProvider;
             this.fullNode = fullNode;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.nodeSettings = nodeSettings;
 
