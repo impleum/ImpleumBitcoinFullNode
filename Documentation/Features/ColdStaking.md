@@ -4,7 +4,7 @@
 ## Motivation
 
 
-In order to produce blocks on the Stratis network, a miner has to be online with a running node and have its wallet open. This is necessary because at each time slot, the miner is supposed to check whether 1 of its UTXOs is eligible to be used as a so-called coinstake kernel input and if so, it needs to use the private key associated with this UTXO in order to produce the coinstake transaction.
+In order to produce blocks on the Impleum network, a miner has to be online with a running node and have its wallet open. This is necessary because at each time slot, the miner is supposed to check whether 1 of its UTXOs is eligible to be used as a so-called coinstake kernel input and if so, it needs to use the private key associated with this UTXO in order to produce the coinstake transaction.
 
 The chance of a UTXO being eligible for producing a coinstake transaction grows linearly with the number of coins that this UTXO presents.
 
@@ -46,7 +46,7 @@ These requirements are similar as if you considered a wallet that supports multi
 
 ### OP_CHECKCOLDSTAKEVERIFY
 
-We propose to introduce cold staking to Stratis using a soft fork mechanism that changes the behaviour of the OP_NOP10 script instruction, newly renamed to `OP_CHECKCOLDSTAKEVERIFY`.
+We propose to introduce cold staking to Impleum using a soft fork mechanism that changes the behaviour of the OP_NOP10 script instruction, newly renamed to `OP_CHECKCOLDSTAKEVERIFY`.
 
 The new behaviour of this opcode is as follows:
 
@@ -98,7 +98,7 @@ Similarly, when a node wants to stake, it has to now understand the special tran
 
 We expect that the implementation of cold staking will allow more people to participate in the staking process without fear of the hot wallet being compromised and their coins stolen. It is currently estimated that about 30% of all coins are used for staking, while 70% of all coins are not. Having more people and more coins participate in the staking process will make the whole network stronger against certain kinds of attacks.
 
-Moreover, some exchanges use their customers' coins for staking. This presents a huge risk to the whole Stratis economy, should such an exchange be hacked, because the coins used for staking need to be present in the hot wallet without cold staking implemented. Cold staking eliminates this risk.
+Moreover, some exchanges use their customers' coins for staking. This presents a huge risk to the whole Impleum economy, should such an exchange be hacked, because the coins used for staking need to be present in the hot wallet without cold staking implemented. Cold staking eliminates this risk.
 
 Additionally, the implementation of cold staking would allow the implementation of pool staking, which was previously not possible without huge risks for the participants of such pools. Pool staking by itself presents new dangers to the network as some attack vectors are stronger when higher stakes are used to perform these attacks. This means that cold staking suddenly enables more dangerous attacks. Currently, we consider this disadvantage not to overweight the benefits of cold staking. Therefore, we recommend implementing it.
 
