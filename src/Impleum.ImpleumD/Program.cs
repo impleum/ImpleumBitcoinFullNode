@@ -11,7 +11,7 @@ using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Miner;
 using Stratis.Bitcoin.Features.RPC;
-using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Features.ColdStaking;
 using Stratis.Bitcoin.Networks;
 using Stratis.Bitcoin.Utilities;
 
@@ -19,12 +19,7 @@ namespace Impleum.ImpleumD
 {
     public class Program
     {
-        public static void Main(string[] args)
-        {
-            MainAsync(args).Wait();
-        }
-
-        public static async Task MainAsync(string[] args)
+        public static async Task Main(string[] args)
         {
             try
             {
@@ -38,7 +33,7 @@ namespace Impleum.ImpleumD
                     .UseBlockStore()
                     .UsePosConsensus()
                     .UseMempool()
-                    .UseWallet()
+                    .UseColdStakingWallet()
                     .AddPowPosMining()
                     .UseApi()
                     .UseApps()
@@ -46,13 +41,11 @@ namespace Impleum.ImpleumD
                     .Build();
 
                 if (node != null)
-                {
                     await node.RunAsync();
-                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("There was a problem initializing the node. Details: '{0}'", ex.Message);
+                Console.WriteLine("There was a problem initializing the node. Details: '{0}'", ex.ToString());
             }
         }
     }
