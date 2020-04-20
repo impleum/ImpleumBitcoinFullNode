@@ -26,7 +26,7 @@ namespace Stratis.Bitcoin.Features.Wallet
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
             Guard.NotNull(dataFolder, nameof(dataFolder));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.fileStorage = new FileStorage<AddressBook>(dataFolder.RootPath);
         }
 

@@ -10,7 +10,6 @@ using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.IntegrationTests.Common.ReadyData;
 using Stratis.Bitcoin.Networks;
-using Stratis.Bitcoin.Tests.Common;
 using Stratis.Bitcoin.Tests.Common.TestFramework;
 using Xunit.Abstractions;
 
@@ -70,8 +69,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
             this.stratisSender.FullNode.NodeService<WalletController>().SendTransaction(new SendTransactionRequest(this.transaction.ToHex()));
 
-            TestBase.WaitLoop(() => this.stratisReceiver.CreateRPCClient().GetRawMempool().Length > 0);
-            TestBase.WaitLoop(() => this.stratisReceiver.FullNode.WalletManager().GetSpendableTransactionsInWallet(Name).Any());
+            TestHelper.WaitLoop(() => this.stratisReceiver.CreateRPCClient().GetRawMempool().Length > 0);
+            TestHelper.WaitLoop(() => this.stratisReceiver.FullNode.WalletManager().GetSpendableTransactionsInWallet(Name).Any());
 
             var receivetotal = this.stratisReceiver.FullNode.WalletManager().GetSpendableTransactionsInWallet(Name).Sum(s => s.Transaction.Amount);
             receivetotal.Should().Equals(Money.COIN * 100);

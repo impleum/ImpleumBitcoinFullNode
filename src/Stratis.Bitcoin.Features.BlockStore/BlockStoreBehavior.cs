@@ -33,6 +33,10 @@ namespace Stratis.Bitcoin.Features.BlockStore
 
     public class BlockStoreBehavior : NetworkPeerBehavior, IBlockStoreBehavior
     {
+        // TODO: move this to the options
+        // Maximum number of headers to announce when relaying blocks with headers message.
+        private const int MaxBlocksToAnnounce = 8;
+
         protected readonly ChainIndexer ChainIndexer;
 
         protected readonly IConsensusManager consensusManager;
@@ -82,7 +86,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
 
             this.ChainIndexer = chainIndexer;
             this.chainState = chainState;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.loggerFactory = loggerFactory;
             this.consensusManager = consensusManager;
             this.blockStoreQueue = blockStoreQueue;
@@ -286,7 +290,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
             // TODO: bring logic from core
             foreach (InventoryVector item in getDataPayload.Inventory.Where(inv => inv.Type.HasFlag(InventoryType.MSG_BLOCK)))
             {
-                ChainedHeaderBlock chainedHeaderBlock = this.consensusManager.GetBlockData(item.Hash);
+                ChainedHeaderBlock chainedHeaderBlock = await this.consensusManager.GetBlockDataAsync(item.Hash).ConfigureAwait(false);
 
                 if (chainedHeaderBlock?.Block != null)
                 {
@@ -358,7 +362,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
                 return;
             }
 
-            bool revertToInv = (!this.PreferHeaders && (!this.preferHeaderAndIDs || blocksToAnnounce.Count > 1));
+            bool revertToInv = ((!this.PreferHeaders && (!this.preferHeaderAndIDs || blocksToAnnounce.Count > 1)) || blocksToAnnounce.Count > MaxBlocksToAnnounce);
 
             this.logger.LogTrace("Block propagation preferences of the peer '{0}': prefer headers - {1}, prefer headers and IDs - {2}, will{3} revert to 'inv' now.", peer.RemoteSocketEndpoint, this.PreferHeaders, this.preferHeaderAndIDs, revertToInv ? "" : " NOT");
 

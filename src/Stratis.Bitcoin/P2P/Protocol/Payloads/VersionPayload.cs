@@ -43,7 +43,7 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
     {
         private const int MaxSubversionLength = 256;
 
-        private static string userAgentNBitcoin;
+        private static string userAgent;
 
         private uint version;
 
@@ -172,13 +172,13 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
             }
         }
 
-        private VarString userAgent;
+        private VarString user_agent;
 
         public string UserAgent
         {
             get
             {
-                return Encoders.ASCII.EncodeData(this.userAgent.GetString());
+                return Encoders.ASCII.EncodeData(this.user_agent.GetString());
             }
 
             set
@@ -186,19 +186,19 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
                 if (value.Length > MaxSubversionLength)
                     value = value.Substring(0, MaxSubversionLength);
 
-                this.userAgent = new VarString(Encoders.ASCII.DecodeData(value));
+                this.user_agent = new VarString(Encoders.ASCII.DecodeData(value));
             }
         }
 
         public static string GetNBitcoinUserAgent()
         {
-            if (userAgentNBitcoin == null)
+            if (userAgent == null)
             {
                 Version version = typeof(VersionPayload).GetTypeInfo().Assembly.GetName().Version;
-                userAgentNBitcoin = "/NBitcoin:" + version.Major + "." + version.MajorRevision + "." + version.Build + "/";
+                userAgent = "/NBitcoin:" + version.Major + "." + version.MajorRevision + "." + version.Build + "/";
             }
 
-            return userAgentNBitcoin;
+            return userAgent;
         }
 
         public override void ReadWriteCore(BitcoinStream stream)
@@ -224,10 +224,10 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
                     }
 
                     stream.ReadWrite(ref this.nonce);
-                    stream.ReadWrite(ref this.userAgent);
+                    stream.ReadWrite(ref this.user_agent);
                     if (this.version < 60002)
                     {
-                        if (this.userAgent.Length != 0)
+                        if (this.user_agent.Length != 0)
                             throw new FormatException("Should not find user agent for current version " + this.version);
                     }
 

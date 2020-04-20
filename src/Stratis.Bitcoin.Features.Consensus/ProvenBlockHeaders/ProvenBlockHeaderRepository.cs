@@ -81,7 +81,7 @@ namespace Stratis.Bitcoin.Features.Consensus.ProvenBlockHeaders
             Guard.NotNull(folder, nameof(folder));
             this.dBreezeSerializer = dBreezeSerializer;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             Directory.CreateDirectory(folder);
 

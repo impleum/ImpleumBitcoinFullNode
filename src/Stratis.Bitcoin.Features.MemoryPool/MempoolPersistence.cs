@@ -180,7 +180,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         public MempoolPersistence(NodeSettings settings, ILoggerFactory loggerFactory)
         {
             this.dataDir = settings?.DataDir;
-            this.mempoolLogger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.mempoolLogger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />

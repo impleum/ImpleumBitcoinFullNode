@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Features.PoA.Voting;
 using Stratis.Bitcoin.Tests.Common;

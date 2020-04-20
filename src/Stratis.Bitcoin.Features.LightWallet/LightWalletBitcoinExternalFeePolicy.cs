@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Newtonsoft.Json.Linq;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Utilities;
@@ -17,7 +16,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
         private IAsyncLoop asyncLoop;
 
         /// <summary>Factory for creating background async loop tasks.</summary>
-        private readonly IAsyncProvider asyncProvider;
+        private readonly IAsyncLoopFactory asyncLoopFactory;
 
         private readonly Money maxTxFee;
 
@@ -38,11 +37,11 @@ namespace Stratis.Bitcoin.Features.LightWallet
 
         private FeeRate lowTxFeePerKb;
 
-        public LightWalletBitcoinExternalFeePolicy(IAsyncProvider asyncProvider, INodeLifetime nodeLifetime, ILoggerFactory loggerFactory, NodeSettings settings)
+        public LightWalletBitcoinExternalFeePolicy(IAsyncLoopFactory asyncLoopFactory, INodeLifetime nodeLifetime, ILoggerFactory loggerFactory, NodeSettings settings)
         {
-            this.asyncProvider = asyncProvider;
+            this.asyncLoopFactory = asyncLoopFactory;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.nodeSettings = settings;
             this.maxTxFee = new Money(0.1M, MoneyUnit.BTC);
             this.initializedOnce = false;
@@ -51,7 +50,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
         /// <inheritdoc />
         public void Start()
         {
-            this.asyncLoop = this.asyncProvider.CreateAndRunAsyncLoop(nameof(LightWalletBitcoinExternalFeePolicy), async token =>
+            this.asyncLoop = this.asyncLoopFactory.Run(nameof(LightWalletBitcoinExternalFeePolicy), async token =>
             {
                 // This will run evry 3 to 10 minutes randomly
                 // So the API provider is not able to identify our transaction with a timing attack

@@ -3,9 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Internal;
 using Moq;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
-using Stratis.Bitcoin.Configuration.Logging;
-using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.Tests.Common.Logging
 {
@@ -93,16 +90,6 @@ namespace Stratis.Bitcoin.Tests.Common.Logging
                 It.Is<object>(l => ((FormattedLogValues)l)[0].Value.ToString().EndsWith(message)),
                 null,
                 It.IsAny<Func<object, Exception, string>>()));
-        }
-
-        protected IAsyncProvider CreateAsyncProvider()
-        {
-            var loggerFactory = new ExtendedLoggerFactory();
-            var signals = new Signals.Signals(loggerFactory, null);
-            var nodeLifetime = new NodeLifetime();
-            var asyncProvider = new AsyncProvider(loggerFactory, signals, nodeLifetime);
-
-            return asyncProvider;
         }
     }
 }

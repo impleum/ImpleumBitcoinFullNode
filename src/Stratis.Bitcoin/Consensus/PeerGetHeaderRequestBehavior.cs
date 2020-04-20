@@ -14,7 +14,7 @@ using TracerAttributes;
 namespace Stratis.Bitcoin.Consensus
 {
     /// <summary>
-    /// Bans and disconnects peers that sends a <see cref="GetHeadersPayload"/> request, more than <see cref="GetHeaderRequestCountThresholdSeconds"/> times,
+    /// Bans and disconnects peers that sends a <see cref="GetHeadersPayload"/> request, more than <see cref="GetHeaderRequestCountThreshold"/> times,
     /// within a certain time frame.
     /// </summary>
     /// <remarks>
@@ -40,10 +40,7 @@ namespace Stratis.Bitcoin.Consensus
         private int getHeaderRequestCount;
 
         /// <summary>The threshold after which the node will be banned and disconnected.</summary>
-        private const int GetHeaderRequestCountThresholdSeconds = 10;
-
-        /// <summary>The threshold time span in which header requests are invalid and tracked.</summary>
-        private const int GetHeaderRequestTimestampThreshold = 10;
+        private const int GetHeaderRequestCountThreshold = 10;
 
         /// <summary>Instance logger.</summary>
         private readonly ILogger logger;
@@ -61,7 +58,7 @@ namespace Stratis.Bitcoin.Consensus
         {
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.peerBanning = peerBanning;
         }
 
@@ -107,7 +104,7 @@ namespace Stratis.Bitcoin.Consensus
         /// <summary>
         /// Determines whether or not a peer asked for the same set of headers within 60 seconds.
         /// <para>
-        /// If the same set of headers was requested more than <see cref="GetHeaderRequestCountThresholdSeconds"/>, it will be banned
+        /// If the same set of headers was requested more than <see cref="GetHeaderRequestCountThreshold"/>, it will be banned
         /// and disconnected.
         /// </para>
         /// </summary>
@@ -123,10 +120,10 @@ namespace Stratis.Bitcoin.Consensus
             // Is the last requested hash the same as this request.
             if (this.getHeaderLastRequestHash == blockLocatorHash)
             {
-                this.logger.LogDebug("{0} block locator matches previous, count {1}; last requested hash {2}", this.AttachedPeer.PeerEndPoint, this.getHeaderRequestCount, blockLocatorHash);
+                this.logger.LogDebug($"{this.AttachedPeer.PeerEndPoint} block locator matches previous, count {this.getHeaderRequestCount}");
 
-                // Was this hash requested less than 10 seconds ago.
-                if (this.getHeaderLastRequestedTimestamp > this.dateTimeProvider.GetUtcNow().AddSeconds(-GetHeaderRequestTimestampThreshold))
+                // Was this hash requested less than 60 seconds ago.
+                if (this.getHeaderLastRequestedTimestamp > this.dateTimeProvider.GetUtcNow().AddSeconds(-60))
                 {
                     this.getHeaderRequestCount++;
                 }
@@ -139,9 +136,9 @@ namespace Stratis.Bitcoin.Consensus
                     return;
                 }
 
-                // If the same header was requested more than 10 times in the last 10 seconds,
+                // If the same header was requested more than 3 times in the last 60 seconds,
                 // ban and disconnect the peer for 1 hour.
-                if (this.getHeaderRequestCount >= GetHeaderRequestCountThresholdSeconds)
+                if (this.getHeaderRequestCount >= GetHeaderRequestCountThreshold)
                 {
                     this.peerBanning.BanAndDisconnectPeer(this.AttachedPeer.PeerEndPoint, BanDurationSeconds, $"Banned via rate limiting for {BanDurationSeconds} seconds.");
                     this.logger.LogDebug("{0} banned via rate limiting for {1} seconds.", this.AttachedPeer.PeerEndPoint, BanDurationSeconds);

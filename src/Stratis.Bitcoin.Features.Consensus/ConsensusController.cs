@@ -9,6 +9,7 @@ using Stratis.Bitcoin.Base.Deployments;
 using Stratis.Bitcoin.Base.Deployments.Models;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Controllers;
+using Stratis.Bitcoin.Features.Consensus.Rules.CommonRules;
 using Stratis.Bitcoin.Utilities;
 using Stratis.Bitcoin.Utilities.JsonErrors;
 
@@ -33,7 +34,7 @@ namespace Stratis.Bitcoin.Features.Consensus
             Guard.NotNull(chainIndexer, nameof(chainIndexer));
             Guard.NotNull(chainState, nameof(chainState));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>
@@ -78,10 +79,10 @@ namespace Stratis.Bitcoin.Features.Consensus
         }
 
         /// <summary>
-        /// Gets the hash of the block at the consensus tip.
+        /// Get the hash of the block at the consensus tip.
+        /// API wrapper of RPC call.
         /// </summary>
         /// <returns>Json formatted <see cref="uint256"/> hash of the block at the consensus tip. Returns <see cref="IActionResult"/> formatted error if fails.</returns>
-        /// <remarks>This is an API implementation of an RPC call.</remarks>
         [Route("api/[controller]/getbestblockhash")]
         [HttpGet]
         public IActionResult GetBestBlockHashAPI()
@@ -118,11 +119,11 @@ namespace Stratis.Bitcoin.Features.Consensus
         }
 
         /// <summary>
-        /// Gets the hash of the block at a given height.
+        /// Gets the hash of the block at the given height.
+        /// API wrapper of RPC call.
         /// </summary>
-        /// <param name="height">The height of the block to get the hash for.</param>
+        /// <param name="request">A <see cref="GetBlockHashRequestModel"/> request containing the height.</param>
         /// <returns>Json formatted <see cref="uint256"/> hash of the block at the given height. <c>Null</c> if block not found. Returns <see cref="IActionResult"/> formatted error if fails.</returns>
-        /// <remarks>This is an API implementation of an RPC call.</remarks>
         [Route("api/[controller]/getblockhash")]
         [HttpGet]
         public IActionResult GetBlockHashAPI([FromQuery] int height)

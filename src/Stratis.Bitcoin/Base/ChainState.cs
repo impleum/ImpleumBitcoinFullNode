@@ -1,3 +1,4 @@
+using System;
 using NBitcoin;
 
 namespace Stratis.Bitcoin.Base

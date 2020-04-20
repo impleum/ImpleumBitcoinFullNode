@@ -53,7 +53,8 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             {
                 var posRuleContext = context as PosRuleContext;
                 Money stakeReward = block.Transactions[1].TotalOut - posRuleContext.TotalCoinStakeValueIn;
-                Money calcStakeReward = fees + this.GetProofOfStakeReward(height);
+                Money calcStakeReward = fees + this.GetProofOfStakeReward(height, posRuleContext.CoinAge);
+               
 
                 this.Logger.LogTrace("Block stake reward is {0}, calculated reward is {1}.", stakeReward, calcStakeReward);
                 if (stakeReward > calcStakeReward)
@@ -72,11 +73,6 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                     ConsensusErrors.BadCoinbaseAmount.Throw();
                 }
             }
-        }
-
-        protected override Money GetTransactionFee(UnspentOutputSet view, Transaction tx)
-        {
-            return tx.IsCoinStake ? Money.Zero : view.GetValueIn(tx) - tx.TotalOut;
         }
 
         /// <inheritdoc />
@@ -190,20 +186,126 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
         {
             if (this.IsPremine(height))
                 return this.consensus.PremineReward;
-
-            return this.consensus.ProofOfWorkReward;
+            if (height <= 40100)
+                return this.consensus.ProofOfWorkReward;
+            if (height <= 45000)
+                return Money.Coins(24);
+            if (height <= 50000)
+                return Money.Coins(12);
+            if (height <= 55000)
+                return Money.Coins(6);
+            if (height <= 60000)
+                return Money.Coins(3);
+            if (height <= 65000)
+                return Money.Coins(1);
+            if (height <= 70000)
+                return Money.Coins(0);
+            if (height >= 75000)
+                return Money.Coins(0.48m);
+            return Money.Coins(0);
         }
 
         /// <summary>
         /// Gets miner's coin stake reward.
         /// </summary>
         /// <param name="height">Target block height.</param>
+        /// <param name="coinAge">Age of coin</param>
         /// <returns>Miner's coin stake reward.</returns>
-        public Money GetProofOfStakeReward(int height)
+        public Money GetProofOfStakeReward(int height, long? coinAge = null)
         {
             if (this.IsPremine(height))
                 return this.consensus.PremineReward;
 
+            if (coinAge.HasValue)
+            {
+                long nSubsidy = (coinAge.Value * 1 * Money.CENT * 33 / (365 * 33 + 8));
+                if (height <= 1000)
+                {
+                    nSubsidy >>= (int)(nSubsidy / 100000);
+                    return Money.Satoshis(nSubsidy);  //no substantial pos reward until block 1k
+                }
+                else if (height <= 7201)
+                {
+                    return Money.Satoshis(nSubsidy * 500);
+                }
+                else if (height > 7201 && height <= 14401)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 14401 && height <= 21601)
+                {
+                    return Money.Satoshis(nSubsidy * 500);
+                }
+                else if (height > 21601 && height <= 28801)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 28801 && height <= 32401)
+                {
+                    return Money.Satoshis(nSubsidy * 1000);
+                }
+                else if (height > 32401 && height <= 36001)
+                {
+                    return Money.Satoshis(nSubsidy * 500);
+                }
+                else if (height > 36001 && height <= 43201)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 43201 && height <= 50401)
+                {
+                    return Money.Satoshis(nSubsidy * 500);
+                }
+                else if (height > 50401 && height <= 57601)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 57601 && height <= 72001)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 72001 && height <= 75601)
+                {
+                    return Money.Satoshis(nSubsidy * 500);
+                }
+                else if (height > 75601 && height <= 82801)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 82801 && height <= 90001)
+                {
+                    return Money.Satoshis(nSubsidy * 750);
+                }
+                else if (height > 90001 && height <= 97201)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 97201 && height <= 100801)
+                {
+                    return Money.Satoshis(nSubsidy * 500);
+                }
+                else if (height > 100801 && height <= 108001)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 108001 && height <= 115201)
+                {
+                    return Money.Satoshis(nSubsidy * 500);
+                }
+                else if (height > 115201 && height <= 129601)
+                {
+                    return Money.Satoshis(nSubsidy * 250);
+                }
+                else if (height > 129601 && height <= 215000)
+                {
+                    return Money.Satoshis(nSubsidy * 10);
+                }
+                else
+                {
+                    return this.consensus.ProofOfStakeReward;
+                }
+
+            }
             return this.consensus.ProofOfStakeReward;
         }
     }

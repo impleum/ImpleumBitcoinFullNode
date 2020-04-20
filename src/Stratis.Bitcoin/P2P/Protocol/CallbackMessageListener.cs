@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Stratis.Bitcoin.AsyncWork;
-using Stratis.Bitcoin.P2P.Peer;
+using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.P2P.Protocol
 {
     /// <summary>
-    /// Represents a callback routine to be called when a new message arrives to the listener.
+    /// Represents a callback rountine to be called when a new message arrives to the listener.
     /// <para>
     /// It is guaranteed that only execution of the callback routine is executed at the time.
     /// </para>
@@ -24,16 +23,15 @@ namespace Stratis.Bitcoin.P2P.Protocol
     public class CallbackMessageListener<T> : IMessageListener<T>, IDisposable
     {
         /// <summary>Queue of the unprocessed incoming messages.</summary>
-        private readonly IAsyncDelegateDequeuer<T> asyncQueue;
+        private readonly AsyncQueue<T> asyncQueue;
 
         /// <summary>
         /// Initializes the instance of the object.
         /// </summary>
         /// <param name="processMessageAsync">User defined callback routine to be executed when a new message arrives to the listener.</param>
-        public CallbackMessageListener(IAsyncProvider asyncProvider, ProcessMessageAsync<T> processMessageAsync, INetworkPeer peer)
+        public CallbackMessageListener(ProcessMessageAsync<T> processMessageAsync)
         {
-            string queuerName = $"{nameof(CallbackMessageListener<T>)}-{typeof(T).Name}-{peer.PeerEndPoint?.ToString()}";
-            this.asyncQueue = asyncProvider.CreateAndRunAsyncDelegateDequeuer<T>(queuerName, new Func<T, CancellationToken, Task>(processMessageAsync));
+            this.asyncQueue = new AsyncQueue<T>(new AsyncQueue<T>.OnEnqueueAsync(processMessageAsync));
         }
 
         /// <inheritdoc/>

@@ -4,6 +4,7 @@ using NBitcoin;
 using Stratis.Bitcoin.Base.Deployments;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Features.RPC;
+using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.Networks.Deployments;
 using Stratis.Bitcoin.Tests.Common;
@@ -44,7 +45,7 @@ namespace Stratis.Bitcoin.IntegrationTests
                     // generate 450 blocks, block 431 will be segwit activated.
                     coreRpc.Generate(450);
                     var cancellationToken = new CancellationTokenSource(TimeSpan.FromMinutes(2)).Token;
-                    TestBase.WaitLoop(() => stratisNode.CreateRPCClient().GetBestBlockHash() == coreNode.CreateRPCClient().GetBestBlockHash(), cancellationToken: cancellationToken);
+                    TestHelper.WaitLoop(() => stratisNode.CreateRPCClient().GetBestBlockHash() == coreNode.CreateRPCClient().GetBestBlockHash(), cancellationToken: cancellationToken);
 
                     // segwit activation on Bitcoin regtest.
                     // - On regtest deployment state changes every 144 block, the threshold for activating a rule is 108 blocks.

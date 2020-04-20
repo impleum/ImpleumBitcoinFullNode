@@ -4,7 +4,6 @@ using NBitcoin;
 using Stratis.Bitcoin.Features.SmartContracts;
 using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Consensus.Rules;
 using Stratis.Bitcoin.IntegrationTests.Common;
-using Stratis.Bitcoin.Tests.Common;
 using Stratis.SmartContracts.CLR;
 using Stratis.SmartContracts.CLR.Serialization;
 using Stratis.SmartContracts.Core;
@@ -37,7 +36,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
                 stratisNodeSync.Broadcast(tx);
 
-                TestBase.WaitLoop(() => stratisNodeSync.CreateRPCClient().GetRawMempool().Length == 1);
+                TestHelper.WaitLoop(() => stratisNodeSync.CreateRPCClient().GetRawMempool().Length == 1);
             }
         }
 
@@ -108,7 +107,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
                 tx.AddOutput(new TxOut("24", new Key().PubKey.Hash)); // 1 btc fee
                 tx.Sign(stratisNodeSync.FullNode.Network, stratisNodeSync.MinerSecret, false);
                 stratisNodeSync.Broadcast(tx);
-                TestBase.WaitLoop(() => stratisNodeSync.CreateRPCClient().GetRawMempool().Length == 1);
+                TestHelper.WaitLoop(() => stratisNodeSync.CreateRPCClient().GetRawMempool().Length == 1);
             }
         }
     }

@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.Bitcoin.Consensus;
-using Stratis.Bitcoin.Controllers;
 using Stratis.Bitcoin.Primitives;
 using Stratis.Features.FederatedPeg.Interfaces;
 using Stratis.Features.FederatedPeg.Models;
+using Stratis.Features.FederatedPeg.RestClients;
 
 namespace Stratis.Features.FederatedPeg.SourceChain
 {
@@ -21,7 +21,7 @@ namespace Stratis.Features.FederatedPeg.SourceChain
         /// <param name="maxBlocks">The number of blocks to retrieve.</param>
         /// <returns>A list of mature block deposits.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the blocks are not mature or not found.</exception>
-        Task<Result<List<MaturedBlockDepositsModel>>> GetMaturedDepositsAsync(int blockHeight, int maxBlocks);
+        Task<List<MaturedBlockDepositsModel>> GetMaturedDepositsAsync(int blockHeight, int maxBlocks);
     }
 
     public class MaturedBlocksProvider : IMaturedBlocksProvider
@@ -37,11 +37,11 @@ namespace Stratis.Features.FederatedPeg.SourceChain
             this.depositExtractor = depositExtractor;
             this.consensusManager = consensusManager;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />
-        public async Task<Result<List<MaturedBlockDepositsModel>>> GetMaturedDepositsAsync(int blockHeight, int maxBlocks)
+        public async Task<List<MaturedBlockDepositsModel>> GetMaturedDepositsAsync(int blockHeight, int maxBlocks)
         {
             ChainedHeader consensusTip = this.consensusManager.Tip;
 
@@ -49,9 +49,7 @@ namespace Stratis.Features.FederatedPeg.SourceChain
 
             if (blockHeight > matureTipHeight)
             {
-                // We need to return a Result type here to explicitly indicate failure and the reason for failure.
-                // This is an expected condition so we can avoid throwing an exception here.
-                return Result<List<MaturedBlockDepositsModel>>.Fail($"Block height {blockHeight} submitted is not mature enough. Blocks less than a height of {matureTipHeight} can be processed.");
+                throw new InvalidOperationException($"Block height {blockHeight} submitted is not mature enough. Blocks less than a height of {matureTipHeight} can be processed.");
             }
 
             var maturedBlocks = new List<MaturedBlockDepositsModel>();
@@ -64,14 +62,7 @@ namespace Stratis.Features.FederatedPeg.SourceChain
             {
                 ChainedHeader currentHeader = consensusTip.GetAncestor(i);
 
-                ChainedHeaderBlock block = this.consensusManager.GetBlockData(currentHeader.HashBlock);
-
-                if (block?.Block?.Transactions == null)
-                {
-                    // Report unexpected results from consenus manager.
-                    this.logger.LogWarning("Stop matured blocks collection due to consensus manager integrity failure. Send what we've collected.");
-                    break;
-                }
+                ChainedHeaderBlock block = await this.consensusManager.GetBlockDataAsync(currentHeader.HashBlock).ConfigureAwait(false);
 
                 MaturedBlockDepositsModel maturedBlockDeposits = this.depositExtractor.ExtractBlockDeposits(block);
 
@@ -87,7 +78,7 @@ namespace Stratis.Features.FederatedPeg.SourceChain
                 }
             }
 
-            return Result<List<MaturedBlockDepositsModel>>.Ok(maturedBlocks);
+            return maturedBlocks;
         }
     }
 }

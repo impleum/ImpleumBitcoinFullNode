@@ -48,7 +48,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
 
         private readonly IPrunedBlockRepository prunedBlockRepository;
 
-        private readonly IAddressIndexer addressIndexer;
+        private readonly AddressIndexer addressIndexer;
 
         public BlockStoreFeature(
             Network network,
@@ -63,14 +63,14 @@ namespace Stratis.Bitcoin.Features.BlockStore
             IConsensusManager consensusManager,
             ICheckpoints checkpoints,
             IPrunedBlockRepository prunedBlockRepository,
-            IAddressIndexer addressIndexer)
+            AddressIndexer addressIndexer)
         {
             this.network = network;
             this.chainIndexer = chainIndexer;
             this.blockStoreQueue = blockStoreQueue;
             this.blockStoreSignaled = blockStoreSignaled;
             this.connectionManager = connectionManager;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.loggerFactory = loggerFactory;
             this.storeSettings = storeSettings;
             this.chainState = chainState;
@@ -131,7 +131,8 @@ namespace Stratis.Bitcoin.Features.BlockStore
             }
 
             // Use ProvenHeadersBlockStoreBehavior for PoS Networks
-            if (this.network.Consensus.IsProofOfStake)
+            // Temporary disabled in impleum until soft fork is done
+            if (this.network.Consensus.IsProofOfStake && !this.network.IsImpleum())
             {
                 this.connectionManager.Parameters.TemplateBehaviors.Add(new ProvenHeadersBlockStoreBehavior(this.network, this.chainIndexer, this.chainState, this.loggerFactory, this.consensusManager, this.checkpoints, this.blockStoreQueue));
             }
@@ -164,10 +165,10 @@ namespace Stratis.Bitcoin.Features.BlockStore
                 this.prunedBlockRepository.PruneAndCompactDatabase(this.chainState.BlockStoreTip, this.network, false);
             }
 
-            this.logger.LogInformation("Stopping BlockStoreSignaled.");
+            this.logger.LogInformation("Stopping BlockStore.");
+
             this.blockStoreSignaled.Dispose();
 
-            this.logger.LogInformation("Stopping AddressIndexer.");
             this.addressIndexer.Dispose();
         }
     }
@@ -191,7 +192,8 @@ namespace Stratis.Bitcoin.Features.BlockStore
                         services.AddSingleton<IBlockRepository, BlockRepository>();
                         services.AddSingleton<IPrunedBlockRepository, PrunedBlockRepository>();
 
-                        if (fullNodeBuilder.Network.Consensus.IsProofOfStake)
+                        // Temporary disabled in impleum until soft fork is done
+                        if (fullNodeBuilder.Network.Consensus.IsProofOfStake && !fullNodeBuilder.Network.IsImpleum())
                             services.AddSingleton<BlockStoreSignaled, ProvenHeadersBlockStoreSignaled>();
                         else
                             services.AddSingleton<BlockStoreSignaled>();
@@ -199,7 +201,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
                         services.AddSingleton<StoreSettings>();
                         services.AddSingleton<BlockStoreController>();
                         services.AddSingleton<IBlockStoreQueueFlushCondition, BlockStoreQueueFlushCondition>();
-                        services.AddSingleton<IAddressIndexer, AddressIndexer>();
+                        services.AddSingleton<AddressIndexer>();
                     });
             });
 

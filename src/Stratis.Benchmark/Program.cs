@@ -1,4 +1,6 @@
-﻿using BenchmarkDotNet.Running;
+﻿using System;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Running;
 
 namespace Stratis.Benchmark
 {

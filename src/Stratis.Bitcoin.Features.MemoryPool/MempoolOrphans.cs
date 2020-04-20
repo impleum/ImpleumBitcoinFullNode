@@ -89,7 +89,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.mapOrphanTransactionsByPrev = new Dictionary<OutPoint, List<OrphanTx>>(); // OutPoint already correctly implements equality compare
             this.recentRejects = new Dictionary<uint256, uint256>();
             this.hashRecentRejectsChainTip = uint256.Zero;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.lockObject = new object();
         }
 

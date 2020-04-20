@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NBitcoin;
 using NBitcoin.DataEncoders;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Base.Deployments;
 using Stratis.Bitcoin.Configuration;
@@ -97,7 +96,7 @@ namespace Stratis.Bitcoin.IntegrationTests
         {
             var context = new MempoolValidationContext(tx, new MempoolValidationState(false));
             context.View = new MempoolCoinView(testContext.cachedCoinView, testContext.mempool, testContext.mempoolLock, null);
-            testContext.mempoolLock.ReadAsync(() => context.View.LoadViewLocked(tx)).GetAwaiter().GetResult();
+            context.View.LoadViewAsync(tx).GetAwaiter().GetResult();
             return MempoolValidator.CheckSequenceLocks(testContext.network, chainedHeader, context, flags, uselock, false);
         }
 
@@ -156,17 +155,14 @@ namespace Stratis.Bitcoin.IntegrationTests
                 var consensusSettings = new ConsensusSettings(nodeSettings);
                 var connectionSettings = new ConnectionManagerSettings(nodeSettings);
 
-                var signals = new Signals.Signals(loggerFactory, null);
-                var asyncProvider = new AsyncProvider(loggerFactory, signals, new NodeLifetime());
-
-                var networkPeerFactory = new NetworkPeerFactory(this.network, dateTimeProvider, loggerFactory, new PayloadProvider().DiscoverPayloads(), new SelfEndpointTracker(loggerFactory, connectionSettings), new Mock<IInitialBlockDownloadState>().Object, new ConnectionManagerSettings(nodeSettings), asyncProvider);
+                var networkPeerFactory = new NetworkPeerFactory(this.network, dateTimeProvider, loggerFactory, new PayloadProvider().DiscoverPayloads(), new SelfEndpointTracker(loggerFactory, connectionSettings), new Mock<IInitialBlockDownloadState>().Object, new ConnectionManagerSettings(nodeSettings));
 
                 var peerAddressManager = new PeerAddressManager(DateTimeProvider.Default, nodeSettings.DataFolder, loggerFactory, new SelfEndpointTracker(loggerFactory, connectionSettings));
-                var peerDiscovery = new PeerDiscovery(asyncProvider, loggerFactory, this.network, networkPeerFactory, new NodeLifetime(), nodeSettings, peerAddressManager);
+                var peerDiscovery = new PeerDiscovery(new AsyncLoopFactory(loggerFactory), loggerFactory, this.network, networkPeerFactory, new NodeLifetime(), nodeSettings, peerAddressManager);
                 var selfEndpointTracker = new SelfEndpointTracker(loggerFactory, connectionSettings);
                 var connectionManager = new ConnectionManager(dateTimeProvider, loggerFactory, this.network, networkPeerFactory,
                     nodeSettings, new NodeLifetime(), new NetworkPeerConnectionParameters(), peerAddressManager, new IPeerConnector[] { },
-                    peerDiscovery, selfEndpointTracker, connectionSettings, new VersionProvider(), new Mock<INodeStats>().Object, asyncProvider);
+                    peerDiscovery, selfEndpointTracker, connectionSettings, new VersionProvider(), new Mock<INodeStats>().Object);
 
                 var peerBanning = new PeerBanning(connectionManager, loggerFactory, dateTimeProvider, peerAddressManager);
                 var deployments = new NodeDeployments(this.network, this.ChainIndexer);
@@ -179,7 +175,7 @@ namespace Stratis.Bitcoin.IntegrationTests
                 };
 
                 this.ConsensusRules = new PowConsensusRuleEngine(this.network, loggerFactory, dateTimeProvider, this.ChainIndexer, deployments, consensusSettings,
-                    new Checkpoints(), this.cachedCoinView, chainState, new InvalidBlockHashStore(dateTimeProvider), new NodeStats(dateTimeProvider), asyncProvider).Register();
+                    new Checkpoints(), this.cachedCoinView, chainState, new InvalidBlockHashStore(dateTimeProvider), new NodeStats(dateTimeProvider)).Register();
 
                 this.consensus = ConsensusManagerHelper.CreateConsensusManager(this.network, chainState: chainState, inMemoryCoinView: inMemoryCoinView, chainIndexer: this.ChainIndexer);
 
@@ -405,7 +401,7 @@ namespace Stratis.Bitcoin.IntegrationTests
                 var error = Assert.Throws<ConsensusException>(() => TestHelper.MineBlocks(miner, 1));
                 Assert.True(error.Message == ConsensusErrors.BadBlockSigOps.ToString());
 
-                TestBase.WaitLoop(() => TestHelper.IsNodeSynced(miner));
+                TestHelper.WaitLoop(() => TestHelper.IsNodeSynced(miner));
 
                 Assert.True(miner.FullNode.ConsensusManager().Tip.Height == 1);
             }
@@ -500,7 +496,7 @@ namespace Stratis.Bitcoin.IntegrationTests
                 var error = Assert.Throws<ConsensusException>(() => TestHelper.MineBlocks(miner, 1));
                 Assert.True(error.Message == ConsensusErrors.BadMultipleCoinbase.ToString());
 
-                TestBase.WaitLoop(() => TestHelper.IsNodeSynced(miner));
+                TestHelper.WaitLoop(() => TestHelper.IsNodeSynced(miner));
 
                 Assert.True(miner.FullNode.ConsensusManager().Tip.Height == 1);
             }
@@ -709,6 +705,36 @@ namespace Stratis.Bitcoin.IntegrationTests
             }
         }
 
+        [Fact]
+        public void Miner_Create_Block_Whilst_Connected_Syncs()
+        {
+            using (NodeBuilder builder = NodeBuilder.Create(this))
+            {
+                CoreNode miner = builder.CreateStratisPowNode(KnownNetworks.RegTest).WithDummyWallet().Start();
+                CoreNode syncer = builder.CreateStratisPowNode(KnownNetworks.RegTest).Start();
+
+                TestHelper.Connect(miner, syncer);
+
+                TestHelper.MineBlocks(miner, 1);
+
+                TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(miner, syncer));
+            }
+        }
+
+        [Fact]
+        public void Miner_Create_Block_Whilst_Disconnected_Syncs()
+        {
+            using (NodeBuilder builder = NodeBuilder.Create(this))
+            {
+                CoreNode miner = builder.CreateStratisPowNode(KnownNetworks.RegTest).WithDummyWallet().Start();
+                CoreNode syncer = builder.CreateStratisPowNode(KnownNetworks.RegTest).Start();
+
+                TestHelper.MineBlocks(miner, 1);
+
+                TestHelper.ConnectAndSync(miner, syncer);
+            }
+        }
+
         //NOTE: These tests rely on CreateNewBlock doing its own self-validation!
         private void MinerCreateNewBlockValidity()
         {
@@ -844,6 +870,19 @@ namespace Stratis.Bitcoin.IntegrationTests
             //    chainActive.Tip().Height--;
             //    SetMockTime(0);
             //    mempool.clear();
+        }
+
+        [Fact]
+        public void MiningAndPropagatingPOW_MineBlockCheckNodeConsensusTipIsCorrect()
+        {
+            using (NodeBuilder builder = NodeBuilder.Create(this))
+            {
+                CoreNode miner = builder.CreateStratisPowNode(KnownNetworks.RegTest).WithDummyWallet().Start();
+
+                TestHelper.MineBlocks(miner, 5);
+
+                Assert.Equal(5, miner.FullNode.ConsensusManager().Tip.Height);
+            }
         }
 
         [Fact]

@@ -87,10 +87,10 @@ namespace Stratis.Bitcoin.BlockPulling
         public ChainedHeader Tip { get; set; }
 
         /// <summary>The average size in bytes of blocks delivered by that peer.</summary>
-        private readonly AverageCalculator averageSizeBytes;
+        internal readonly AverageCalculator averageSizeBytes;
 
         /// <summary>The average delay in seconds between asking this peer for a block and it being downloaded.</summary>
-        private readonly AverageCalculator averageDelaySeconds;
+        internal readonly AverageCalculator averageDelaySeconds;
 
         /// <summary>Time when the last block was delivered.</summary>
         private DateTime? lastDeliveryTime;

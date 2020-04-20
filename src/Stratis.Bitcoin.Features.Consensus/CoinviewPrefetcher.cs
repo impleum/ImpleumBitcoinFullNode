@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Base.Deployments;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
+using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.Features.Consensus
 {
@@ -24,7 +25,7 @@ namespace Stratis.Bitcoin.Features.Consensus
         private const int Lookahead = 20;
 
         /// <summary>Queue of headers that were added when block associated with such header was fully validated.</summary>
-        private readonly IAsyncDelegateDequeuer<ChainedHeader> headersQueue;
+        private readonly AsyncQueue<ChainedHeader> headersQueue;
 
         private readonly ICoinView coinview;
 
@@ -32,19 +33,16 @@ namespace Stratis.Bitcoin.Features.Consensus
 
         private readonly ChainIndexer chainIndexer;
 
-        private readonly IAsyncProvider asyncProvider;
-
         private readonly ILogger logger;
 
-        public CoinviewPrefetcher(ICoinView coinview, ChainIndexer chainIndexer, ILoggerFactory loggerFactory, IAsyncProvider asyncProvider)
+        public CoinviewPrefetcher(ICoinView coinview, ChainIndexer chainIndexer, ILoggerFactory loggerFactory)
         {
             this.coinview = coinview;
             this.chainIndexer = chainIndexer;
-            this.asyncProvider = asyncProvider;
 
-            this.headersQueue = asyncProvider.CreateAndRunAsyncDelegateDequeuer<ChainedHeader>($"{nameof(CoinviewPrefetcher)}-{nameof(this.headersQueue)}", this.OnHeaderEnqueuedAsync);
+            this.headersQueue = new AsyncQueue<ChainedHeader>(this.OnHeaderEnqueuedAsync);
             this.coinviewHelper = new CoinviewHelper();
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <summary>

@@ -16,7 +16,6 @@ using Stratis.Bitcoin.Features.Wallet.Models;
 using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.Interfaces;
-using Stratis.Bitcoin.Tests.Common;
 using Stratis.Bitcoin.Utilities.JsonErrors;
 using Stratis.SmartContracts.CLR;
 using Stratis.SmartContracts.CLR.Local;
@@ -177,14 +176,8 @@ namespace Stratis.SmartContracts.Tests.Common.MockChain
                 Sender = sender ?? this.MinerAddress.Address,
                 WalletName = this.WalletName
             };
-
-            IActionResult result = this.smartContractsController.BuildAndSendCreateSmartContractTransaction(request);
-            if (result is JsonResult response)
-            {
-                return (BuildCreateContractTransactionResponse)response.Value; 
-            }
-
-            return null;
+            JsonResult response = (JsonResult)this.smartContractsController.BuildAndSendCreateSmartContractTransaction(request);
+            return (BuildCreateContractTransactionResponse)response.Value;
         }
 
         /// <summary>
@@ -326,7 +319,7 @@ namespace Stratis.SmartContracts.Tests.Common.MockChain
         /// </summary>
         public void WaitMempoolCount(int num)
         {
-            TestBase.WaitLoop(() => this.CoreNode.CreateRPCClient().GetRawMempool().Length >= num);
+            TestHelper.WaitLoop(() => this.CoreNode.CreateRPCClient().GetRawMempool().Length >= num);
         }
     }
 }

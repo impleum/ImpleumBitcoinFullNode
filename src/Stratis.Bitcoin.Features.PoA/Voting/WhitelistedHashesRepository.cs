@@ -23,7 +23,7 @@ namespace Stratis.Bitcoin.Features.PoA.Voting
             this.kvRepository = kvRepository;
             this.locker = new object();
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public void Initialize()

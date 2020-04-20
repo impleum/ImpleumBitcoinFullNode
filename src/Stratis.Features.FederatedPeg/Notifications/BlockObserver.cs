@@ -17,8 +17,6 @@ namespace Stratis.Features.FederatedPeg.Notifications
         // The monitor we pass the new blocks onto.
         private readonly IFederationWalletSyncManager walletSyncManager;
 
-        private readonly IInputConsolidator inputConsolidator;
-
         private readonly ISignals signals;
 
         private SubscriptionToken blockConnectedSubscription;
@@ -31,14 +29,11 @@ namespace Stratis.Features.FederatedPeg.Notifications
         /// <param name="withdrawalExtractor">The component used to extract withdrawals from blocks.</param>
         /// <param name="withdrawalReceiver">The component that receives the withdrawals extracted from blocks.</param>
         /// <param name="federationGatewayClient">Client for federation gateway api.</param>
-        public BlockObserver(IFederationWalletSyncManager walletSyncManager,
-            IInputConsolidator inputConsolidator,
-            ISignals signals)
+        public BlockObserver(IFederationWalletSyncManager walletSyncManager, ISignals signals)
         {
             Guard.NotNull(walletSyncManager, nameof(walletSyncManager));
 
             this.walletSyncManager = walletSyncManager;
-            this.inputConsolidator = inputConsolidator;
             this.signals = signals;
 
             this.blockConnectedSubscription = this.signals.Subscribe<BlockConnected>(ev => this.OnBlockReceived(ev.ConnectedBlock));
@@ -53,7 +48,6 @@ namespace Stratis.Features.FederatedPeg.Notifications
         public void OnBlockReceived(ChainedHeaderBlock chainedHeaderBlock)
         {
             this.walletSyncManager.ProcessBlock(chainedHeaderBlock.Block);
-            this.inputConsolidator.ProcessBlock(chainedHeaderBlock);
         }
     }
 }

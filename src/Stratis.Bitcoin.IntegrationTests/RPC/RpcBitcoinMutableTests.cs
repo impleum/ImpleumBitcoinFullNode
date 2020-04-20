@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NBitcoin;
 using Newtonsoft.Json.Linq;
 using Stratis.Bitcoin.Features.RPC;
+using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.Tests.Common;
 using Xunit;
@@ -67,7 +68,7 @@ namespace Stratis.Bitcoin.IntegrationTests.RPC
                 rpc.AddNode(nodeB.Endpoint);
 
                 AddedNodeInfo[] info = null;
-                TestBase.WaitLoop(() =>
+                TestHelper.WaitLoop(() =>
                 {
                     info = rpc.GetAddedNodeInfo(true);
                     return info != null && info.Length > 0;
@@ -84,7 +85,7 @@ namespace Stratis.Bitcoin.IntegrationTests.RPC
                 Assert.Null(oneInfo);
                 rpc.RemoveNode(nodeB.Endpoint);
 
-                TestBase.WaitLoop(() =>
+                TestHelper.WaitLoop(() =>
                 {
                     info = rpc.GetAddedNodeInfo(true);
                     return info.Length == 0;

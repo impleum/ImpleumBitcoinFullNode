@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using DBreeze;
 using DBreeze.DataTypes;
 using Microsoft.Extensions.Logging;
@@ -75,7 +76,7 @@ namespace Stratis.Bitcoin.Features.Consensus.CoinViews
             // Create the coinview folder if it does not exist.
             Directory.CreateDirectory(folder);
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.dBreeze = new DBreezeEngine(folder);
             this.network = network;
             this.performanceCounter = new BackendPerformanceCounter(dateTimeProvider);

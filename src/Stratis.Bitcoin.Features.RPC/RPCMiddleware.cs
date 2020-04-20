@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Net.Mime;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -36,7 +38,7 @@ namespace Stratis.Bitcoin.Features.RPC
 
             this.next = next;
             this.authorization = authorization;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.httpContextFactory = httpContextFactory;
             this.dataFolder = dataFolder;
         }

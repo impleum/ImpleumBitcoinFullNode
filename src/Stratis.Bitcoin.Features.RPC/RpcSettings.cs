@@ -48,7 +48,7 @@ namespace Stratis.Bitcoin.Features.RPC
         {
             Guard.NotNull(nodeSettings, nameof(nodeSettings));
 
-            this.logger = nodeSettings.LoggerFactory.CreateLogger(typeof(RpcSettings).FullName);
+            this.logger = nodeSettings.LoggerFactory.CreateLogger("Impleum.Bitcoin.Features.RPC.RpcSettings");
 
             this.Bind = new List<IPEndPoint>();
             this.DefaultBindings = new List<IPEndPoint>();

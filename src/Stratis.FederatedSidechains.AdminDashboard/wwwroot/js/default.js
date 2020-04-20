@@ -96,16 +96,6 @@ function HideModals()
     $(".modal").modal("hide");
 }
 
-function LogLevelChanged()
-{
-    DisplayNotification("Log level changed sucessfully.");
-}
-
-function LogLevelFailed()
-{
-    DisplayNotification("Unable to change the log level.");
-}
-
 function EnabledFederation()
 {
     DisplayNotification("The federation is enabled.");
@@ -127,7 +117,7 @@ function StratisNodeStopFailed()
 
 function StratisCrosschainResynced()
 {
-    DisplayNotification("Mainnet crosschain sucessfully resynced.");
+    DisplayNotification("Mainnet crosschain Sucessfully resynced.");
 }
 function StratisCrosschainResyncFailed()
 {
@@ -155,7 +145,7 @@ function SidechainNodeStopFailed()
 
 function SidechainCrosschainResynced()
 {
-    DisplayNotification("Mainnet crosschain sucessfully resynced.");
+    DisplayNotification("Mainnet crosschain Sucessfully resynced.");
 }
 function SidechainCrosschainResyncFailed()
 {

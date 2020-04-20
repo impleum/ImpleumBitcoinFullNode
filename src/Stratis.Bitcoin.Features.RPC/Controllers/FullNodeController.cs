@@ -62,14 +62,14 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
             IInitialBlockDownloadState ibdState = null)
             : base(
                   fullNode: fullNode,
-                  network: network,
                   nodeSettings: nodeSettings,
+                  network: network,
                   chainIndexer: chainIndexer,
                   chainState: chainState,
                   connectionManager: connectionManager,
                   consensusManager: consensusManager)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.pooledTransaction = pooledTransaction;
             this.pooledGetUnspentTransaction = pooledGetUnspentTransaction;
             this.getUnspentTransaction = getUnspentTransaction;
@@ -144,7 +144,7 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
             else
             {
                 // Retrieve the block specified by the block hash.
-                chainedHeaderBlock = this.ConsensusManager.GetBlockData(hash);
+                chainedHeaderBlock = await this.ConsensusManager.GetBlockDataAsync(hash);
 
                 if (chainedHeaderBlock == null)
                 {
@@ -316,33 +316,26 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
                 Address = address,
             };
 
-            try
+            // P2WPKH
+            if (BitcoinWitPubKeyAddress.IsValid(address, this.Network, out Exception _))
             {
-                // P2WPKH
-                if (BitcoinWitPubKeyAddress.IsValid(address, this.Network, out Exception _))
-                {
-                    result.IsValid = true;
-                }
-                // P2WSH
-                else if (BitcoinWitScriptAddress.IsValid(address, this.Network, out Exception _))
-                {
-                    result.IsValid = true;
-                }
-                // P2PKH
-                else if (BitcoinPubKeyAddress.IsValid(address, this.Network))
-                {
-                    result.IsValid = true;
-                }
-                // P2SH
-                else if (BitcoinScriptAddress.IsValid(address, this.Network))
-                {
-                    result.IsValid = true;
-                    result.IsScript = true;
-                }
+                result.IsValid = true;
             }
-            catch(NotImplementedException)
+            // P2WSH (unsupported)
+            else if (BitcoinWitScriptAddress.IsValid(address, this.Network, out Exception _))
             {
-                result.IsValid = false;
+                result.IsValid = true;
+            }
+            // P2PKH
+            else if (BitcoinPubKeyAddress.IsValid(address, this.Network))
+            {
+                result.IsValid = true;
+            }
+            // P2SH
+            else if (BitcoinScriptAddress.IsValid(address, this.Network))
+            {
+                result.IsValid = true;
+                result.IsScript = true;
             }
 
             if (result.IsValid)
@@ -358,15 +351,15 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
         /// <summary>
         /// RPC method for returning a block.
         /// <para>
-        /// Supports Json format by default, and optionally raw (hex) format by supplying <c>0</c> to <see cref="verbosity"/>.
+        /// Supports Json format by default, and optionally raw (hex) format by supplying <c>false</c> to <see cref="isJsonFormat"/>.
         /// </para>
         /// </summary>
         /// <param name="blockHash">Hash of block to find.</param>
-        /// <param name="verbosity">Defaults to 1. 0 for hex encoded data, 1 for a json object, and 2 for json object with transaction data.</param>
+        /// <param name="verbosity">0 for hex encoded data, 1 for a json object, and 2 for json object with transaction data.</param>
         /// <returns>The block according to format specified in <see cref="verbosity"/></returns>
         [ActionName("getblock")]
         [ActionDescription("Returns the block in hex, given a block hash.")]
-        public async Task<object> GetBlockAsync(string blockHash, int verbosity = 1)
+        public async Task<object> GetBlockAsync(string blockHash, int verbosity = 0)
         {
             Block block = this.blockStore != null ? this.blockStore.GetBlock(uint256.Parse(blockHash)) : null;
 

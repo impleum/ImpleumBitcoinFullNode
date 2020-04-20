@@ -38,7 +38,7 @@ namespace Stratis.Features.FederatedPeg.Tests.Wallet
         }
 
         [Fact]
-        public void UseOrderedEvenWhenOneCoinWhenAmountMatchesExactly()
+        public void UseOneCoinWhenAmountMatchesExactly()
         {
             Transaction fundingTransaction = this.network.CreateTransaction();
             fundingTransaction.Outputs.Add(new TxOut(Money.Coins(1m), new Key().ScriptPubKey));
@@ -55,7 +55,8 @@ namespace Stratis.Features.FederatedPeg.Tests.Wallet
             };
 
             IEnumerable<ICoin> result = this.deterministicCoinSelector.Select(coins, target);
-            Assert.Equal(2, result.Count());
+            Assert.Single(result);
+            Assert.Equal(Money.Coins(1.5m), result.First().Amount);
         }
 
         [Fact]
@@ -82,7 +83,7 @@ namespace Stratis.Features.FederatedPeg.Tests.Wallet
         }
 
         [Fact]
-        public void UseAllCoinsWhenLowerCoinsDontTotalTarget()
+        public void UseOneCoinWhenLowerCoinsDontTotalTarget()
         {
             Transaction fundingTransaction = this.network.CreateTransaction();
             fundingTransaction.Outputs.Add(new TxOut(Money.Coins(0.1m), new Key().ScriptPubKey));
@@ -101,7 +102,7 @@ namespace Stratis.Features.FederatedPeg.Tests.Wallet
             };
 
             ICoin[] result = this.deterministicCoinSelector.Select(coins, target).ToArray();
-            Assert.Equal(4, result.Length);
+            Assert.Single(result);
         }
 
         [Fact]

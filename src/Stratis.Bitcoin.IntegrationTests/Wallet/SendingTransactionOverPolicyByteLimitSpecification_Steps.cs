@@ -10,7 +10,6 @@ using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.IntegrationTests.Common.ReadyData;
 using Stratis.Bitcoin.Networks;
-using Stratis.Bitcoin.Tests.Common;
 using Stratis.Bitcoin.Tests.Common.TestFramework;
 using Xunit.Abstractions;
 
@@ -69,7 +68,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
         private void mempool_of_node2_has_received_transaction()
         {
-            TestBase.WaitLoop(() => this.firstNode.FullNode.MempoolManager().GetMempoolAsync().Result.Any());
+            TestHelper.WaitLoop(() => this.firstNode.FullNode.MempoolManager().GetMempoolAsync().Result.Any());
             this.firstNode.FullNode.MempoolManager().GetMempoolAsync().Result.Should().Contain(this.transaction.GetHash());
         }
 

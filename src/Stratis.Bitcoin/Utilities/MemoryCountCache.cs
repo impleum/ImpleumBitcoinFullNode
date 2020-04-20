@@ -19,7 +19,7 @@ namespace Stratis.Bitcoin.Utilities
         {
             Guard.Assert(maxItemsCount > 0);
 
-            this.Cache = new Dictionary<TKey, LinkedListNode<CacheItem>>(this.maxItemsCount, comparer);
+            this.cache = new Dictionary<TKey, LinkedListNode<CacheItem>>(this.maxItemsCount, comparer);
 
             this.maxItemsCount = maxItemsCount;
         }
@@ -35,7 +35,7 @@ namespace Stratis.Bitcoin.Utilities
         /// <inheritdoc />
         protected override bool IsCacheFullLocked(CacheItem item)
         {
-            return (this.Keys.Count == this.maxItemsCount);
+            return (this.keys.Count == this.maxItemsCount);
         }
     }
 }

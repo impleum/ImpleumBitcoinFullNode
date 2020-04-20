@@ -109,8 +109,8 @@ namespace Stratis.Bitcoin.Consensus
         [NoTrace]
         public bool CheckHardened(int height, uint256 hash)
         {
-            CheckpointInfo checkpoint;
-            if (!this.GetCheckpoints().TryGetValue(height, out checkpoint)) return true;
+            if (!this.GetCheckpoints().TryGetValue(height, out CheckpointInfo checkpoint))
+                return true;
 
             return checkpoint.Hash.Equals(hash);
         }
@@ -119,8 +119,7 @@ namespace Stratis.Bitcoin.Consensus
         [NoTrace]
         public CheckpointInfo GetCheckpoint(int height)
         {
-            CheckpointInfo checkpoint;
-            this.GetCheckpoints().TryGetValue(height, out checkpoint);
+            this.GetCheckpoints().TryGetValue(height, out CheckpointInfo checkpoint);
             return checkpoint;
         }
 

@@ -1,4 +1,8 @@
-﻿using Stratis.Bitcoin.EventBus;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using NBitcoin;
+using Stratis.Bitcoin.EventBus;
 
 namespace Stratis.Bitcoin.Features.PoA.Events
 {
@@ -8,9 +12,9 @@ namespace Stratis.Bitcoin.Features.PoA.Events
     /// <seealso cref="Stratis.Bitcoin.EventBus.EventBase" />
     public class FedMemberKicked : EventBase
     {
-        public IFederationMember KickedMember { get; }
+        public PubKey KickedMember { get; }
 
-        public FedMemberKicked(IFederationMember  kickedMember)
+        public FedMemberKicked(PubKey kickedMember)
         {
             this.KickedMember = kickedMember;
         }

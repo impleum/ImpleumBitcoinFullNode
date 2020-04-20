@@ -71,7 +71,7 @@ namespace Stratis.Bitcoin.Base
             this.newCommonTipSetEvent = new AsyncManualResetEvent(false);
             this.cancellation = new CancellationTokenSource();
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />

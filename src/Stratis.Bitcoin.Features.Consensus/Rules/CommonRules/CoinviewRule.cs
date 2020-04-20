@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -78,7 +79,8 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                     {
                         this.CheckInputs(tx, view, index.Height);
 
-                        fees += this.GetTransactionFee(view, tx);
+                        if (!tx.IsCoinStake)
+                            fees += view.GetValueIn(tx) - tx.TotalOut;
 
                         var txData = new PrecomputedTransactionData(tx);
                         for (int inputIndex = 0; inputIndex < tx.Inputs.Count; inputIndex++)
@@ -131,8 +133,6 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             }
             else this.Logger.LogTrace("BIP68, SigOp cost, and block reward validation skipped for block at height {0}.", index.Height);
         }
-
-        protected abstract Money GetTransactionFee(UnspentOutputSet view, Transaction tx);
 
         /// <summary>Checks if transaction if final.</summary>
         protected virtual bool IsTxFinal(Transaction transaction, RuleContext context)

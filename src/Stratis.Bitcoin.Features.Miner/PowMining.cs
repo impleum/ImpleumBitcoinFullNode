@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.MemoryPool.Interfaces;
@@ -33,7 +32,7 @@ namespace Stratis.Bitcoin.Features.Miner
     public class PowMining : IPowMining
     {
         /// <summary>Factory for creating background async loop tasks.</summary>
-        private readonly IAsyncProvider asyncProvider;
+        private readonly IAsyncLoopFactory asyncLoopFactory;
 
         /// <summary>Builder that creates a proof-of-work block template.</summary>
         private readonly IBlockProvider blockProvider;
@@ -83,7 +82,7 @@ namespace Stratis.Bitcoin.Features.Miner
         private CancellationTokenSource miningCancellationTokenSource;
 
         public PowMining(
-            IAsyncProvider asyncProvider,
+            IAsyncLoopFactory asyncLoopFactory,
             IBlockProvider blockProvider,
             IConsensusManager consensusManager,
             ChainIndexer chainIndexer,
@@ -95,14 +94,14 @@ namespace Stratis.Bitcoin.Features.Miner
             ILoggerFactory loggerFactory,
             IInitialBlockDownloadState initialBlockDownloadState)
         {
-            this.asyncProvider = asyncProvider;
+            this.asyncLoopFactory = asyncLoopFactory;
             this.blockProvider = blockProvider;
             this.chainIndexer = chainIndexer;
             this.consensusManager = consensusManager;
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
             this.initialBlockDownloadState = initialBlockDownloadState;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.mempool = mempool;
             this.mempoolLock = mempoolLock;
             this.network = network;
@@ -118,7 +117,7 @@ namespace Stratis.Bitcoin.Features.Miner
 
             this.miningCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(new[] { this.nodeLifetime.ApplicationStopping });
 
-            this.miningLoop = this.asyncProvider.CreateAndRunAsyncLoop("PowMining.Mine", token =>
+            this.miningLoop = this.asyncLoopFactory.Run("PowMining.Mine", token =>
             {
                 try
                 {

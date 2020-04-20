@@ -49,11 +49,9 @@ namespace Stratis.Bitcoin.Tests.P2P
 
             var endpointAddNode = new IPEndPoint(IPAddress.Parse("::ffff:192.168.0.1"), 80);
 
-            var asyncProvider = this.CreateAsyncProvider();
-
             var networkPeerServer = new NetworkPeerServer(this.Network,
                 endpointAddNode, endpointAddNode, ProtocolVersion.PROTOCOL_VERSION, this.extendedLoggerFactory,
-                networkPeerFactory.Object, initialBlockDownloadState.Object, connectionManagerSettings, asyncProvider);
+                networkPeerFactory.Object, initialBlockDownloadState.Object, connectionManagerSettings);
 
             // Mimic external client
             const int portNumber = 80;
@@ -67,7 +65,7 @@ namespace Stratis.Bitcoin.Tests.P2P
             // Include the external client as a NodeServerEndpoint.
             connectionManagerSettings.Bind.Add(new NodeServerEndpoint(endpointDiscovered, isWhiteListed));
 
-            // Act
+            // Act 
             var result = networkPeerServer.InvokeMethod("AllowClientConnection", client);
 
             // Assert

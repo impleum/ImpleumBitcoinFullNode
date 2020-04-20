@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using NBitcoin;
-using Stratis.Bitcoin.Utilities;
 using Stratis.Features.FederatedPeg.Wallet;
 
 namespace Stratis.Features.FederatedPeg.Interfaces
@@ -9,7 +8,7 @@ namespace Stratis.Features.FederatedPeg.Interfaces
     /// <summary>
     /// Interface for a manager providing operations on wallets.
     /// </summary>
-    public interface IFederationWalletManager : ILockProtected
+    public interface IFederationWalletManager
     {
         /// <summary>
         /// Starts this wallet manager.
@@ -56,10 +55,17 @@ namespace Stratis.Features.FederatedPeg.Interfaces
         /// </summary>
         /// <param name="transaction">The transaction.</param>
         /// <param name="blockHeight">The height of the block this transaction came from. Null if it was not a transaction included in a block.</param>
-        /// <param name="blockHash">The hash of the block this transaction came from. Null if it was not a transaction included in a block.</param>
         /// <param name="block">The block in which this transaction was included.</param>
+        /// <param name="isPropagated">Transaction propagation state.</param>
         /// <returns>A value indicating whether this transaction affects the wallet.</returns>
-        bool ProcessTransaction(Transaction transaction, int? blockHeight = null, uint256 blockHash = null, Block block = null);
+        bool ProcessTransaction(Transaction transaction, int? blockHeight = null, Block block = null, bool isPropagated = true);
+
+        /// <summary>
+        /// Removes a transaction not yet broadcasted or included in a block.
+        /// </summary>
+        /// <param name="transaction">The transaction to remove.</param>
+        /// <returns>A value indicating whether this transaction affects the wallet.</returns>
+        bool RemoveTransaction(Transaction transaction);
 
         /// <summary>
         /// Verifies that the transaction's input UTXO's have been reserved by the wallet.
@@ -69,14 +75,6 @@ namespace Stratis.Features.FederatedPeg.Interfaces
         /// <param name="checkSignature">Indicates whether to check the signature.</param>
         /// <returns><c>True</c> if all's well and <c>false</c> otherwise.</returns>
         bool ValidateTransaction(Transaction transaction, bool checkSignature = false);
-
-        /// <summary>
-        /// Verifies that a transaction's inputs aren't being consumed by any other transactions.
-        /// </summary>
-        /// <param name="transaction">The transaction to check.</param>
-        /// <param name="checkSignature">Indicates whether to check the signature.</param>
-        /// <returns><c>True</c> if all's well and <c>false</c> otherwise.</returns>
-        bool ValidateConsolidatingTransaction(Transaction transaction, bool checkSignature = false);
 
         /// <summary>
         /// Saves the wallet into the file system.
@@ -108,26 +106,29 @@ namespace Stratis.Features.FederatedPeg.Interfaces
         /// Finds all withdrawal transactions with optional filtering by deposit id or transaction id.
         /// </summary>
         /// <param name="depositId">Filters by this deposit id if not <c>null</c>.</param>
-        /// <param name="sort">Sorts the results ascending according to earliest input UTXO.</param>
+        /// <param name="transactionId">Filters by this transaction id if not <c>null</c>.</param>
         /// <returns>The transaction data containing the withdrawal transaction.</returns>
-        List<(Transaction, IWithdrawal)> FindWithdrawalTransactions(uint256 depositId = null, bool sort = false);
+        List<(Transaction, TransactionData, IWithdrawal)> FindWithdrawalTransactions(uint256 depositId = null);
 
         /// <summary>
-        /// Removes the withdrawal transaction(s) associated with the corresponding deposit id.
+        /// Removes the transient transactions associated with the corresponding deposit ids.
         /// </summary>
-        /// <param name="depositId">The deposit id identifying the withdrawal transaction(s) to remove.</param>
-        bool RemoveWithdrawalTransactions(uint256 depositId);
+        /// <param name="depositId">The deposit id identifying the transient transactions to remove. Set to <c>null</c> to remove all.</param>
+        bool RemoveTransientTransactions(uint256 depositId = null);
 
         /// <summary>
-        /// Removes transaction data that is still to be confirmed in a block.
+        /// Compares two outpoints to see which occurs earlier.
         /// </summary>
-        bool RemoveUnconfirmedTransactionData();
+        /// <param name="outPoint1">The first outpoint to compare.</param>
+        /// <param name="outPoint2">The second outpoint to compare.</param>
+        /// <returns><c>-1</c> if the <paramref name="outPoint1"/> occurs first and <c>1</c> otherwise.</returns>
+        int CompareOutpoints(OutPoint outPoint1, OutPoint outPoint2);
 
         /// <summary>
         /// Determines if federation has been activated.
         /// </summary>
         /// <returns><c>True</c> if federation is active and <c>false</c> otherwise.</returns>
-        bool IsFederationWalletActive();
+        bool IsFederationActive();
 
         /// <summary>
         /// Enables federation.
@@ -135,7 +136,7 @@ namespace Stratis.Features.FederatedPeg.Interfaces
         /// <param name="password">The federation wallet password.</param>
         /// <param name="mnemonic">The user's mnemonic.</param>
         /// <param name="passphrase">A passphrase used to derive the private key from the mnemonic.</param>
-        void EnableFederationWallet(string password, string mnemonic = null, string passphrase = null);
+        void EnableFederation(string password, string mnemonic = null, string passphrase = null);
 
         /// <summary>
         /// Removes all the transactions from the federation wallet.
@@ -144,9 +145,9 @@ namespace Stratis.Features.FederatedPeg.Interfaces
         HashSet<(uint256, DateTimeOffset)> RemoveAllTransactions();
 
         /// <summary>
-        /// Get the accounts total spendable value for both confirmed and unconfirmed UTXO.
+        /// Enumerate withdrawals starting with the most recent.
         /// </summary>
-        /// <returns>A tuple containing the confirmed and unconfirmed balances.</returns>
-        (Money ConfirmedAmount, Money UnConfirmedAmount) GetSpendableAmount();
+        /// <returns>An enumeration of IWithdrawal objects.</returns>
+        IEnumerable<IWithdrawal> GetWithdrawals();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,7 @@ namespace Stratis.Bitcoin.Features.Apps
         public AppsStore(ILoggerFactory loggerFactory, DataFolder dataFolder)
         {
             this.dataFolder = dataFolder;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public IEnumerable<IStratisApp> Applications
@@ -54,11 +55,11 @@ namespace Stratis.Bitcoin.Features.Apps
                 this.applications.AddRange(apps.Where(x => x != null));
 
                 if (this.applications.IsEmpty())
-                    this.logger.LogWarning("No Stratis applications found at or below '{0}'.", this.dataFolder.ApplicationsPath);
+                    this.logger.LogWarning("No Impleum applications found at or below '{0}'.", this.dataFolder.ApplicationsPath);
             }
             catch (Exception e)
             {
-                this.logger.LogError("Failed to load Stratis apps :{0}", e.Message);
+                this.logger.LogError("Failed to load Impleum apps :{0}", e.Message);
             }
         }
 

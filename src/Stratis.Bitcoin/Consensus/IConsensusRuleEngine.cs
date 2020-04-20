@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using NBitcoin;
 using Stratis.Bitcoin.Consensus.Rules;
+using Stratis.Bitcoin.Primitives;
 
 namespace Stratis.Bitcoin.Consensus
 {

@@ -9,11 +9,11 @@ namespace Stratis.Bitcoin.Consensus
         /// <inheritdoc cref="IScriptAddressReader.GetAddressFromScriptPubKey"/>
         public string GetAddressFromScriptPubKey(Network network, Script script)
         {
-            ScriptTemplate scriptTemplate = network.StandardScriptsRegistry.GetTemplateFromScriptPubKey(script);
+            var scriptTemplate = network.StandardScriptsRegistry.GetTemplateFromScriptPubKey(script);
 
-            string destinationAddress = null;
+            var destinationAddress = string.Empty;
 
-            switch (scriptTemplate?.Type)
+            switch (scriptTemplate.Type)
             {
                 // Pay to PubKey can be found in outputs of staking transactions.
                 case TxOutType.TX_PUBKEY:

@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Configuration.Settings;
@@ -149,11 +148,8 @@ namespace Stratis.Bitcoin.Tests.Base
         {
             var peer = new Mock<INetworkPeer>();
 
-            var signals = new Bitcoin.Signals.Signals(this.loggerFactory, null);
-            var asyncProvider = new AsyncProvider(this.loggerFactory, signals, new NodeLifetime());
-
             var connection = new NetworkPeerConnection(KnownNetworks.StratisMain, peer.Object, new TcpClient(), 0, (message, token) => Task.CompletedTask,
-                new DateTimeProvider(), this.loggerFactory, new PayloadProvider(), asyncProvider);
+                new DateTimeProvider(), this.loggerFactory, new PayloadProvider());
 
             peer.SetupGet(networkPeer => networkPeer.Connection).Returns(connection);
 

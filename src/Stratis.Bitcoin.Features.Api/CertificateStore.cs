@@ -11,7 +11,7 @@ namespace Stratis.Bitcoin.Features.Api
 
         public CertificateStore(ILoggerFactory loggerFactory)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
         
         /// <inheritdoc />

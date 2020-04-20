@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using NBitcoin;
 using Newtonsoft.Json;
 using Stratis.Bitcoin.Utilities.JsonConverters;
@@ -12,7 +13,7 @@ namespace Stratis.Features.FederatedPeg.Wallet
     {
         public MultiSigAddress()
         {
-            this.Transactions = new MultiSigTransactions();
+            this.Transactions = new List<TransactionData>();
         }
 
         /// <summary>
@@ -58,11 +59,25 @@ namespace Stratis.Features.FederatedPeg.Wallet
         /// A list of transactions involving this multisig address.
         /// </summary>
         [JsonProperty(PropertyName = "transactions")]
-        public MultiSigTransactions Transactions { get; set; }
-
+        public ICollection<TransactionData> Transactions { get; set; }
+        
         public Key GetPrivateKey(string encryptedSeed, string password, Network network)
         {
             return Key.Parse(encryptedSeed, password, network);
+        }
+
+        /// <summary>
+        /// List all spendable transactions in a multisig address.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<TransactionData> UnspentTransactions()
+        {
+            if (this.Transactions == null)
+            {
+                return new List<TransactionData>();
+            }
+
+            return this.Transactions.Where(t => t.IsSpendable());
         }
     }
 }

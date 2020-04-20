@@ -14,7 +14,6 @@ using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.IntegrationTests.Common.ReadyData;
 using Stratis.Bitcoin.Networks;
-using Stratis.Bitcoin.Tests.Common;
 using Xunit;
 
 namespace Stratis.Bitcoin.IntegrationTests.Wallet
@@ -25,7 +24,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
         public WalletRPCControllerTest()
         {
-            this.network = new StratisRegTest();
+            this.network = new ImpleumRegTest();
         }
 
         [Fact]
@@ -213,7 +212,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
                 uint256 txId = buildTransactionModel.TransactionId;
 
-                TestBase.WaitLoop(() =>
+                TestHelper.WaitLoop(() =>
                 {
                     WalletHistoryModel history = $"http://localhost:{receivingNode.ApiPort}/api"
                     .AppendPathSegment("wallet/history")
@@ -224,7 +223,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
                     return history.AccountsHistoryModel.First().TransactionsHistory.Any(h => h.Id == txId);
                 });
 
-                TestBase.WaitLoop(() =>
+                TestHelper.WaitLoop(() =>
                 {
                     WalletHistoryModel history = $"http://localhost:{sendingNode.ApiPort}/api"
                         .AppendPathSegment("wallet/history")

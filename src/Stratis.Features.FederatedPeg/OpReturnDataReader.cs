@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Features.FederatedPeg.CounterChain;
-using TracerAttributes;
 
 namespace Stratis.Features.FederatedPeg
 {
@@ -35,17 +33,16 @@ namespace Stratis.Features.FederatedPeg
         bool TryGetTransactionId(Transaction transaction, out string txId);
     }
 
-    [NoTrace]
     public class OpReturnDataReader : IOpReturnDataReader
     {
         private readonly ILogger logger;
 
         private readonly Network counterChainNetwork;
 
-        public OpReturnDataReader(ILoggerFactory loggerFactory, CounterChainNetworkWrapper counterChainNetworkWrapper)
+        public OpReturnDataReader(ILoggerFactory loggerFactory, FederatedPegOptions federatedPegOptions)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
-            this.counterChainNetwork = counterChainNetworkWrapper.CounterChainNetwork;
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.counterChainNetwork = federatedPegOptions.CounterChainNetwork;
         }
 
         /// <inheritdoc />
@@ -55,6 +52,9 @@ namespace Stratis.Features.FederatedPeg
                 .Select(this.TryConvertValidOpReturnDataToAddress)
                 .Where(s => s != null)
                 .Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
+
+            this.logger.LogDebug("Address(es) found in OP_RETURN(s) of transaction {0}: [{1}]",
+                transaction.GetHash(), string.Join(",", opReturnAddresses));
 
             if (opReturnAddresses.Count != 1)
             {
@@ -73,6 +73,9 @@ namespace Stratis.Features.FederatedPeg
                 .Select(this.TryConvertValidOpReturnDataToHash)
                 .Where(s => s != null)
                 .Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
+
+            this.logger.LogDebug("Transaction Id(s) found in OP_RETURN(s) of transaction {0}: [{1}]",
+                transaction.GetHash(), string.Join(",", transactionId));
 
             if (transactionId.Count != 1)
             {
@@ -103,12 +106,13 @@ namespace Stratis.Features.FederatedPeg
             // Attempt to parse the string. Validates the base58 string.
             try
             {
-                BitcoinAddress bitcoinAddress = this.counterChainNetwork.Parse<BitcoinAddress>(destination);
+                var bitcoinAddress = this.counterChainNetwork.Parse<BitcoinAddress>(destination);
+                this.logger.LogTrace($"ConvertValidOpReturnDataToAddress received {destination} and network.Parse received {bitcoinAddress}.");
                 return destination;
             }
             catch (Exception ex)
             {
-                this.logger.LogDebug("Address {destination} could not be converted to a valid address. Reason {message}.", destination, ex.Message);
+                this.logger.LogTrace($"Address {destination} could not be converted to a valid address. Reason {ex.Message}.");
                 return null;
             }
         }
@@ -119,11 +123,12 @@ namespace Stratis.Features.FederatedPeg
             try
             {
                 var hash256 = new uint256(data);
+                this.logger.LogTrace($"ConvertValidOpReturnDataToHash received {hash256}.");
                 return hash256.ToString();
             }
             catch (Exception ex)
             {
-                this.logger.LogDebug("Candidate hash {data} could not be converted to a valid uint256. Reason {message}.", data, ex.Message);
+                this.logger.LogTrace($"Candidate hash {data} could not be converted to a valid uint256. Reason {ex.Message}.");
                 return null;
             }
         }

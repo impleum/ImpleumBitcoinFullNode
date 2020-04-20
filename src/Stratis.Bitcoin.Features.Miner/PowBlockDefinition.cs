@@ -26,7 +26,7 @@ namespace Stratis.Bitcoin.Features.Miner
             : base(consensusManager, dateTimeProvider, loggerFactory, mempool, mempoolLock, minerSettings, network)
         {
             this.consensusRules = consensusRules;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public override void AddToBlock(TxMempoolEntry mempoolEntry)

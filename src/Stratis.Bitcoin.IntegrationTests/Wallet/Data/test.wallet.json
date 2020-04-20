@@ -36,7 +36,7 @@
     "a064601e9999e30e9aea529fbac583662a8757e6b3033df71b5140f3276b967d",
     "00000e246d7b73b88c9ab55f2e5e94d9e22d471def3df5ea448f5576b1d156b9"
   ],
-  "network": "StratisRegTest",
+  "network": "ImpleumRegTest",
   "creationTime": "1538661096",
   "accountsRoot": [
     {

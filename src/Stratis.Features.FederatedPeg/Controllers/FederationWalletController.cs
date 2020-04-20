@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
@@ -67,7 +66,7 @@ namespace Stratis.Features.FederatedPeg.Controllers
             this.withdrawalHistoryProvider = withdrawalHistoryProvider;
             this.coinType = (CoinType)network.Consensus.CoinType;
             this.chainIndexer = chainIndexer;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         [Route(FederationWalletRouteEndPoint.GeneralInfo)]
@@ -115,7 +114,7 @@ namespace Stratis.Features.FederatedPeg.Controllers
                     return this.NotFound("No federation wallet found.");
                 }
 
-                (Money ConfirmedAmount, Money UnConfirmedAmount) result = this.walletManager.GetSpendableAmount();
+                (Money ConfirmedAmount, Money UnConfirmedAmount) result = wallet.GetSpendableAmount();
 
                 var balance = new AccountBalanceModel
                 {
@@ -203,20 +202,9 @@ namespace Stratis.Features.FederatedPeg.Controllers
                     return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, "Formatting error", string.Join(Environment.NewLine, errors));
                 }
 
-                // Enabling the federation wallet requires the federation wallet.
-                for (int timeOutSeconds = request.TimeoutSeconds ?? 0; timeOutSeconds >= 0; timeOutSeconds--)
-                {
-                    if (this.walletManager.GetWallet() != null)
-                    {
-                        this.walletManager.EnableFederationWallet(request.Password, request.Mnemonic, request.Passphrase);
+                this.walletManager.EnableFederation(request.Password, request.Mnemonic, request.Passphrase);
 
-                        return this.Ok();
-                    }
-
-                    Thread.Sleep(1000);
-                }
-
-                return this.NotFound("No federation wallet found.");
+                return this.Ok();
             }
             catch (Exception e)
             {

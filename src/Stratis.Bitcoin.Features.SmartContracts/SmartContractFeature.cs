@@ -13,6 +13,7 @@ using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.SmartContracts.PoA;
 using Stratis.Bitcoin.Features.SmartContracts.PoS;
 using Stratis.Bitcoin.Features.SmartContracts.PoW;
+using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor;
 using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers;
 using Stratis.Bitcoin.Interfaces;
 using Stratis.Bitcoin.Utilities;
@@ -42,7 +43,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts
         public SmartContractFeature(IConsensusManager consensusLoop, ILoggerFactory loggerFactory, Network network, IStateRepositoryRoot stateRoot)
         {
             this.consensusManager = consensusLoop;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.network = network;
             this.stateRoot = stateRoot;
         }
@@ -53,9 +54,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts
             if (this.network.Consensus.IsProofOfStake)
                 Guard.Assert(this.network.Consensus.ConsensusFactory is SmartContractPosConsensusFactory);
             else
-                Guard.Assert(this.network.Consensus.ConsensusFactory is SmartContractPowConsensusFactory
-                             || this.network.Consensus.ConsensusFactory is SmartContractPoAConsensusFactory
-                             || this.network.Consensus.ConsensusFactory is SmartContractCollateralPoAConsensusFactory);
+                Guard.Assert(this.network.Consensus.ConsensusFactory is SmartContractPowConsensusFactory || this.network.Consensus.ConsensusFactory is SmartContractPoAConsensusFactory);
 
             this.stateRoot.SyncToRoot(((ISmartContractBlockHeader)this.consensusManager.Tip.Header).HashStateRoot.ToBytes());
 

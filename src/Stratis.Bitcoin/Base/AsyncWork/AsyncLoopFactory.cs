@@ -72,7 +72,7 @@ namespace Stratis.Bitcoin.Utilities
         /// <remarks>TODO: It might be a better idea to pass factory to the newly created loops so that new loggers can be created for each loop.</remarks>
         public AsyncLoopFactory(ILoggerFactory loggerFactory)
         {
-            this.logger = loggerFactory.CreateLogger("STR_1.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />

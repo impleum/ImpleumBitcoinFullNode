@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.P2P.Protocol;
 using Stratis.Bitcoin.P2P.Protocol.Payloads;
+using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.P2P.Peer
 {
@@ -13,11 +13,10 @@ namespace Stratis.Bitcoin.P2P.Peer
     public class NetworkPeerListener : IMessageListener<IncomingMessage>, IDisposable
     {
         /// <summary>Queue of unprocessed messages.</summary>
-        private readonly IAsyncQueue<IncomingMessage> asyncIncomingMessagesQueue;
+        private readonly AsyncQueue<IncomingMessage> asyncQueue;
 
         /// <summary>Connected network peer that we receive messages from.</summary>
         private readonly INetworkPeer peer;
-        private readonly IAsyncProvider asyncProvider;
 
         /// <summary>Registration to the message producer of the connected peer.</summary>
         private readonly MessageProducerRegistration<IncomingMessage> messageProducerRegistration;
@@ -26,20 +25,18 @@ namespace Stratis.Bitcoin.P2P.Peer
         /// Initializes the instance of the object and subscribes to the peer's message producer.
         /// </summary>
         /// <param name="peer">Connected network peer that we receive messages from.</param>
-        public NetworkPeerListener(INetworkPeer peer, IAsyncProvider asyncProvider)
+        public NetworkPeerListener(INetworkPeer peer)
         {
-            this.peer = peer;
-            this.asyncProvider = asyncProvider;
-            this.asyncIncomingMessagesQueue = asyncProvider.CreateAsyncQueue<IncomingMessage>();
-
+            this.asyncQueue = new AsyncQueue<IncomingMessage>();
             this.messageProducerRegistration = peer.MessageProducer.AddMessageListener(this);
+            this.peer = peer;
         }
 
         /// <inheritdoc/>
         /// <remarks>Adds the newly received message to the queue.</remarks>
         public void PushMessage(IncomingMessage message)
         {
-            this.asyncIncomingMessagesQueue.Enqueue(message);
+            this.asyncQueue.Enqueue(message);
         }
 
         /// <summary>
@@ -59,7 +56,7 @@ namespace Stratis.Bitcoin.P2P.Peer
             {
                 while (true)
                 {
-                    IncomingMessage message = await this.asyncIncomingMessagesQueue.DequeueAsync(cancellation.Token).ConfigureAwait(false);
+                    IncomingMessage message = await this.asyncQueue.DequeueAsync(cancellation.Token).ConfigureAwait(false);
                     if (message.Message.Payload is TPayload payload)
                         return payload;
                 }
@@ -70,7 +67,7 @@ namespace Stratis.Bitcoin.P2P.Peer
         public void Dispose()
         {
             this.messageProducerRegistration.Dispose();
-            this.asyncIncomingMessagesQueue.Dispose();
+            this.asyncQueue.Dispose();
         }
     }
 }

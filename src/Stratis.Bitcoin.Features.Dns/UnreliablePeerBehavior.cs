@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.Bitcoin.Base;
@@ -59,7 +60,7 @@ namespace Stratis.Bitcoin.Features.Dns
             this.nodeSettings = nodeSettings;
             this.checkpoints = checkpoints;
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         /// <inheritdoc />
@@ -117,7 +118,7 @@ namespace Stratis.Bitcoin.Features.Dns
         private bool IsProvenHeaderActivated()
         {
             long currentHeight = this.chainState.ConsensusTip.Height;
-            return (currentHeight >= this.checkpoints.GetLastCheckpointHeight()) && this.network.Consensus.IsProofOfStake;
+            return currentHeight >= this.checkpoints.GetLastCheckpointHeight(); ;
         }
 
         /// <summary>

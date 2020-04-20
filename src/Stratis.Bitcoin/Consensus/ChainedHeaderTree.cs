@@ -230,7 +230,7 @@ namespace Stratis.Bitcoin.Consensus
             this.finalizedBlockInfo = finalizedBlockInfo;
             this.consensusSettings = consensusSettings;
             this.invalidHashesStore = invalidHashesStore;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.peerTipsByPeerId = new Dictionary<int, uint256>();
             this.peerIdsByTipHash = new Dictionary<uint256, HashSet<int>>();

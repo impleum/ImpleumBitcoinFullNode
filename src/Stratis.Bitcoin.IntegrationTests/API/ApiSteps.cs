@@ -39,7 +39,8 @@ namespace Stratis.Bitcoin.IntegrationTests.API
         private const string WalletAccountName = "account 0";
         private const string WalletPassword = "password";
         private const string WalletPassphrase = "wallet_passphrase";
-        private const string StratisRegTest = "StratisRegTest";
+        //private const string StratisRegTest = "StratisRegTest";
+        private const string StratisRegTest = "ImpleumRegTest";
 
         // BlockStore
         private const string BlockUri = "api/blockstore/block";
@@ -298,7 +299,7 @@ namespace Stratis.Bitcoin.IntegrationTests.API
             this.send_api_get_request($"{AddnodeUri}?endpoint={this.secondStratisPowApiNode.Endpoint.ToString()}&command=onetry");
             this.responseText.Should().Be("true");
 
-            TestBase.WaitLoop(() => TestHelper.AreNodesSynced(this.firstStratisPowApiNode, this.secondStratisPowApiNode));
+            TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(this.firstStratisPowApiNode, this.secondStratisPowApiNode));
         }
 
         private void calling_block()
@@ -423,7 +424,7 @@ namespace Stratis.Bitcoin.IntegrationTests.API
         {
             var commands = JsonDataSerializer.Instance.Deserialize<List<RpcCommandModel>>(this.responseText);
 
-            commands.Count.Should().Be(30);
+            commands.Count.Should().Be(29);
             commands.Should().Contain(x => x.Command == "stop");
             commands.Should().Contain(x => x.Command == "getrawtransaction <txid> [<verbose>] [<blockhash>]");
             commands.Should().Contain(x => x.Command == "gettxout <txid> <vout> [<includemempool>]");
@@ -450,7 +451,6 @@ namespace Stratis.Bitcoin.IntegrationTests.API
             commands.Should().Contain(x => x.Command == "sendmany <fromaccount> <addressesjson> [<minconf>] [<comment>] [<subtractfeefromjson>] [<isreplaceable>] [<conftarget>] [<estimatemode>]");
             commands.Should().Contain(x => x.Command == "getblockchaininfo");
             commands.Should().Contain(x => x.Command == "getnetworkinfo");
-            commands.Should().Contain(x => x.Command == "listaddressgroupings");
         }
 
         private void status_information_is_returned()

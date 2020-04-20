@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using NBitcoin;
-using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Wallet.Broadcasting;
 
 namespace Stratis.Bitcoin.Features.Wallet.Interfaces
@@ -14,6 +13,6 @@ namespace Stratis.Bitcoin.Features.Wallet.Interfaces
 
         TransactionBroadcastEntry GetTransaction(uint256 transactionHash);
 
-        void AddOrUpdate(Transaction transaction, State state, MempoolError mempoolError = null);
+        void AddOrUpdate(Transaction transaction, State state, string ErrorMessage = "");
     }
 }

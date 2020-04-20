@@ -1,6 +1,5 @@
 ﻿using NBitcoin;
 using Stratis.Bitcoin.Consensus;
-using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
 using Stratis.Bitcoin.Features.SmartContracts.Rules;
 using Stratis.SmartContracts.CLR;
@@ -18,12 +17,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.PoW.Rules
             ISenderRetriever senderRetriever, IReceiptRepository receiptRepository, ICoinView coinView) 
             : base(network, stateRepositoryRoot, executorFactory, callDataSerializer, senderRetriever, receiptRepository, coinView)
         {
-        }
-
-        /// <inheritdoc />
-        protected override Money GetTransactionFee(UnspentOutputSet view, Transaction tx)
-        {
-            return view.GetValueIn(tx) - tx.TotalOut;
         }
     }
 }

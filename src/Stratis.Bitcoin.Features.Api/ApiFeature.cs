@@ -45,7 +45,7 @@ namespace Stratis.Bitcoin.Features.Api
             this.apiFeatureOptions = apiFeatureOptions;
             this.apiSettings = apiSettings;
             this.certificateStore = certificateStore;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.InitializeBeforeBase = true;
         }

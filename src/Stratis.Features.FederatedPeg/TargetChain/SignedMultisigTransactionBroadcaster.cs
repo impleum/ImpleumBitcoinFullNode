@@ -1,14 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Stratis.Bitcoin.EventBus;
+using NBitcoin;
 using Stratis.Bitcoin.Features.MemoryPool;
-using Stratis.Bitcoin.Features.Wallet.Broadcasting;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
-using Stratis.Bitcoin.Interfaces;
-using Stratis.Bitcoin.Signals;
 using Stratis.Bitcoin.Utilities;
-using Stratis.Features.FederatedPeg.Events;
 using Stratis.Features.FederatedPeg.Interfaces;
 
 namespace Stratis.Features.FederatedPeg.TargetChain
@@ -19,6 +17,14 @@ namespace Stratis.Features.FederatedPeg.TargetChain
     /// </summary>
     public interface ISignedMultisigTransactionBroadcaster
     {
+        /// <summary>
+        /// Broadcast signed transactions that are not in the mempool.
+        /// </summary>
+        /// <remarks>
+        /// The current federated leader equal the <see cref="IFederationGatewaySettings.PublicKey"/> before it can broadcast the transactions.
+        /// </remarks>
+        Task BroadcastTransactionsAsync();
+
         /// <summary>
         /// Starts the broadcasting of fully signed transactions every N seconds.
         /// </summary>
@@ -36,82 +42,89 @@ namespace Stratis.Features.FederatedPeg.TargetChain
         /// How often to trigger the query for and broadcasting of new transactions.
         /// </summary>
         private static readonly TimeSpan TimeBetweenQueries = TimeSpans.TenSeconds;
+
         private readonly ILogger logger;
+        private readonly ICrossChainTransferStore store;
         private readonly MempoolManager mempoolManager;
         private readonly IBroadcasterManager broadcasterManager;
-        private readonly ISignals signals;
-        private readonly ICrossChainTransferStore store;
+        private readonly INodeLifetime nodeLifetime;
+        private readonly IAsyncLoopFactory asyncLoopFactory;
 
-        private readonly IInitialBlockDownloadState ibdState;
-        private readonly IFederationWalletManager federationWalletManager;
-        private SubscriptionToken onCrossChainTransactionFullySignedSubscription;
+        private IAsyncLoop asyncLoop;
 
         public SignedMultisigTransactionBroadcaster(
+            IAsyncLoopFactory asyncLoopFactory,
             ILoggerFactory loggerFactory,
-            MempoolManager mempoolManager,
-            IBroadcasterManager broadcasterManager,
-            IInitialBlockDownloadState ibdState,
-            IFederationWalletManager federationWalletManager,
-            ISignals signals,
-            ICrossChainTransferStore crossChainTransferStore = null)
+            ICrossChainTransferStore store,
+            INodeLifetime nodeLifetime,
+            MempoolManager mempoolManager, IBroadcasterManager broadcasterManager)
         {
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
-            this.mempoolManager = Guard.NotNull(mempoolManager, nameof(mempoolManager));
-            this.broadcasterManager = Guard.NotNull(broadcasterManager, nameof(broadcasterManager));
-            this.ibdState = Guard.NotNull(ibdState, nameof(ibdState));
-            this.federationWalletManager = Guard.NotNull(federationWalletManager, nameof(federationWalletManager));
-            this.signals = Guard.NotNull(signals, nameof(signals));
-            this.store = crossChainTransferStore;
+            Guard.NotNull(store, nameof(store));
+            Guard.NotNull(mempoolManager, nameof(mempoolManager));
+            Guard.NotNull(broadcasterManager, nameof(broadcasterManager));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
-        }
 
-        private async Task OnCrossChainTransactionFullySigned(CrossChainTransferTransactionFullySigned @event)
-        {
-            if (this.ibdState.IsInitialBlockDownload() || !this.federationWalletManager.IsFederationWalletActive())
-            {
-                this.logger.LogTrace("Federation wallet isn't active or in IBD. Not attempting to broadcast signed transactions.");
-                return;
-            }
-
-            TxMempoolInfo txInfo = await this.mempoolManager.InfoAsync(@event.Transfer.PartialTransaction.GetHash()).ConfigureAwait(false);
-            if (txInfo != null)
-            {
-                this.logger.LogTrace("Deposit ID '{0}' already in the mempool.", @event.Transfer.DepositTransactionId);
-                return;
-            }
-
-            this.logger.LogDebug("Broadcasting deposit-id={0} a signed multisig transaction {1} to the network.", @event.Transfer.DepositTransactionId, @event.Transfer.PartialTransaction.GetHash());
-
-            await this.broadcasterManager.BroadcastTransactionAsync(@event.Transfer.PartialTransaction).ConfigureAwait(false);
-
-            // Check if transaction was actually added to a mempool.
-            TransactionBroadcastEntry transactionBroadCastEntry = this.broadcasterManager.GetTransaction(@event.Transfer.PartialTransaction.GetHash());
-
-            if (transactionBroadCastEntry?.State == State.CantBroadcast && !CrossChainTransferStore.IsMempoolErrorRecoverable(transactionBroadCastEntry.MempoolError))
-            {
-                this.logger.LogWarning("Deposit ID '{0}' rejected due to '{1}'.", @event.Transfer.DepositTransactionId, transactionBroadCastEntry.ErrorMessage);
-                this.store.RejectTransfer(@event.Transfer);
-            }
+            this.asyncLoopFactory = asyncLoopFactory;
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.store = store;
+            this.nodeLifetime = nodeLifetime;
+            this.mempoolManager = mempoolManager;
+            this.broadcasterManager = broadcasterManager;
         }
 
         /// <inheritdoc />
         public void Start()
         {
-            this.onCrossChainTransactionFullySignedSubscription = this.signals.Subscribe<CrossChainTransferTransactionFullySigned>(async (tx) => await this.OnCrossChainTransactionFullySigned(tx).ConfigureAwait(false));
+            this.asyncLoop = this.asyncLoopFactory.Run(nameof(PartialTransactionRequester), _ =>
+                {
+                    this.BroadcastTransactionsAsync().GetAwaiter().GetResult();
+                    return Task.CompletedTask;
+                },
+                this.nodeLifetime.ApplicationStopping,
+                TimeBetweenQueries);
+        }
+
+        /// <inheritdoc />
+        public async Task BroadcastTransactionsAsync()
+        {
+            Dictionary<uint256, Transaction> transactions = await this.store.GetTransactionsByStatusAsync(CrossChainTransferStatus.FullySigned).ConfigureAwait(false);
+
+            if (!transactions.Any())
+            {
+                this.logger.LogTrace("Signed multisig transactions do not exist in the CrossChainTransfer store.");
+                return;
+            }
+
+            foreach (KeyValuePair<uint256, Transaction> transaction in transactions)
+            {
+                TxMempoolInfo txInfo = await this.mempoolManager.InfoAsync(transaction.Value.GetHash()).ConfigureAwait(false);
+
+                if (txInfo != null)
+                {
+                    this.logger.LogTrace("Transaction ID '{0}' already in the mempool.", transaction.Key);
+                    continue;
+                }
+
+                this.logger.LogInformation("Broadcasting deposit-id={0} a signed multisig transaction {1} to the network.", transaction.Key, transaction.Value.GetHash());
+
+                await this.broadcasterManager.BroadcastTransactionAsync(transaction.Value).ConfigureAwait(false);
+            }
         }
 
         public void Dispose()
         {
             this.Stop();
+            this.store?.Dispose();
         }
 
         /// <inheritdoc />
         public void Stop()
         {
-            if (this.onCrossChainTransactionFullySignedSubscription != null)
+            if (this.asyncLoop != null)
             {
-                this.signals.Unsubscribe(this.onCrossChainTransactionFullySignedSubscription);
+                this.asyncLoop.Dispose();
+                this.asyncLoop = null;
             }
         }
     }

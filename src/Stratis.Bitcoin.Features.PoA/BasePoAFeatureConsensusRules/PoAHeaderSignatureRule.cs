@@ -16,7 +16,7 @@ namespace Stratis.Bitcoin.Features.PoA.BasePoAFeatureConsensusRules
     {
         private PoABlockHeaderValidator validator;
 
-        private ISlotsManager slotsManager;
+        private SlotsManager slotsManager;
 
         private uint maxReorg;
 
@@ -24,25 +24,22 @@ namespace Stratis.Bitcoin.Features.PoA.BasePoAFeatureConsensusRules
 
         private VotingManager votingManager;
 
-        private IFederationManager federationManager;
+        private FederationManager federationManager;
 
         private IChainState chainState;
-
-        private PoAConsensusFactory consensusFactory;
 
         /// <inheritdoc />
         public override void Initialize()
         {
             base.Initialize();
 
-            var engine = this.Parent as PoAConsensusRuleEngine;
+            PoAConsensusRuleEngine engine = this.Parent as PoAConsensusRuleEngine;
 
             this.slotsManager = engine.SlotsManager;
             this.validator = engine.PoaHeaderValidator;
             this.votingManager = engine.VotingManager;
             this.federationManager = engine.FederationManager;
             this.chainState = engine.ChainState;
-            this.consensusFactory = (PoAConsensusFactory)this.Parent.Network.Consensus.ConsensusFactory;
 
             this.maxReorg = this.Parent.Network.Consensus.MaxReorgLength;
             this.votingEnabled = ((PoAConsensusOptions) this.Parent.Network.Consensus.Options).VotingEnabled;
@@ -52,7 +49,7 @@ namespace Stratis.Bitcoin.Features.PoA.BasePoAFeatureConsensusRules
         {
             var header = context.ValidationContext.ChainedHeaderToValidate.Header as PoABlockHeader;
 
-            PubKey pubKey = this.slotsManager.GetFederationMemberForTimestamp(header.Time).PubKey;
+            PubKey pubKey = this.slotsManager.GetPubKeyForTimestamp(header.Time);
 
             if (!this.validator.VerifySignature(pubKey, header))
             {
@@ -67,7 +64,7 @@ namespace Stratis.Bitcoin.Features.PoA.BasePoAFeatureConsensusRules
 
                     bool mightBeInsufficient = currentHeader.Height - this.chainState.ConsensusTip.Height > this.maxReorg;
 
-                    List<IFederationMember> modifiedFederation = this.federationManager.GetFederationMembers();
+                    List<PubKey> modifiedFederation = this.federationManager.GetFederationMembers();
 
                     foreach (Poll poll in this.votingManager.GetFinishedPolls().Where(x => !x.IsExecuted &&
                         ((x.VotingData.Key == VoteKey.AddFederationMember) || (x.VotingData.Key == VoteKey.KickFederationMember))))
@@ -76,15 +73,15 @@ namespace Stratis.Bitcoin.Features.PoA.BasePoAFeatureConsensusRules
                             // Not applied yet.
                             continue;
 
-                        IFederationMember federationMember = this.consensusFactory.DeserializeFederationMember(poll.VotingData.Data);
+                        var newPubKey = new PubKey(poll.VotingData.Data);
 
                         if (poll.VotingData.Key == VoteKey.AddFederationMember)
-                            modifiedFederation.Add(federationMember);
+                            modifiedFederation.Add(newPubKey);
                         else if (poll.VotingData.Key == VoteKey.KickFederationMember)
-                            modifiedFederation.Remove(federationMember);
+                            modifiedFederation.Remove(newPubKey);
                     }
 
-                    pubKey = this.slotsManager.GetFederationMemberForTimestamp(header.Time, modifiedFederation).PubKey;
+                    pubKey = this.slotsManager.GetPubKeyForTimestamp(header.Time, modifiedFederation);
 
                     if (this.validator.VerifySignature(pubKey, header))
                     {

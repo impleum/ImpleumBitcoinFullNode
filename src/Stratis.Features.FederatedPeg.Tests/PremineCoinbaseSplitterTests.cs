@@ -13,7 +13,7 @@ namespace Stratis.Features.FederatedPeg.Tests
         public PremineCoinbaseSplitterTests()
         {
             this.premineSplitter = new PremineCoinbaseSplitter();
-            this.network = CirrusNetwork.NetworksSelector.Mainnet();
+            this.network = FederatedPegNetwork.NetworksSelector.Mainnet();
         }
 
         [Fact]

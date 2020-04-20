@@ -18,7 +18,6 @@ using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.Networks;
-using Stratis.Bitcoin.Tests.Common;
 using Xunit;
 
 namespace Stratis.Bitcoin.IntegrationTests
@@ -108,7 +107,7 @@ namespace Stratis.Bitcoin.IntegrationTests
             // If new transactions are appearing in the wallet, staking has been successful. Due to coin maturity settings the
             // spendable balance of the wallet actually drops after staking, so the wallet balance should not be used to
             // determine whether staking occurred.
-            TestBase.WaitLoop(() =>
+            TestHelper.WaitLoop(() =>
             {
                 List<TransactionData> transactions = this.GetTransactionsSnapshot();
 
@@ -132,7 +131,7 @@ namespace Stratis.Bitcoin.IntegrationTests
                 this.txLookup[tx.Id] = tx;
             }
 
-            TestBase.WaitLoop(() =>
+            TestHelper.WaitLoop(() =>
             {
                 List<TransactionData> transactions = this.GetTransactionsSnapshot();
 

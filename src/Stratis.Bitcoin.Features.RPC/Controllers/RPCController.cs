@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using Stratis.Bitcoin.Controllers;
 using Stratis.Bitcoin.Utilities;
@@ -49,7 +50,7 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
             Guard.NotNull(rpcClientFactory, nameof(rpcClientFactory));
 
             this.fullNode = fullNode;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.rpcSettings = rpcSettings;
             this.rpcClientFactory = rpcClientFactory;
         }
@@ -73,7 +74,7 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
         }
 
         /// <summary>
-        /// Processes a Remote Procedural Call.
+        /// Processes a RPCRequest.
         /// </summary>
         /// <param name="request">The request to process.</param>
         /// <returns></returns>
@@ -87,9 +88,9 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
         }
 
         /// <summary>
-        /// Makes a Remote Procedural Call method by name.
+        /// Call an RPC method by name.
         /// </summary>
-        /// <param name="body">A JObject containing the name of the method to process.</param>
+        /// <param name="body">The request to process.</param>
         /// <returns>A JSON result that varies depending on the RPC method.</returns>
         [Route("callbyname")]
         [HttpPost]
@@ -149,7 +150,7 @@ namespace Stratis.Bitcoin.Features.RPC.Controllers
         }
 
         /// <summary>
-        /// Lists the available Remote Procedural Call methods on this node.
+        /// Lists the available RPC methods.
         /// </summary>
         /// <returns>A JSON result that lists the RPC methods.</returns>
         [Route("listmethods")]

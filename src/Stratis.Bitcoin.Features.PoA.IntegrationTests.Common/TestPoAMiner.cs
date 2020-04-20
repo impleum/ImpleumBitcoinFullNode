@@ -4,13 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Consensus.Validators;
 using Stratis.Bitcoin.Features.Miner;
 using Stratis.Bitcoin.Features.PoA.Voting;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
+using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.Interfaces;
 using Stratis.Bitcoin.Utilities;
 
@@ -22,11 +22,11 @@ namespace Stratis.Bitcoin.Features.PoA.IntegrationTests.Common
 
         private CancellationTokenSource cancellation;
 
-        private readonly ISlotsManager slotsManager;
+        private readonly SlotsManager slotsManager;
 
         private readonly IConsensusManager consensusManager;
 
-        private readonly IFederationManager federationManager;
+        private readonly FederationManager federationManager;
 
         public TestPoAMiner(
             IConsensusManager consensusManager,
@@ -36,17 +36,16 @@ namespace Stratis.Bitcoin.Features.PoA.IntegrationTests.Common
             ILoggerFactory loggerFactory,
             IInitialBlockDownloadState ibdState,
             BlockDefinition blockDefinition,
-            ISlotsManager slotsManager,
+            SlotsManager slotsManager,
             IConnectionManager connectionManager,
             PoABlockHeaderValidator poaHeaderValidator,
-            IFederationManager federationManager,
+            FederationManager federationManager,
             IIntegrityValidator integrityValidator,
             IWalletManager walletManager,
             INodeStats nodeStats,
             VotingManager votingManager,
-            PoAMinerSettings poAMinerSettings,
-            IAsyncProvider asyncProvider) : base(consensusManager, dateTimeProvider, network, nodeLifetime, loggerFactory, ibdState, blockDefinition, slotsManager,
-                connectionManager, poaHeaderValidator, federationManager, integrityValidator, walletManager, nodeStats, votingManager, poAMinerSettings, asyncProvider)
+            PoAMinerSettings poAMinerSettings) : base(consensusManager, dateTimeProvider, network, nodeLifetime, loggerFactory, ibdState, blockDefinition, slotsManager,
+                connectionManager, poaHeaderValidator, federationManager, integrityValidator, walletManager, nodeStats, votingManager, poAMinerSettings)
         {
             this.timeProvider = dateTimeProvider as EditableTimeProvider;
 

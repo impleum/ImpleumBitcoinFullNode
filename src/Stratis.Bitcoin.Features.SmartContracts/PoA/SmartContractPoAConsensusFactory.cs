@@ -1,19 +1,15 @@
 ﻿using NBitcoin;
-using Stratis.Bitcoin.Features.PoA;
 
 namespace Stratis.Bitcoin.Features.SmartContracts.PoA
 {
-    public class SmartContractPoAConsensusFactory : PoAConsensusFactory
+    public class SmartContractPoAConsensusFactory : ConsensusFactory
     {
         /// <inheritdoc />
-        public override BlockHeader CreateBlockHeader()
+        public override Block CreateBlock()
         {
-            return new SmartContractPoABlockHeader();
+            return new Block(this.CreateBlockHeader());
         }
-    }
 
-    public class SmartContractCollateralPoAConsensusFactory : CollateralPoAConsensusFactory
-    {
         /// <inheritdoc />
         public override BlockHeader CreateBlockHeader()
         {

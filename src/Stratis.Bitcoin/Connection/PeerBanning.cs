@@ -72,7 +72,7 @@ namespace Stratis.Bitcoin.Connection
 
         public PeerBanning(IConnectionManager connectionManager, ILoggerFactory loggerFactory, IDateTimeProvider dateTimeProvider, IPeerAddressManager peerAddressManager)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.connectionManager = connectionManager;
             this.dateTimeProvider = dateTimeProvider;
             this.peerAddressManager = peerAddressManager;
@@ -93,7 +93,7 @@ namespace Stratis.Bitcoin.Connection
 
             // Find all connected peers from the same IP and disconnect them.
             List<INetworkPeer> peers = this.connectionManager.ConnectedPeers.FindByIp(endpoint.Address);
-            foreach (INetworkPeer peer in peers)
+            foreach (var peer in peers)
             {
                 var peerBehavior = peer.Behavior<IConnectionManagerBehavior>();
                 if (peerBehavior.Whitelisted)
@@ -109,23 +109,20 @@ namespace Stratis.Bitcoin.Connection
             List<PeerAddress> peerAddresses = this.peerAddressManager.FindPeersByIp(endpoint);
             if (peerAddresses.Count == 0)
             {
-                PeerAddress address = this.peerAddressManager.AddPeer(endpoint, IPAddress.Loopback);
+                this.peerAddressManager.AddPeer(endpoint, IPAddress.Loopback);
+                peerAddresses.Add(this.peerAddressManager.FindPeer(endpoint));
 
-                // The address could not have been added to the address manager due to it being routable.
-                if (address != null)
-                {
-                    peerAddresses.Add(address);
-                    this.logger.LogTrace("{0} added to the address manager.");
-                }
+                this.logger.LogTrace("{0} added to the address manager.");
             }
 
-            foreach (PeerAddress peerAddress in peerAddresses)
+            foreach (var peerAddress in peerAddresses)
             {
                 peerAddress.BanTimeStamp = this.dateTimeProvider.GetUtcNow();
-                peerAddress.BanUntil = this.dateTimeProvider.GetUtcNow().AddSeconds((banTimeSeconds == 0) ? this.connectionManager.ConnectionSettings.BanTimeSeconds : banTimeSeconds);
+                peerAddress.BanUntil = this.dateTimeProvider.GetUtcNow().AddSeconds(
+                    (banTimeSeconds == 0) ? this.connectionManager.ConnectionSettings.BanTimeSeconds : banTimeSeconds);
                 peerAddress.BanReason = reason;
 
-                this.logger.LogDebug("Peer '{0}' banned for reason '{1}', until '{2}'.", endpoint, reason, peerAddress.BanUntil.ToString());
+                this.logger.LogDebug("Peer '{0}' banned for reason '{1}', until {2}.", endpoint, reason, peerAddress.BanUntil.ToString());
             }
         }
 
@@ -138,7 +135,7 @@ namespace Stratis.Bitcoin.Connection
         /// <inheritdoc />
         public void ClearBannedPeers()
         {
-            foreach (PeerAddress peer in this.peerAddressManager.Peers)
+            foreach (var peer in this.peerAddressManager.Peers)
             {
                 if (this.IsBanned(peer.Endpoint))
                 {
@@ -161,7 +158,7 @@ namespace Stratis.Bitcoin.Connection
                 return false;
             }
 
-            return peerAddresses.Any(p => p.IsBanned(this.dateTimeProvider.GetUtcNow()));
+            return peerAddresses.Any(p => p.BanUntil > this.dateTimeProvider.GetUtcNow());
         }
 
         /// <inheritdoc />
@@ -175,7 +172,7 @@ namespace Stratis.Bitcoin.Connection
                 return;
             }
 
-            foreach (PeerAddress peerAddress in peerAddresses)
+            foreach (var peerAddress in peerAddresses)
             {
                 peerAddress.UnBan();
                 this.logger.LogDebug("Peer '{0}' was un-banned.", endpoint);

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.EventBus;
@@ -34,7 +33,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
         private readonly StoreSettings storeSettings;
 
         /// <summary>Queue of chained blocks that will be announced to the peers.</summary>
-        private readonly IAsyncQueue<ChainedHeader> blocksToAnnounce;
+        private readonly AsyncQueue<ChainedHeader> blocksToAnnounce;
 
         /// <summary>Provider of IBD state.</summary>
         private readonly IInitialBlockDownloadState initialBlockDownloadState;
@@ -46,7 +45,7 @@ namespace Stratis.Bitcoin.Features.BlockStore
         private readonly Task dequeueLoopTask;
 
         private readonly ISignals signals;
-        private readonly IAsyncProvider asyncProvider;
+
         private SubscriptionToken blockConnectedSubscription;
 
         public BlockStoreSignaled(
@@ -57,23 +56,19 @@ namespace Stratis.Bitcoin.Features.BlockStore
             INodeLifetime nodeLifetime,
             ILoggerFactory loggerFactory,
             IInitialBlockDownloadState initialBlockDownloadState,
-            ISignals signals,
-            IAsyncProvider asyncProvider)
+            ISignals signals)
         {
             this.blockStoreQueue = blockStoreQueue;
             this.chainState = chainState;
             this.connection = connection;
             this.nodeLifetime = nodeLifetime;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.storeSettings = storeSettings;
             this.initialBlockDownloadState = initialBlockDownloadState;
             this.signals = signals;
-            this.asyncProvider = asyncProvider;
 
-            this.blocksToAnnounce = asyncProvider.CreateAsyncQueue<ChainedHeader>();
+            this.blocksToAnnounce = new AsyncQueue<ChainedHeader>();
             this.dequeueLoopTask = this.DequeueContinuouslyAsync();
-
-            this.asyncProvider.RegisterTask($"{nameof(BlockStoreSignaled)}.{nameof(this.dequeueLoopTask)}", this.dequeueLoopTask);
         }
 
         public void Initialize()

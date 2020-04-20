@@ -33,12 +33,6 @@ namespace Stratis.Features.FederatedPeg.Wallet
         public int? BlockHeight { get; set; }
 
         /// <summary>
-        /// The hash of the block including this transaction.
-        /// </summary>
-        [JsonProperty(PropertyName = "blockHash", NullValueHandling = NullValueHandling.Ignore)]
-        public uint256 BlockHash { get; set; }
-
-        /// <summary>
         /// A value indicating whether this is a coin stake transaction or not.
         /// </summary>
         [JsonProperty(PropertyName = "isCoinStake", NullValueHandling = NullValueHandling.Ignore)]
@@ -52,16 +46,16 @@ namespace Stratis.Features.FederatedPeg.Wallet
         public DateTimeOffset CreationTime { get; set; }
 
         /// <summary>
-        /// Spending transaction.
+        /// Hexadecimal representation of this spending transaction.
         /// </summary>
-        [JsonIgnore]
-        public Transaction Transaction { get; set; }
+        [JsonProperty(PropertyName = "hex", NullValueHandling = NullValueHandling.Ignore)]
+        public string Hex { get; set; }
 
         /// <summary>
-        /// If this spending transaction is a withdrawal, this contains its details.
+        /// Gets or sets the full transaction object.
         /// </summary>
-        [JsonProperty(PropertyName = "withdrawalDetails", NullValueHandling = NullValueHandling.Ignore)]
-        public WithdrawalDetails WithdrawalDetails { get; set; }
+        [JsonIgnore]
+        public Transaction Transaction => Transaction.Parse(this.Hex, RawFormat.BlockExplorer);
 
         /// <summary>
         /// Determines whether this transaction being spent is confirmed.

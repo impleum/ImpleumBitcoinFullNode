@@ -121,7 +121,7 @@ namespace Stratis.Bitcoin.P2P
             this.selfEndpointTracker = selfEndpointTracker;
             this.dateTimeProvider = dateTimeProvider;
             this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.peerAddresses = peerAddresses;
             this.random = new Random();
         }
@@ -222,7 +222,7 @@ namespace Stratis.Bitcoin.P2P
         {
             IEnumerable<PeerAddress> notBanned = this.NotBanned();
 
-            int attemptedReachedThresholdCount = notBanned.Count(p => p.ConnectionAttempts >= PeerAddress.AttemptThreshold);
+            int attemptedReachedThresholdCount = notBanned.Count(p => p.ConnectionAttempts == PeerAddress.AttemptThreshold);
             bool areAllPeersReachedThreshold = attemptedReachedThresholdCount == notBanned.Count();
 
             return areAllPeersReachedThreshold;
@@ -323,7 +323,7 @@ namespace Stratis.Bitcoin.P2P
         {
             return this.peerAddresses.Values.Where(p =>
                 p.Attempted &&
-                p.ConnectionAttempts <= PeerAddress.AttemptThreshold &&
+                p.ConnectionAttempts < PeerAddress.AttemptThreshold &&
                 p.LastAttempt < this.dateTimeProvider.GetUtcNow().AddHours(-PeerAddress.AttempThresholdHours) &&
                 !this.IsBanned(p));
         }

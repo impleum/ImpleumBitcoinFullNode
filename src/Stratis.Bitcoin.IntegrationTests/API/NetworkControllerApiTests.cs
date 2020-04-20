@@ -8,7 +8,6 @@ using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.Networks;
 using Stratis.Bitcoin.P2P;
-using Stratis.Bitcoin.Tests.Common;
 using Xunit;
 
 namespace Stratis.Bitcoin.IntegrationTests.API
@@ -48,7 +47,7 @@ namespace Stratis.Bitcoin.IntegrationTests.API
 
                 await $"http://localhost:{nodeA.ApiPort}/api".AppendPathSegment("network/setban").PostJsonAsync(banPeerModel);
 
-                TestBase.WaitLoop(() => !TestHelper.IsNodeConnectedTo(nodeA, nodeB));
+                TestHelper.WaitLoop(() => !TestHelper.IsNodeConnectedTo(nodeA, nodeB));
 
                 var nodeBEndPoint = new IPEndPoint(nodeBIpAddress, nodeB.Endpoint.Port);
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Consensus.ProvenBlockHeaders;
@@ -167,7 +168,7 @@ namespace Stratis.Bitcoin.Features.Consensus.CoinViews
         /// <param name="rewindDataIndexCache">Rewind data index store.</param>
         private CachedCoinView(IDateTimeProvider dateTimeProvider, ILoggerFactory loggerFactory, INodeStats nodeStats, StakeChainStore stakeChainStore = null, IRewindDataIndexCache rewindDataIndexCache = null)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.dateTimeProvider = dateTimeProvider;
             this.stakeChainStore = stakeChainStore;
             this.rewindDataIndexCache = rewindDataIndexCache;
@@ -421,20 +422,6 @@ namespace Stratis.Bitcoin.Features.Consensus.CoinViews
                         cacheItem.UnspentOutputs.Spend(unspent);
 
                         this.logger.LogTrace("Cache item after spend {0}:'{1}'.", nameof(cacheItem.UnspentOutputs), cacheItem.UnspentOutputs);
-
-                        if (this.rewindDataIndexCache != null)
-                        {
-                            for (int i = 0; i < unspent.Outputs.Length; i++)
-                            {
-                                // Only push to rewind data index UTXOs that are spent.
-                                // Checks against array length are needed in case problem like 3965 on VSTS appears.
-                                if ((i < clone.Outputs.Length) && (unspent.Outputs[i] == null) && (clone.Outputs[i] != null))
-                                {
-                                    var key = new OutPoint(unspent.TransactionId, i);
-                                    indexItems[key] = this.blockHeight;
-                                }
-                            }
-                        }
                     }
                     else
                     {
@@ -448,6 +435,15 @@ namespace Stratis.Bitcoin.Features.Consensus.CoinViews
                     }
 
                     cacheItem.IsDirty = true;
+
+                    if (this.rewindDataIndexCache != null)
+                    {
+                        for (int i = 0; i < unspent.Outputs.Length; i++)
+                        {
+                            var key = new OutPoint(unspent.TransactionId, i);
+                            indexItems[key] = this.blockHeight;
+                        }
+                    }
 
                     // Inner does not need to know pruned unspent that it never saw.
                     if (cacheItem.UnspentOutputs.IsPrunable && !cacheItem.ExistInInner)

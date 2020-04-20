@@ -4,12 +4,9 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
 {
     public class UnknowPayload : Payload
     {
-        private string command;
+        internal string command;
 
-        public override string Command
-        {
-            get { return this.command; }
-        }
+        public override string Command { get { return this.command; } }
 
         private byte[] data = new byte[0];
 
@@ -27,11 +24,6 @@ namespace Stratis.Bitcoin.P2P.Protocol.Payloads
         public override void ReadWriteCore(BitcoinStream stream)
         {
             stream.ReadWrite(ref this.data);
-        }
-
-        internal void UpdateCommand(string command)
-        {
-            this.command = command;
         }
     }
 }

@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Stratis.Bitcoin")]
+[assembly: AssemblyTitle("Impleum.Bitcoin")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Stratis.Bitcoin")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyProduct("Impleum.Bitcoin")]
+[assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -34,4 +34,4 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("3.0.4.0")]
 [assembly: AssemblyFileVersion("3.0.4.0")]
-[assembly: InternalsVisibleTo("Stratis.Bitcoin.Tests")]
+[assembly: InternalsVisibleTo("Impleum.Bitcoin.Tests")]

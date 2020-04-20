@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using NLog.LayoutRenderers.Wrappers;
 
 namespace Stratis.Bitcoin.Utilities
 {
@@ -34,7 +35,7 @@ namespace Stratis.Bitcoin.Utilities
 
                     if (logger != null) logger.LogError("Failed to commit transaction. Retrying.", ex);
 
-                    // Check strategy type and if it is a backoff type, use exponential delay.
+                    // Check strategy type and if it is a backoff type, use exponential delay. 
                     TimeSpan delay = retryOptions.Type == RetryStrategyType.Simple
                         ? retryOptions.Delay
                         : TimeSpan.FromMilliseconds((int)(retryOptions.Delay.TotalMilliseconds * Math.Pow(2, i)));

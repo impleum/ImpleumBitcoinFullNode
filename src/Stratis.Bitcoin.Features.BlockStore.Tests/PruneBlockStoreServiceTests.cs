@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Moq;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Features.BlockStore.Pruning;
@@ -14,7 +13,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
 {
     public sealed class PruneBlockStoreServiceTests : LogsTestBase
     {
-        private readonly IAsyncProvider asyncProvider;
+        private readonly IAsyncLoopFactory asyncLoopFactory;
         private readonly IBlockRepository blockRepository;
         private Mock<IPrunedBlockRepository> prunedBlockRepository;
         private readonly Mock<IChainState> chainState;
@@ -22,7 +21,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
 
         public PruneBlockStoreServiceTests() : base(new StratisMain())
         {
-            this.asyncProvider = new Mock<IAsyncProvider>().Object;
+            this.asyncLoopFactory = new Mock<IAsyncLoopFactory>().Object;
             this.blockRepository = new Mock<IBlockRepository>().Object;
             this.chainState = new Mock<IChainState>();
             this.nodeLifetime = new NodeLifetime();
@@ -43,7 +42,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
                 AmountOfBlocksToKeep = 2880
             };
 
-            var service = new PruneBlockStoreService(this.asyncProvider, this.blockRepository, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
+            var service = new PruneBlockStoreService(this.asyncLoopFactory, this.blockRepository, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
 
             service.Initialize();
 
@@ -65,7 +64,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
                 AmountOfBlocksToKeep = 2880
             };
 
-            var service = new PruneBlockStoreService(this.asyncProvider, this.blockRepository, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
+            var service = new PruneBlockStoreService(this.asyncLoopFactory, this.blockRepository, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
 
             service.Initialize();
 
@@ -92,7 +91,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
                 AmountOfBlocksToKeep = 2880
             };
 
-            var service = new PruneBlockStoreService(this.asyncProvider, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
+            var service = new PruneBlockStoreService(this.asyncLoopFactory, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
             service.Initialize();
 
             await service.PruneBlocksAsync();
@@ -119,7 +118,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
                 AmountOfBlocksToKeep = 2880
             };
 
-            var service = new PruneBlockStoreService(this.asyncProvider, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
+            var service = new PruneBlockStoreService(this.asyncLoopFactory, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
             service.Initialize();
 
             await service.PruneBlocksAsync();
@@ -149,7 +148,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
                 AmountOfBlocksToKeep = 20
             };
 
-            var service = new PruneBlockStoreService(this.asyncProvider, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
+            var service = new PruneBlockStoreService(this.asyncLoopFactory, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
             service.Initialize();
 
             await service.PruneBlocksAsync();
@@ -179,7 +178,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
                 AmountOfBlocksToKeep = 20
             };
 
-            var service = new PruneBlockStoreService(this.asyncProvider, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
+            var service = new PruneBlockStoreService(this.asyncLoopFactory, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
             service.Initialize();
 
             await service.PruneBlocksAsync();
@@ -209,7 +208,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Tests
                 AmountOfBlocksToKeep = 20
             };
 
-            var service = new PruneBlockStoreService(this.asyncProvider, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
+            var service = new PruneBlockStoreService(this.asyncLoopFactory, blockRepository.Object, this.prunedBlockRepository.Object, this.chainState.Object, this.LoggerFactory.Object, this.nodeLifetime, storeSettings);
             service.Initialize();
 
             await service.PruneBlocksAsync();

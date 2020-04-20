@@ -5,7 +5,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Base.Deployments;
 using Stratis.Bitcoin.Configuration;
@@ -24,7 +23,6 @@ using Stratis.Bitcoin.Interfaces;
 using Stratis.Bitcoin.Mining;
 using Stratis.Bitcoin.P2P;
 using Stratis.Bitcoin.P2P.Peer;
-using Stratis.Bitcoin.Signals;
 using Stratis.Bitcoin.Tests.Common;
 using Stratis.Bitcoin.Utilities;
 using Xunit;
@@ -80,10 +78,6 @@ namespace Stratis.Bitcoin.Features.Consensus.Tests
         public PartialValidator PartialValidator { get; set; }
 
         public FullValidator FullValidator { get; set; }
-
-        public ISignals Signals { get; set; }
-
-        public IAsyncProvider AsyncProvider { get; set; }
     }
 
     /// <summary>
@@ -104,9 +98,6 @@ namespace Stratis.Bitcoin.Features.Consensus.Tests
             testChainContext.LoggerFactory = testChainContext.NodeSettings.LoggerFactory;
             testChainContext.DateTimeProvider = DateTimeProvider.Default;
 
-            testChainContext.Signals = new Signals.Signals(testChainContext.NodeSettings.LoggerFactory, null);
-            testChainContext.AsyncProvider = new AsyncProvider(testChainContext.NodeSettings.LoggerFactory, testChainContext.Signals, new Mock<INodeLifetime>().Object);
-
             network.Consensus.Options = new ConsensusOptions();
             new FullNodeBuilderConsensusExtension.PowConsensusRulesRegistration().RegisterRules(network.Consensus);
 
@@ -114,7 +105,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Tests
             testChainContext.Checkpoints = new Checkpoints();
             testChainContext.ChainIndexer = new ChainIndexer(network);
             testChainContext.ChainState = new ChainState();
-            testChainContext.InitialBlockDownloadState = new InitialBlockDownloadState(testChainContext.ChainState, testChainContext.Network, consensusSettings, new Checkpoints(), testChainContext.NodeSettings.LoggerFactory);
+            testChainContext.InitialBlockDownloadState = new InitialBlockDownloadState(testChainContext.ChainState, testChainContext.Network, consensusSettings, new Checkpoints());
 
             var inMemoryCoinView = new InMemoryCoinView(testChainContext.ChainIndexer.Tip.HashBlock);
             var cachedCoinView = new CachedCoinView(inMemoryCoinView, DateTimeProvider.Default, testChainContext.LoggerFactory, new NodeStats(new DateTimeProvider()));
@@ -138,11 +129,11 @@ namespace Stratis.Bitcoin.Features.Consensus.Tests
             var deployments = new NodeDeployments(testChainContext.Network, testChainContext.ChainIndexer);
             testChainContext.ConsensusRules = new PowConsensusRuleEngine(testChainContext.Network, testChainContext.LoggerFactory, testChainContext.DateTimeProvider,
                 testChainContext.ChainIndexer, deployments, consensusSettings, testChainContext.Checkpoints, cachedCoinView, testChainContext.ChainState,
-                    new InvalidBlockHashStore(dateTimeProvider), new NodeStats(dateTimeProvider), testChainContext.AsyncProvider).Register();
+                    new InvalidBlockHashStore(dateTimeProvider), new NodeStats(dateTimeProvider)).Register();
 
             testChainContext.HeaderValidator = new HeaderValidator(testChainContext.ConsensusRules, testChainContext.LoggerFactory);
             testChainContext.IntegrityValidator = new IntegrityValidator(testChainContext.ConsensusRules, testChainContext.LoggerFactory);
-            testChainContext.PartialValidator = new PartialValidator(testChainContext.AsyncProvider, testChainContext.ConsensusRules, testChainContext.LoggerFactory);
+            testChainContext.PartialValidator = new PartialValidator(testChainContext.ConsensusRules, testChainContext.LoggerFactory);
             testChainContext.FullValidator = new FullValidator(testChainContext.ConsensusRules, testChainContext.LoggerFactory);
 
             var dBreezeSerializer = new DBreezeSerializer(network.Consensus.ConsensusFactory);
@@ -152,7 +143,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Tests
             var blockStoreFlushCondition = new BlockStoreQueueFlushCondition(testChainContext.ChainState, testChainContext.InitialBlockDownloadState);
 
             var blockStore = new BlockStoreQueue(testChainContext.ChainIndexer, testChainContext.ChainState, blockStoreFlushCondition, new Mock<StoreSettings>().Object,
-                blockRepository, testChainContext.LoggerFactory, new Mock<INodeStats>().Object, testChainContext.AsyncProvider);
+                blockRepository, testChainContext.LoggerFactory, new Mock<INodeStats>().Object);
 
             blockStore.Initialize();
 

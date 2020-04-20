@@ -101,6 +101,7 @@ namespace Stratis.SmartContracts.CLR.Tests
 
         public ContractTests()
         {
+            var gasMeter = new Mock<IGasMeter>();
             var internalTxExecutor = new Mock<IInternalTransactionExecutor>();
             var internalHashHelper = new Mock<IInternalHashHelper>();
             var persistentState = new Mock<IPersistentState>();
@@ -109,7 +110,8 @@ namespace Stratis.SmartContracts.CLR.Tests
             Func<ulong> getBalance = () => 1;
 
             this.state = Mock.Of<ISmartContractState>(
-                g => g.InternalTransactionExecutor == internalTxExecutor.Object
+                g => g.GasMeter == gasMeter.Object
+                     && g.InternalTransactionExecutor == internalTxExecutor.Object
                      && g.InternalHashHelper == internalHashHelper.Object
                      && g.PersistentState == persistentState.Object
                      && g.Block == block.Object

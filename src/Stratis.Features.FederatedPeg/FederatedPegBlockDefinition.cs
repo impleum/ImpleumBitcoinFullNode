@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using NBitcoin;
+using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
 using Stratis.Bitcoin.Features.MemoryPool;
@@ -43,11 +44,13 @@ namespace Stratis.Features.FederatedPeg
             ISenderRetriever senderRetriever,
             IStateRepositoryRoot stateRoot,
             ICoinbaseSplitter premineSplitter,
-            MinerSettings minerSettings,
-            FederatedPegSettings federatedPegSettings)
+            NodeSettings nodeSettings,
+            MinerSettings minerSettings)
             : base(blockBufferGenerator, coinView, consensusManager, dateTimeProvider, executorFactory, loggerFactory, mempool, mempoolLock, network, senderRetriever, stateRoot, minerSettings)
         {
-            this.payToMultisigScript = federatedPegSettings.MultiSigAddress.ScriptPubKey;
+            var federationGatewaySettings = new FederationGatewaySettings(nodeSettings);
+            this.payToMultisigScript = federationGatewaySettings.MultiSigAddress.ScriptPubKey;
+            this.payToMemberScript = PayToPubkeyTemplate.Instance.GenerateScriptPubKey(new PubKey(federationGatewaySettings.PublicKey));
 
             this.premineSplitter = premineSplitter;
         }
@@ -56,8 +59,7 @@ namespace Stratis.Features.FederatedPeg
         {
             bool miningPremine = (chainTip.Height + 1) == this.Network.Consensus.PremineHeight;
 
-            // If we are not mining the premine, then the reward should fall back to what was selected by the caller.
-            Script rewardScript = miningPremine ? this.payToMultisigScript : scriptPubKey;
+            Script rewardScript = miningPremine ? this.payToMultisigScript : this.payToMemberScript;
 
             BlockTemplate built = base.Build(chainTip, rewardScript);
 

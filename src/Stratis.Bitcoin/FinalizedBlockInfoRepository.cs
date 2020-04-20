@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin
@@ -58,12 +57,12 @@ namespace Stratis.Bitcoin
 
         private readonly AsyncManualResetEvent queueUpdatedEvent;
 
-        public FinalizedBlockInfoRepository(IKeyValueRepository keyValueRepo, ILoggerFactory loggerFactory, IAsyncProvider asyncProvider)
+        public FinalizedBlockInfoRepository(IKeyValueRepository keyValueRepo, ILoggerFactory loggerFactory)
         {
             Guard.NotNull(keyValueRepo, nameof(keyValueRepo));
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.keyValueRepo = keyValueRepo;
             this.finalizedBlockInfosToSave = new Queue<HashHeightPair>();
@@ -72,8 +71,6 @@ namespace Stratis.Bitcoin
             this.queueUpdatedEvent = new AsyncManualResetEvent(false);
             this.cancellation = new CancellationTokenSource();
             this.finalizedBlockInfoPersistingTask = this.PersistFinalizedBlockInfoContinuouslyAsync();
-
-            asyncProvider.RegisterTask($"{nameof(FinalizedBlockInfoRepository)}.{nameof(this.finalizedBlockInfoPersistingTask)}", this.finalizedBlockInfoPersistingTask);
         }
 
         private async Task PersistFinalizedBlockInfoContinuouslyAsync()

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.EventBus;
 using Stratis.Bitcoin.EventBus.CoreEvents;
@@ -23,7 +22,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
         private IAsyncLoop asyncLoop;
 
         /// <summary>Factory for creating background async loop tasks.</summary>
-        private readonly IAsyncProvider asyncProvider;
+        private readonly IAsyncLoopFactory asyncLoopFactory;
 
         private readonly IWalletManager walletManager;
 
@@ -55,7 +54,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
             IBlockNotification blockNotification,
             ISignals signals,
             INodeLifetime nodeLifetime,
-            IAsyncProvider asyncProvider,
+            IAsyncLoopFactory asyncLoopFactory,
             IConsensusManager consensusManager)
         {
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
@@ -65,16 +64,16 @@ namespace Stratis.Bitcoin.Features.LightWallet
             Guard.NotNull(blockNotification, nameof(blockNotification));
             Guard.NotNull(signals, nameof(signals));
             Guard.NotNull(nodeLifetime, nameof(nodeLifetime));
-            Guard.NotNull(asyncProvider, nameof(asyncProvider));
+            Guard.NotNull(asyncLoopFactory, nameof(asyncLoopFactory));
             Guard.NotNull(consensusManager, nameof(consensusManager));
 
             this.walletManager = walletManager;
             this.chainIndexer = chainIndexer;
             this.signals = signals;
             this.blockNotification = blockNotification;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.nodeLifetime = nodeLifetime;
-            this.asyncProvider = asyncProvider;
+            this.asyncLoopFactory = asyncLoopFactory;
             this.consensusManager = consensusManager;
         }
 
@@ -107,7 +106,6 @@ namespace Stratis.Bitcoin.Features.LightWallet
                     ChainedHeader fork = this.chainIndexer.FindFork(blockLocator);
                     this.walletManager.RemoveBlocks(fork);
                     this.walletManager.WalletTipHash = fork.HashBlock;
-                    this.walletManager.WalletTipHeight = fork.Height;
                     this.walletTip = fork;
                     this.logger.LogWarning($"Wallet tip was out of sync, wallet tip reverted back to Height = {this.walletTip.Height} hash = {this.walletTip.HashBlock}.");
                 }
@@ -238,7 +236,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
                         {
                             token.ThrowIfCancellationRequested();
 
-                            nextblock = this.consensusManager.GetBlockData(next.HashBlock);
+                            nextblock = this.consensusManager.GetBlockDataAsync(next.HashBlock).GetAwaiter().GetResult();
                             if (nextblock != null && nextblock.Block != null)
                                 break;
 
@@ -300,7 +298,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
             {
                 this.logger.LogTrace("The chain tip's date ({0}) is behind the date from which we want to sync ({1}). Waiting for the chain to catch up.", this.chainIndexer.Tip.Header.BlockTime.LocalDateTime, date);
 
-                this.asyncLoop = this.asyncProvider.CreateAndRunAsyncLoopUntil("LightWalletSyncManager.SyncFromDate", this.nodeLifetime.ApplicationStopping,
+                this.asyncLoop = this.asyncLoopFactory.RunUntil("LightWalletSyncManager.SyncFromDate", this.nodeLifetime.ApplicationStopping,
                     () => this.chainIndexer.Tip.Header.BlockTime.LocalDateTime >= date,
                     () =>
                     {
@@ -338,7 +336,7 @@ namespace Stratis.Bitcoin.Features.LightWallet
             {
                 this.logger.LogTrace("The chain tip's height ({0}) is lower than the tip height from which we want to sync ({1}). Waiting for the chain to catch up.", this.chainIndexer.Tip.Height, height);
 
-                this.asyncLoop = this.asyncProvider.CreateAndRunAsyncLoopUntil("LightWalletSyncManager.SyncFromHeight", this.nodeLifetime.ApplicationStopping,
+                this.asyncLoop = this.asyncLoopFactory.RunUntil("LightWalletSyncManager.SyncFromHeight", this.nodeLifetime.ApplicationStopping,
                     () => this.chainIndexer.Tip.Height >= height,
                     () =>
                     {
@@ -371,7 +369,6 @@ namespace Stratis.Bitcoin.Features.LightWallet
             ChainedHeader chainedHeader = this.chainIndexer.GetHeader(height);
             this.walletTip = chainedHeader ?? throw new WalletException("Invalid block height");
             this.walletManager.WalletTipHash = chainedHeader.HashBlock;
-            this.walletManager.WalletTipHeight = chainedHeader.Height;
             this.blockNotification.SyncFrom(chainedHeader.HashBlock);
         }
     }

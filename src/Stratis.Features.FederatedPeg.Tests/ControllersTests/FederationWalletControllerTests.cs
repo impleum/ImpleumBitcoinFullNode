@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -63,14 +61,6 @@ namespace Stratis.Features.FederatedPeg.Tests.ControllersTests
             this.fedWallet.CreationTime = DateTimeOffset.Now;
 
             this.walletManager.GetWallet().Returns(this.fedWallet);
-
-            var federationWalletManager = (FederationWalletManager)FormatterServices.GetUninitializedObject(typeof(FederationWalletManager));
-            PropertyInfo lockProp = typeof(LockProtected).GetProperty("lockObject", BindingFlags.NonPublic | BindingFlags.Instance);
-            lockProp.SetValue(federationWalletManager, new object());
-            federationWalletManager.Wallet = this.fedWallet;
-            this.walletManager.GetSpendableAmount().Returns((x) => {
-                return federationWalletManager.GetSpendableAmount();
-            });
         }
 
         [Fact]
@@ -129,7 +119,7 @@ namespace Stratis.Features.FederatedPeg.Tests.ControllersTests
         public void EnableFederation()
         {
             bool called = false;
-            this.walletManager.When(x => x.EnableFederationWallet(null)).Do(info => called = true);
+            this.walletManager.When(x => x.EnableFederation(null)).Do(info => called = true);
 
             this.controller.EnableFederation(new EnableFederationRequest());
 

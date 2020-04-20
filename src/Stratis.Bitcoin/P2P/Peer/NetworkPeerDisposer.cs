@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Stratis.Bitcoin.AsyncWork;
+using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.P2P.Peer
 {
@@ -29,13 +29,12 @@ namespace Stratis.Bitcoin.P2P.Peer
     {
         /// <summary>Instance logger.</summary>
         private readonly ILogger logger;
-        private readonly IAsyncProvider asyncProvider;
 
         /// <summary>Callback that is called before the peer is disposed.</summary>
         private readonly Action<INetworkPeer> onPeerDisposed;
 
         /// <summary>Queue of disconnected peers to be disposed.</summary>
-        private readonly IAsyncDelegateDequeuer<INetworkPeer> peersToDispose;
+        private readonly AsyncQueue<INetworkPeer> peersToDispose;
 
         /// <summary>Mapping of connected peers by their connection ID.</summary>
         private readonly ConcurrentDictionary<int, INetworkPeer> connectedPeers;
@@ -57,16 +56,14 @@ namespace Stratis.Bitcoin.P2P.Peer
         /// </summary>
         /// <param name="loggerFactory">Factory for creating loggers.</param>
         /// <param name="onPeerDisposed">Callback that is called before the peer is disposed.</param>
-        public NetworkPeerDisposer(ILoggerFactory loggerFactory, IAsyncProvider asyncProvider, Action<INetworkPeer> onPeerDisposed = null)
+        public NetworkPeerDisposer(ILoggerFactory loggerFactory, Action<INetworkPeer> onPeerDisposed = null)
         {
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
-            this.asyncProvider = asyncProvider;
             this.onPeerDisposed = onPeerDisposed;
             this.connectedPeers = new ConcurrentDictionary<int, INetworkPeer>();
 
-            string dequeuerName = $"{nameof(NetworkPeerDisposer)}-{nameof(this.peersToDispose)}";
-            this.peersToDispose = asyncProvider.CreateAndRunAsyncDelegateDequeuer<INetworkPeer>(dequeuerName, this.OnEnqueueAsync);
+            this.peersToDispose = new AsyncQueue<INetworkPeer>(this.OnEnqueueAsync);
         }
 
         /// <summary>

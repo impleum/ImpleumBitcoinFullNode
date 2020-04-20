@@ -21,7 +21,7 @@ namespace Stratis.Bitcoin.P2P
         /// Only routable IP addresses will be added. See <see cref="IpExtensions.IsRoutable"/>.
         /// </para>
         /// </summary>
-        PeerAddress AddPeer(IPEndPoint endPoint, IPAddress source);
+        void AddPeer(IPEndPoint endPoint, IPAddress source);
 
         /// <summary>
         /// Add a set of peers to the <see cref="Peers"/> dictionary.

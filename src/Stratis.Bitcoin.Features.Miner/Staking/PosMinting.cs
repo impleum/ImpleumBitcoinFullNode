@@ -8,7 +8,6 @@ using NBitcoin;
 using NBitcoin.BuilderExtensions;
 using NBitcoin.Crypto;
 using NBitcoin.Protocol;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Features.Consensus;
@@ -22,6 +21,7 @@ using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Interfaces;
 using Stratis.Bitcoin.Mining;
+using Stratis.Bitcoin.Primitives;
 using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.Features.Miner.Staking
@@ -125,7 +125,7 @@ namespace Stratis.Bitcoin.Features.Miner.Staking
         private readonly IStakeValidator stakeValidator;
 
         /// <summary>Factory for creating background async loop tasks.</summary>
-        private readonly IAsyncProvider asyncProvider;
+        private readonly IAsyncLoopFactory asyncLoopFactory;
 
         /// <summary>A manager providing operations on wallets.</summary>
         private readonly IWalletManager walletManager;
@@ -229,7 +229,7 @@ namespace Stratis.Bitcoin.Features.Miner.Staking
             MempoolSchedulerLock mempoolLock,
             ITxMempool mempool,
             IWalletManager walletManager,
-            IAsyncProvider asyncProvider,
+            IAsyncLoopFactory asyncLoopFactory,
             ITimeSyncBehaviorState timeSyncBehaviorState,
             ILoggerFactory loggerFactory,
             MinerSettings minerSettings)
@@ -246,11 +246,11 @@ namespace Stratis.Bitcoin.Features.Miner.Staking
             this.stakeValidator = stakeValidator;
             this.mempoolLock = mempoolLock;
             this.mempool = mempool;
-            this.asyncProvider = asyncProvider;
+            this.asyncLoopFactory = asyncLoopFactory;
             this.walletManager = walletManager;
             this.timeSyncBehaviorState = timeSyncBehaviorState;
             this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             this.minerSleep = 500; // GetArg("-minersleep", 500);
             this.systemTimeOutOfSyncSleep = 7000;
@@ -281,7 +281,7 @@ namespace Stratis.Bitcoin.Features.Miner.Staking
             this.rpcGetStakingInfoModel.Enabled = true;
             this.stakeCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(new[] { this.nodeLifetime.ApplicationStopping });
 
-            this.stakingLoop = this.asyncProvider.CreateAndRunAsyncLoop("PosMining.Stake", async token =>
+            this.stakingLoop = this.asyncLoopFactory.Run("PosMining.Stake", async token =>
             {
                 try
                 {
@@ -684,7 +684,7 @@ namespace Stratis.Bitcoin.Features.Miner.Staking
             this.logger.LogTrace("Worker #{0} found the kernel.", workersResult.KernelFoundIndex);
 
             // Get reward for newly created block.
-            long reward = fees + this.consensusManager.ConsensusRules.GetRule<PosCoinviewRule>().GetProofOfStakeReward(chainTip.Height + 1);
+            long reward = fees + this.consensusManager.ConsensusRules.GetRule<PosCoinviewRule>().GetProofOfStakeReward(chainTip.Height + 1, this.stakeValidator.GetCoinAge(coinstakeContext.CoinstakeTx, chainTip.Previous));
             if (reward <= 0)
             {
                 // TODO: This can't happen unless we remove reward for mined block.

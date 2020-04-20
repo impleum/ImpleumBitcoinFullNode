@@ -1,4 +1,8 @@
-﻿namespace Stratis.Bitcoin.EventBus
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Stratis.Bitcoin.EventBus
 {
     /// <summary>
     /// Basic implementation of a generic <see cref="EventBase"/> that exposes a typed Content property.

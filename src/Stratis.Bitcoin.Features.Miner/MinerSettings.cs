@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.Bitcoin.Configuration;
@@ -74,7 +75,7 @@ namespace Stratis.Bitcoin.Features.Miner
         {
             Guard.NotNull(nodeSettings, nameof(nodeSettings));
 
-            this.logger = nodeSettings.LoggerFactory.CreateLogger(typeof(MinerSettings).FullName);
+            this.logger = nodeSettings.LoggerFactory.CreateLogger("Impleum.Bitcoin.Features.Miner.MinerSettings");
 
             TextFileConfiguration config = nodeSettings.ConfigReader;
 

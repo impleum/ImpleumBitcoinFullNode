@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
-using Stratis.Bitcoin.Tests.Common;
 
 namespace Stratis.Bitcoin.Features.PoA.IntegrationTests.Common
 {
@@ -16,7 +15,7 @@ namespace Stratis.Bitcoin.Features.PoA.IntegrationTests.Common
         {
             for (int i = 0; i < nodes.Length - 1; i++)
             {
-                TestBase.WaitLoop(() => TestHelper.AreNodesSynced(nodes[i], nodes[i + 1]));
+                TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(nodes[i], nodes[i + 1]));
             }
         }
     }

@@ -21,19 +21,9 @@ namespace Stratis.SmartContracts.Core.Receipts
         public uint256 PostState { get; }
 
         /// <summary>
-        /// The gas price used for this transaction.
-        /// </summary>
-        public ulong GasPrice { get; }
-
-        /// <summary>
         /// Gas consumed in this smart contract execution.
         /// </summary>
         public ulong GasUsed { get; }
-
-        /// <summary>
-        /// The amount sent with this transaction.
-        /// </summary>
-        public ulong Amount { get; }
 
         /// <summary>
         /// Bloom data representing all of the indexed logs contained inside this receipt.
@@ -104,19 +94,18 @@ namespace Stratis.SmartContracts.Core.Receipts
             uint160 newContractAddress,
             bool success,
             string result,
-            string errorMessage,
-            ulong gasPrice,
-            ulong amount) 
-            : this(postState, gasUsed, logs, BuildBloom(logs), transactionHash, null, @from, to, newContractAddress, success, result, errorMessage, gasPrice, amount)
+            string errorMessage) 
+            : this(postState, gasUsed, logs, BuildBloom(logs), transactionHash, null, from, to, newContractAddress, success, result, errorMessage)
         { }
 
         /// <summary>
         /// Creates receipt with consensus fields and generates bloom.
         /// </summary>
-        public Receipt(uint256 postState,
+        public Receipt(
+            uint256 postState,
             ulong gasUsed,
             Log[] logs)
-            : this(postState, gasUsed, logs, BuildBloom(logs), null, null, null, null, null, false, null, null, 0, 0)
+            : this(postState, gasUsed, logs, BuildBloom(logs), null, null, null, null, null, false, null, null)
         { }
 
         /// <summary>
@@ -127,7 +116,7 @@ namespace Stratis.SmartContracts.Core.Receipts
             ulong gasUsed,
             Log[] logs,
             Bloom bloom) 
-            : this(postState, gasUsed, logs, bloom, null, null, null, null, null, false, null, null, 0, 0)
+            : this(postState, gasUsed, logs, bloom, null, null, null, null, null, false, null, null)
         { }
 
         private Receipt(uint256 postState,
@@ -141,12 +130,9 @@ namespace Stratis.SmartContracts.Core.Receipts
             uint160 newContractAddress,
             bool success,
             string result,
-            string errorMessage,
-            ulong gasPrice,
-            ulong amount)
+            string errorMessage)
         {
             this.PostState = postState;
-            this.GasPrice = gasPrice;
             this.GasUsed = gasUsed;
             this.Logs = logs;
             this.Bloom = bloom;
@@ -158,7 +144,6 @@ namespace Stratis.SmartContracts.Core.Receipts
             this.Success = success;
             this.Result = result;
             this.ErrorMessage = errorMessage;
-            this.Amount = amount;
         }
 
         /// <summary>
@@ -247,9 +232,8 @@ namespace Stratis.SmartContracts.Core.Receipts
                 innerList[8].RLPData != null ? new uint160(innerList[8].RLPData) : null,
                 BitConverter.ToBoolean(innerList[9].RLPData),
                 innerList[10].RLPData != null ? Encoding.UTF8.GetString(innerList[10].RLPData) : null,
-                innerList[11].RLPData != null ? Encoding.UTF8.GetString(innerList[11].RLPData) : null,
-                BitConverter.ToUInt64(innerList[12].RLPData),
-                BitConverter.ToUInt64(innerList[13].RLPData));
+                innerList[11].RLPData != null ? Encoding.UTF8.GetString(innerList[11].RLPData) : null
+            );
 
             return receipt;
         }
@@ -273,9 +257,7 @@ namespace Stratis.SmartContracts.Core.Receipts
                 RLP.EncodeElement(this.NewContractAddress?.ToBytes()),
                 RLP.EncodeElement(BitConverter.GetBytes(this.Success)),
                 RLP.EncodeElement(Encoding.UTF8.GetBytes(this.Result ?? "")),
-                RLP.EncodeElement(Encoding.UTF8.GetBytes(this.ErrorMessage ?? "")),
-                RLP.EncodeElement(BitConverter.GetBytes(this.GasPrice)),
-                RLP.EncodeElement(BitConverter.GetBytes(this.Amount))
+                RLP.EncodeElement(Encoding.UTF8.GetBytes(this.ErrorMessage ?? ""))
             );
         }
 

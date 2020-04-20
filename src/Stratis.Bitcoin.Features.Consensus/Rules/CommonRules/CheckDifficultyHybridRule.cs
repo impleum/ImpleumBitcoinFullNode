@@ -47,11 +47,14 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
 
             BlockHeader header = context.ValidationContext.BlockToValidate.Header;
 
-            // Check proof of stake.
-            if (header.Bits != nextWorkRequired)
+            if (posRuleContext.BlockStake.IsProofOfStake())
             {
-                this.Logger.LogTrace("(-)[BAD_DIFF_BITS]");
-                ConsensusErrors.BadDiffBits.Throw();
+                // Check proof of stake.
+                if (header.Bits != nextWorkRequired)
+                {
+                    this.Logger.LogTrace("(-)[BAD_DIFF_BITS]");
+                    ConsensusErrors.BadDiffBits.Throw();
+                }
             }
 
             return Task.CompletedTask;

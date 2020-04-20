@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Internal;
 using Moq;
-using Stratis.Bitcoin.AsyncWork;
+using Stratis.Bitcoin.Base.AsyncWork;
 using Stratis.Bitcoin.Utilities;
 using Xunit;
 
@@ -19,13 +18,12 @@ namespace Stratis.Bitcoin.Tests.Utilities
         /// <summary>Source of randomness.</summary>
         private Random random = new Random();
         private AsyncProvider asyncProvider;
-        private Mock<ILogger> mockLogger;
 
         public AsyncProviderTest()
         {
-            this.mockLogger = new Mock<ILogger>();
+            var mockLogger = new Mock<ILogger>();
             var mockLoggerFactory = new Mock<ILoggerFactory>();
-            mockLoggerFactory.Setup(l => l.CreateLogger(It.IsAny<string>())).Returns(this.mockLogger.Object).Verifiable();
+            mockLoggerFactory.Setup(l => l.CreateLogger(It.IsAny<string>())).Returns(mockLogger.Object);
 
             var signals = new Bitcoin.Signals.Signals(mockLoggerFactory.Object, null);
             var nodeLifetime = new Mock<INodeLifetime>().Object;
@@ -448,29 +446,6 @@ namespace Stratis.Bitcoin.Tests.Utilities
 
             await Task.Delay(500);
             Assert.False(shouldBeFalse);
-        }
-
-
-        [Fact]
-        public async Task AsyncProvider_AsyncLoop_ExceptionInLoopThrowsCriticalException()
-        {
-            var asyncLoop = this.asyncProvider.CreateAndRunAsyncLoop("TestLoop", async token =>
-            {
-                throw new Exception("Exception Test.");
-            }, CancellationToken.None);
-
-            await asyncLoop.RunningTask;
-
-            this.AssertLog<Exception>(this.mockLogger, LogLevel.Critical, "Exception Test.", "TestLoop threw an unhandled exception");
-        }
-
-        protected void AssertLog<T>(Mock<ILogger> logger, LogLevel logLevel, string exceptionMessage, string message) where T : Exception
-        {
-            logger.Verify(f => f.Log<Object>(logLevel,
-                It.IsAny<EventId>(),
-                It.Is<object>(l => ((FormattedLogValues)l)[0].Value.ToString().EndsWith(message)),
-                It.Is<T>(t => t.Message.Equals(exceptionMessage)),
-                It.IsAny<Func<object, Exception, string>>()));
         }
     }
 }

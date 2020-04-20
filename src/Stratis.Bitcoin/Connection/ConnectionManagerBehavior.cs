@@ -40,7 +40,7 @@ namespace Stratis.Bitcoin.Connection
         public ConnectionManagerBehavior(IConnectionManager connectionManager, ILoggerFactory loggerFactory)
         {
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName, $"[{this.GetHashCode():x}] ");
-            this.infoLogger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.infoLogger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.loggerFactory = loggerFactory;
 
             this.connectionManager = connectionManager;
@@ -85,7 +85,7 @@ namespace Stratis.Bitcoin.Connection
 
                 if ((peer.State == NetworkPeerState.Failed) || (peer.State == NetworkPeerState.Offline))
                 {
-                    this.infoLogger.LogInformation("Peer '{0}' offline, reason: '{1}'.{2}", peer.RemoteSocketEndpoint, peer.DisconnectReason?.Reason ?? "unknown", peer.DisconnectReason?.Exception?.Message ?? string.Empty);
+                    this.infoLogger.LogInformation("Peer '{0}' offline, reason: '{1}'.", peer.RemoteSocketEndpoint, peer.DisconnectReason?.Reason ?? "unknown");
 
                     this.connectionManager.RemoveConnectedPeer(peer, "Peer offline");
                 }
@@ -99,9 +99,7 @@ namespace Stratis.Bitcoin.Connection
         protected override void DetachCore()
         {
             this.AttachedPeer.StateChanged.Unregister(this.OnStateChangedAsync);
-
-            if (this.AttachedPeer.Connection != null)
-                this.connectionManager.PeerDisconnected(this.AttachedPeer.Connection.Id);
+            this.connectionManager.PeerDisconnected(this.AttachedPeer.Connection.Id);
         }
     }
 }

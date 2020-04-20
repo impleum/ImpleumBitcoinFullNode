@@ -6,7 +6,6 @@ using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Bitcoin.IntegrationTests.Common.ReadyData;
 using Stratis.Bitcoin.Networks;
-using Stratis.Bitcoin.Tests.Common;
 using Xunit;
 
 namespace Stratis.Bitcoin.IntegrationTests.Miners
@@ -36,11 +35,11 @@ namespace Stratis.Bitcoin.IntegrationTests.Miners
                 TestHelper.Connect(miner, syncerC);
 
                 // Ensure miner has 3 connections.
-                TestBase.WaitLoop(() => miner.FullNode.ConnectionManager.ConnectedPeers.Count() == 3);
+                TestHelper.WaitLoop(() => miner.FullNode.ConnectionManager.ConnectedPeers.Count() == 3);
 
-                TestBase.WaitLoop(() => TestHelper.AreNodesSynced(miner, syncerA));
-                TestBase.WaitLoop(() => TestHelper.AreNodesSynced(miner, syncerB));
-                TestBase.WaitLoop(() => TestHelper.AreNodesSynced(miner, syncerC));
+                TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(miner, syncerA));
+                TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(miner, syncerB));
+                TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(miner, syncerC));
 
                 Assert.True(new[] { syncerA, syncerB, syncerC }.All(n => n.FullNode.ConsensusManager().Tip.Height == 10));
             }

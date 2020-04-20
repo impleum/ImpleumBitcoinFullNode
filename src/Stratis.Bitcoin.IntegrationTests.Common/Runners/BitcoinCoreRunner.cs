@@ -30,7 +30,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.Runners
         public override void Stop()
         {
             TimeSpan duration = TimeSpan.FromSeconds(30);
-            TestBase.WaitLoop(() =>
+            TestHelper.WaitLoop(() =>
             {
                 try
                 {
@@ -63,7 +63,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.Runners
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && (new FileInfo(this.DataFolder).FullName.Length > 222))
                 throw new Exception("Path is too long for bitcoind to function.");
 
-            TestBase.WaitLoop(() =>
+            TestHelper.WaitLoop(() =>
             {
                 try
                 {

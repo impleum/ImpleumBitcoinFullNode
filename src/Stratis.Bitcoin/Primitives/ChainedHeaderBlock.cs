@@ -1,4 +1,5 @@
-﻿using NBitcoin;
+﻿using System;
+using NBitcoin;
 using Stratis.Bitcoin.Utilities;
 
 namespace Stratis.Bitcoin.Primitives

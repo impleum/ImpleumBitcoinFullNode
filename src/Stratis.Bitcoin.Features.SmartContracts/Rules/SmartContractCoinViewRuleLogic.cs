@@ -9,6 +9,7 @@ using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Consensus.Rules;
 using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
+using Stratis.Bitcoin.Features.Consensus.Rules;
 using Stratis.Bitcoin.Features.Consensus.Rules.CommonRules;
 using Stratis.SmartContracts.CLR;
 using Stratis.SmartContracts.Core;
@@ -168,7 +169,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Rules
             IContractTransactionContext txContext = this.GetSmartContractTransactionContext(context, transaction);
             this.CheckFeeAccountsForGas(txContext.Data, txContext.MempoolFee);
             IContractExecutor executor = this.executorFactory.CreateExecutor(this.mutableStateRepository, txContext);
-            Result<ContractTxData> deserializedCallData = this.callDataSerializer.Deserialize(txContext.Data);
 
             IContractExecutionResult result = executor.Execute(txContext);
 
@@ -182,9 +182,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Rules
                 result.NewContractAddress,
                 !result.Revert,
                 result.Return?.ToString(),
-                result.ErrorMessage,
-                deserializedCallData.Value.GasPrice,
-                txContext.TxOutValue)
+                result.ErrorMessage
+            )
             {
                 BlockHash = context.ValidationContext.BlockToValidate.GetHash()
             };

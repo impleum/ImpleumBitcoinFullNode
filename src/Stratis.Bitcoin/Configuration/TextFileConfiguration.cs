@@ -12,6 +12,7 @@ namespace Stratis.Bitcoin.Configuration
     /// </summary>
     public class ConfigurationException : Exception
     {
+        /// <inheritdoc />
         public ConfigurationException(string message) : base(message)
         {
         }
@@ -204,9 +205,9 @@ namespace Stratis.Bitcoin.Configuration
                 return (T)(object)int.Parse(str, CultureInfo.InvariantCulture);
             }
 
-            if (typeof(T) == typeof(long))
+            if (typeof(T) == typeof(Int64))
             {
-                return (T)(object)long.Parse(str, CultureInfo.InvariantCulture);
+                return (T)(object)Int64.Parse(str, CultureInfo.InvariantCulture);
             }
 
             if (typeof(T) == typeof(ulong))

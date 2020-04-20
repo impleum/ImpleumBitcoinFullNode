@@ -149,7 +149,7 @@ namespace Stratis.Bitcoin.P2P.Protocol
                     object payload = this.payloadObject;
                     payloadStream.ReadWrite(payloadType, ref payload);
                     if (unknown)
-                        ((UnknowPayload)payload).UpdateCommand(this.Command);
+                        ((UnknowPayload)payload).command = this.Command;
 
                     this.Payload = (Payload)payload;
                 }

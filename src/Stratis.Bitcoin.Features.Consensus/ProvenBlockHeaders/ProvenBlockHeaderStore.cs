@@ -99,7 +99,7 @@ namespace Stratis.Bitcoin.Features.Consensus.ProvenBlockHeaders
             Guard.NotNull(provenBlockHeaderRepository, nameof(provenBlockHeaderRepository));
             Guard.NotNull(nodeStats, nameof(nodeStats));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.provenBlockHeaderRepository = provenBlockHeaderRepository;
             this.initialBlockDownloadState = initialBlockDownloadState;
 
@@ -115,7 +115,6 @@ namespace Stratis.Bitcoin.Features.Consensus.ProvenBlockHeaders
         /// <inheritdoc />
         public async Task<ChainedHeader> InitializeAsync(ChainedHeader highestHeader)
         {
-            Guard.NotNull(highestHeader, nameof(highestHeader));
             await this.provenBlockHeaderRepository.InitializeAsync().ConfigureAwait(false);
 
             ChainedHeader tip = highestHeader;
@@ -133,9 +132,6 @@ namespace Stratis.Bitcoin.Features.Consensus.ProvenBlockHeaders
                     for (int height = repoTip.Height - 1; height > 0; height--)
                     {
                         ProvenBlockHeader provenBlockHeader = await this.provenBlockHeaderRepository.GetAsync(height).ConfigureAwait(false);
-
-                        // Block header at current height not found, go to previous height.
-                        if (provenBlockHeader == null) continue;
 
                         tip = highestHeader.FindAncestorOrSelf(provenBlockHeader.GetHash());
                         if (tip != null)

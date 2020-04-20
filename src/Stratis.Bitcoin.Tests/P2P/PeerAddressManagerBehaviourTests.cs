@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Threading;
 using Moq;
-using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Configuration.Settings;
@@ -11,7 +10,6 @@ using Stratis.Bitcoin.P2P;
 using Stratis.Bitcoin.P2P.Peer;
 using Stratis.Bitcoin.P2P.Protocol;
 using Stratis.Bitcoin.P2P.Protocol.Payloads;
-using Stratis.Bitcoin.Signals;
 using Stratis.Bitcoin.Tests.Common.Logging;
 using Stratis.Bitcoin.Utilities;
 using Xunit;
@@ -23,16 +21,12 @@ namespace Stratis.Bitcoin.Tests.P2P
         private readonly ExtendedLoggerFactory extendedLoggerFactory;
         private readonly INetworkPeerFactory networkPeerFactory;
         private readonly ConnectionManagerSettings connectionManagerSettings;
-        private readonly ISignals signals;
-        private readonly AsyncProvider asyncProvider;
 
         public PeerAddressManagerBehaviourTests()
         {
             this.extendedLoggerFactory = new ExtendedLoggerFactory();
             this.extendedLoggerFactory.AddConsoleWithFilters();
             this.connectionManagerSettings = new ConnectionManagerSettings(NodeSettings.Default(this.Network));
-            this.signals = new Bitcoin.Signals.Signals(extendedLoggerFactory, null);
-            this.asyncProvider = new AsyncProvider(extendedLoggerFactory, this.signals, new NodeLifetime());
 
             this.networkPeerFactory = new NetworkPeerFactory(this.Network,
                 DateTimeProvider.Default,
@@ -40,8 +34,7 @@ namespace Stratis.Bitcoin.Tests.P2P
                 new PayloadProvider().DiscoverPayloads(),
                 new SelfEndpointTracker(this.extendedLoggerFactory, this.connectionManagerSettings),
                 new Mock<IInitialBlockDownloadState>().Object,
-                this.connectionManagerSettings,
-                this.asyncProvider);
+                this.connectionManagerSettings);
         }
 
         [Fact]

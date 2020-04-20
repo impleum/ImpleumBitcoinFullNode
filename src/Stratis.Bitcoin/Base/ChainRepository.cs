@@ -40,7 +40,7 @@ namespace Stratis.Bitcoin.Base
             Guard.NotEmpty(folder, nameof(folder));
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
 
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
 
             Directory.CreateDirectory(folder);
             this.dbreeze = new DBreezeEngine(folder);

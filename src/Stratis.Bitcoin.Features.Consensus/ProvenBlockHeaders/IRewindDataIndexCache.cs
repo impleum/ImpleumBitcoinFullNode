@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
 

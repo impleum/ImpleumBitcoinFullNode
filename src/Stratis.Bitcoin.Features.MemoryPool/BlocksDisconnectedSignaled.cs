@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.Bitcoin.EventBus;
 using Stratis.Bitcoin.EventBus.CoreEvents;
+using Stratis.Bitcoin.Primitives;
 using Stratis.Bitcoin.Signals;
 
 namespace Stratis.Bitcoin.Features.MemoryPool
@@ -25,7 +26,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.mempoolValidator = mempoolValidator;
             this.mempoolLock = mempoolLock;
             this.signals = signals;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
         }
 
         public void Initialize()

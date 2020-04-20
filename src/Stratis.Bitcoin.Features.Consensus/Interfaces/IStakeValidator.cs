@@ -156,5 +156,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Interfaces
         /// <param name="coinStake">The coinstake transaction.</param>
         /// <returns><c>True</c> if passes validation, and <c>false</c> otherwise.</returns>
         bool CheckStakeSignature(BlockSignature signature, uint256 blockHash, Transaction coinStake);
+
+        long GetCoinAge(Transaction coinstakeTx, ChainedHeader prevBlock);
     }
 }

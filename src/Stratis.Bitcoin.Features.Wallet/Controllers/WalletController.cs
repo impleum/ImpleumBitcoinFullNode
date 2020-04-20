@@ -68,17 +68,17 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
             this.network = network;
             this.coinType = (CoinType)network.Consensus.CoinType;
             this.chainIndexer = chainIndexer;
-            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
             this.broadcasterManager = broadcasterManager;
             this.dateTimeProvider = dateTimeProvider;
         }
 
         /// <summary>
-        /// Generates a mnemonic to use for an HD wallet.
+        /// Generates a new mnemonic. The call can optionally specify a language and the number of words in the mnemonic.
         /// </summary>
-        /// <param name="language">The language for the words in the mnemonic. The options are: English, French, Spanish, Japanese, ChineseSimplified and ChineseTraditional. Defaults to English.</param>
-        /// <param name="wordCount">The number of words in the mnemonic. The options are: 12,15,18,21 or 24. Defaults to 12.</param>
-        /// <returns>A JSON object containing the generated mnemonic.</returns>
+        /// <param name="language">The language for the words in the mnemonic. Options are: English, French, Spanish, Japanese, ChineseSimplified and ChineseTraditional. The default is 'English'.</param>
+        /// <param name="wordCount">The number of words in the mnemonic. Options are: 12,15,18,21 or 24. the default is 12.</param>
+        /// <returns>A JSON object containing the mnemonic generated.</returns>
         [Route("mnemonic")]
         [HttpGet]
         public IActionResult GenerateMnemonic([FromQuery] string language = "English", int wordCount = 12)
@@ -130,9 +130,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Creates a new wallet on this full node.
+        /// Creates a new wallet on the local machine.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters to create a wallet.</param>
+        /// <param name="request">The object containing the parameters used to create the wallet.</param>
         /// <returns>A JSON object containing the mnemonic created for the new wallet.</returns>
         [Route("create")]
         [HttpPost]
@@ -200,7 +200,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Verifies the signature of a message.
+        /// Verify the signature of a message.
         /// </summary>
         /// <param name="request">The object containing the parameters verify a signature.</param>
         /// <returns>A JSON object containing the result of the verification.</returns>
@@ -229,9 +229,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Loads a previously created wallet.
+        /// Loads a wallet previously created by the user.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters to load an existing wallet</param>
+        /// <param name="request">The name of the wallet to load.</param>
         [Route("load")]
         [HttpPost]
         public IActionResult Load([FromBody]WalletLoadRequest request)
@@ -268,10 +268,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Recovers an existing wallet.
+        /// Recovers a wallet.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to recover a wallet.</param>
-        /// <returns>A value of Ok if the wallet was successfully recovered.</returns>
+        /// <param name="request">The object containing the parameters used to recover a wallet.</param>
         [Route("recover")]
         [HttpPost]
         public IActionResult Recover([FromBody]WalletRecoveryRequest request)
@@ -312,11 +311,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Recovers a wallet using its extended public key. Note that the recovered wallet will not have a private key and is
-        /// only suitable for returning the wallet history using further API calls.
+        /// Recovers a wallet using only the extended public key.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to recover a wallet using its extended public key.</param>
-        /// <returns>A value of Ok if the wallet was successfully recovered.</returns>
+        /// <param name="request">The object containing the parameters used to recover a wallet.</param>
         [Route("recover-via-extpubkey")]
         [HttpPost]
         public IActionResult RecoverViaExtPubKey([FromBody]WalletExtPubRecoveryRequest request)
@@ -363,12 +360,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets some general information about a wallet. This includes the network the wallet is for,
-        /// the creation date and time for the wallet, the height of the blocks the wallet currently holds,
-        /// and the number of connected nodes. 
+        /// Get some general info about a wallet.
         /// </summary>
-        /// <param name="request">The name of the wallet to get the information for.</param>
-        /// <returns>A JSON object containing the wallet information.</returns>
+        /// <param name="request">The name of the wallet.</param>
+        /// <returns></returns>
         [Route("general-info")]
         [HttpGet]
         public IActionResult GetGeneralInfo([FromQuery] WalletName request)
@@ -413,11 +408,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets the history of a wallet. This includes the transactions held by the entire wallet
-        /// or a single account if one is specified. 
+        /// Retrieves the history of a wallet.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to retrieve a wallet's history.</param>
-        /// <returns>A JSON object containing the wallet history.</returns>
+        /// <param name="request">The request parameters.</param>
+        /// <returns></returns>
         [Route("history")]
         [HttpGet]
         public IActionResult GetHistory([FromQuery] WalletHistoryRequest request)
@@ -441,10 +435,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                     var transactionItems = new List<TransactionItemModel>();
 
                     // Sorting the history items by descending dates. That includes received and sent dates.
-                    List<FlatHistory> items = accountHistory.History
-                                                            .OrderBy(o => o.Transaction.IsConfirmed() ? 1 : 0)
-                                                            .ThenByDescending(o => o.Transaction.SpendingDetails?.CreationTime ?? o.Transaction.CreationTime)
-                                                            .ToList();
+                    List<FlatHistory> items = accountHistory.History.OrderByDescending(o => o.Transaction.SpendingDetails?.CreationTime ?? o.Transaction.CreationTime).ToList();
 
                     // Represents a sublist containing only the transactions that have already been spent.
                     List<FlatHistory> spendingDetails = items.Where(t => t.Transaction.SpendingDetails != null).ToList();
@@ -604,10 +595,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets the balance of a wallet in STRAT (or sidechain coin). Both the confirmed and unconfirmed balance are returned.
+        /// Gets the balance of a wallet.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to retrieve a wallet's balance.</param>
-        /// <returns>A JSON object containing the wallet balance.</returns>
+        /// <param name="request">The request parameters.</param>
+        /// <returns></returns>
         [Route("balance")]
         [HttpGet]
         public IActionResult GetBalance([FromQuery] WalletBalanceRequest request)
@@ -650,13 +641,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets the balance at a specific wallet address in STRAT (or sidechain coin).
-        /// Both the confirmed and unconfirmed balance are returned.
-        /// This method gets the UTXOs at the address which the wallet can spend.
+        /// Gets the balance for an address.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to retrieve the balance
-        /// at a specific wallet address.</param>
-        /// <returns>A JSON object containing the balance, fee, and an address for the balance.</returns>
+        /// <param name="request">The request parameters.</param>
+        /// <returns>The address balance for an address.</returns>
         [Route("received-by-address")]
         [HttpGet]
         public IActionResult GetReceivedByAddress([FromQuery] ReceivedByAddressRequest request)
@@ -688,12 +676,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets the maximum spendable balance for an account along with the fee required to spend it.
+        /// Gets the maximum spendable balance on an account, along with the fee required to spend it.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to retrieve the
-        /// maximum spendable balance on an account.</param>
-        /// <returns>A JSON object containing the maximum spendable balance for an account
-        /// along with the fee required to spend it.</returns>
+        /// <param name="request">The request parameters.</param>
+        /// <returns></returns>
         [Route("maxbalance")]
         [HttpGet]
         public IActionResult GetMaximumSpendableBalance([FromQuery] WalletMaximumBalanceRequest request)
@@ -723,12 +709,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets the spendable transactions for an account with the option to specify how many confirmations
-        /// a transaction needs to be included.
+        /// Gets the spendable transactions in an account, taking into account coin maturity and number of confirmations.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to retrieve the spendable 
-        /// transactions for an account.</param>
-        /// <returns>A JSON object containing the spendable transactions for an account.</returns>
+        /// <param name="request">The request parameters.</param>
+        /// <returns></returns>
         [Route("spendable-transactions")]
         [HttpGet]
         public IActionResult GetSpendableTransactions([FromQuery] SpendableTransactionsRequest request)
@@ -767,12 +751,11 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets a fee estimate for a specific transaction.
+        /// Gets a transaction fee estimate.
         /// Fee can be estimated by creating a <see cref="TransactionBuildContext"/> with no password
         /// and then building the transaction and retrieving the fee from the context.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to estimate the fee 
-        /// for a specific transaction.</param>
+        /// <param name="request">The transaction parameters.</param>
         /// <returns>The estimated fee for the transaction.</returns>
         [Route("estimate-txfee")]
         [HttpPost]
@@ -819,11 +802,10 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Builds a transaction and returns the hex to use when executing the transaction.
+        /// Builds a transaction.
         /// </summary>
-        /// <param name="request">An object containing the parameters used to build a transaction.</param>
-        /// <returns>A JSON object including the transaction ID, the hex used to execute
-        /// the transaction, and the transaction fee.</returns>
+        /// <param name="request">The transaction parameters.</param>
+        /// <returns>All the details of the transaction, including the hex used to execute it.</returns>
         [Route("build-transaction")]
         [HttpPost]
         public IActionResult BuildTransaction([FromBody] BuildTransactionRequest request)
@@ -886,11 +868,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Sends a transaction that has already been built.
-        /// Use the /api/Wallet/build-transaction call to create transactions.
+        /// Sends a transaction.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters used to a send transaction request.</param>
-        /// <returns>A JSON object containing information about the sent transaction.</returns>
+        /// <param name="request">The hex representing the transaction.</param>
         [Route("send-transaction")]
         [HttpPost]
         public IActionResult SendTransaction([FromBody] SendTransactionRequest request)
@@ -930,6 +910,8 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                     });
                 }
 
+                
+                
                 this.broadcasterManager.BroadcastTransactionAsync(transaction).GetAwaiter().GetResult();
 
                 TransactionBroadcastEntry transactionBroadCastEntry = this.broadcasterManager.GetTransaction(transaction.GetHash());
@@ -950,10 +932,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Lists all the files found in the default wallet folder.
+        /// Lists all the wallet files found under the default folder.
         /// </summary>
-        /// <returns>A JSON object containing the wallet folder path and
-        /// the names of the files found within the folder.</returns>
+        /// <returns>A list of the wallets files found.</returns>
         [Route("files")]
         [HttpGet]
         public IActionResult ListWalletsFiles()
@@ -978,18 +959,8 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
 
         /// <summary>
         /// Creates a new account for a wallet.
-        /// Accounts are given the name "account i", where i is an incremental index which starts at 0.
-        /// According to BIP44. an account at index i can only be created when the account at index (i - 1)
-        /// contains at least one transaction. For example, if three accounts named "account 0", "account 1",
-        /// and "account 2" already exist and contain at least one transaction, then the
-        /// the function will create "account 3". However, if "account 2", for example, instead contains no
-        /// transactions, then this API call returns "account 2".
-        /// Accounts are created deterministically, which means that on any device, the accounts and addresses
-        /// for a given seed (or mnemonic) are always the same.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters to create a new account in a wallet.</param>
-        /// <returns>A JSON object containing the name of the new account or an existing account
-        /// containing no transactions.</returns>
+        /// <returns>An account name.</returns>
         [Route("account")]
         [HttpPost]
         public IActionResult CreateNewAccount([FromBody]GetUnusedAccountModel request)
@@ -1022,8 +993,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         /// <summary>
         /// Gets a list of accounts for the specified wallet.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters to list the accounts for a wallet.</param>
-        /// <returns>A JSON object containing a list of accounts for the specified wallet.</returns>
+        /// <returns>The list of accounts for the specified wallet</returns>
         [Route("accounts")]
         [HttpGet]
         public IActionResult ListAccounts([FromQuery]ListAccountsModel request)
@@ -1049,12 +1019,9 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets an unused address (in the Base58 format) for a wallet account. This address will not have been assigned
-        /// to any known UTXO (neither to pay funds into the wallet or to pay change back to the wallet).
+        /// Gets an unused address.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters to retrieve an
-        /// unused address for a wallet account.</param>
-        /// <returns>A JSON object containing the last created and unused address (in Base58 format).</returns>
+        /// <returns>The last created and unused address or creates a new address (in Base58 format).</returns>
         [Route("unusedaddress")]
         [HttpGet]
         public IActionResult GetUnusedAddress([FromQuery]GetUnusedAddressModel request)
@@ -1080,12 +1047,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets a specified number of unused addresses (in the Base58 format) for a wallet account. These addresses
-        /// will not have been assigned to any known UTXO (neither to pay funds into the wallet or to pay change back
-        /// to the wallet).
-        /// <param name="request">An object containing the necessary parameters to retrieve
-        /// unused addresses for a wallet account.</param>
-        /// <returns>A JSON object containing the required amount of unused addresses (in Base58 format).</returns>
+        /// Gets the specified number of unused addresses.
         /// </summary>
         [Route("unusedaddresses")]
         [HttpGet]
@@ -1113,10 +1075,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets all addresses for a wallet account.
-        /// <param name="request">An object containing the necessary parameters to retrieve
-        /// all addresses for a wallet account.</param>
-        /// <returns>A JSON object containing all addresses for a wallet account (in Base58 format).</returns>
+        /// Gets the specified number of unused addresses.
         /// </summary>
         [Route("addresses")]
         [HttpGet]
@@ -1157,21 +1116,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Removes transactions from the wallet.
-        /// You might want to remove transactions from a wallet if some unconfirmed transactions disappear
-        /// from the blockchain or the transaction fields within the wallet are updated and a refresh is required to
-        /// populate the new fields. 
-        /// In one situation, you might notice several unconfirmed transaction in the wallet, which you now know were
-        /// never confirmed. You can use this API to correct this by specifying a date and time before the first
-        /// unconfirmed transaction thereby removing all transactions after this point. You can also request a resync as
-        /// part of the call, which calculates the block height for the earliest removal. The wallet sync manager then
-        /// proceeds to resync from there reinstating the confirmed transactions in the wallet. You can also cherry pick
-        /// transactions to remove by specifying their transaction ID. 
-        /// 
-        /// <param name="request">An object containing the necessary parameters to remove transactions
-        /// from a wallet. The includes several options for specifying the transactions to remove.</param>
-        /// <returns>A JSON object containing all removed transactions identified by their
-        /// transaction ID and creation time.</returns>
+        /// Removed transactions from the wallet.
         /// </summary>
         [Route("remove-transactions")]
         [HttpDelete]
@@ -1200,7 +1145,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                 else if (request.TransactionsIds != null)
                 {
                     IEnumerable<uint256> ids = request.TransactionsIds.Select(uint256.Parse);
-                    result = this.walletManager.RemoveTransactionsByIds(request.WalletName, ids);
+                    result = this.walletManager.RemoveTransactionsByIdsLocked(request.WalletName, ids);
                 }
                 else
                 {
@@ -1239,10 +1184,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Gets the extended public key of a specified wallet account.
-        /// <param name="request">An object containing the necessary parameters to retrieve
-        /// the extended public key for a wallet account.</param>
-        /// <returns>A JSON object containing the extended public key for a wallet account.</returns>
+        /// Gets the extpubkey of the specified account.
         /// </summary>
         [Route("extpubkey")]
         [HttpGet]
@@ -1269,13 +1211,11 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Requests the node resyncs from a block specified by its block hash.
-        /// Internally, the specified block is taken as the new wallet tip
-        /// and all blocks after it are resynced.
+        /// Request the node to sync back from a given block hash.
+        /// This is for demo and testing use only.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters
-        /// to request a resync.</param>
-        /// <returns>A value of Ok if the resync was successful.</returns>
+        /// <param name="model">The hash of the block from which to start syncing.</param>
+        /// <returns></returns>
         [HttpPost]
         [Route("sync")]
         public IActionResult Sync([FromBody] HashModel model)
@@ -1297,15 +1237,12 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
         }
 
         /// <summary>
-        /// Request the node resyncs starting from a given date and time.
-        /// Internally, the first block created on or after the supplied date and time
-        /// is taken as the new wallet tip and all blocks after it are resynced.
+        /// Request the node to sync back from a given date.
         /// </summary>
-        /// <param name="request">An object containing the necessary parameters
-        /// to request a resync.</param>
-        /// <returns>A value of Ok if the resync was successful.</returns>
+        /// <param name="request">The model containing the date from which to start syncing.</param>
+        /// <returns></returns>
         [HttpPost]
-        [Route("sync-from-date")]
+        [Route("syncfromdate")]
         public IActionResult SyncFromDate([FromBody] WalletSyncFromDateRequest request)
         {
             if (!this.ModelState.IsValid)
@@ -1349,8 +1286,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                     MinConfirmations = 1,
                     Shuffle = true,
                     WalletPassword = request.WalletPassword,
-                    Recipients = recipients,
-                    Time = (uint)this.dateTimeProvider.GetAdjustedTimeAsUnixTimestamp()
+                    Recipients = recipients
                 };
 
                 Transaction transactionResult = this.walletTransactionHandler.BuildTransaction(context);

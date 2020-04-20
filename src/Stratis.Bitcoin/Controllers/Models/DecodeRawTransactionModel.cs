@@ -2,12 +2,10 @@
 
 namespace Stratis.Bitcoin.Controllers.Models
 {
-    /// <summary>
-    /// A class containing the necessary parameters for a block search request.
-    /// </summary>
+    /// <summary>Contains a transaction in hex format prior to being decoded to JSON.</summary>
     public class DecodeRawTransactionModel
     {
-        /// <summary>The transaction to be decoded in hex format.</summary>
+        /// <summary>The transaction to be decoded, in hex format.</summary>
         [JsonProperty(PropertyName = "rawHex")]
         public string RawHex { get; set; }
     }
