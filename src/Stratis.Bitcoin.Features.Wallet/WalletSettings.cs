@@ -50,7 +50,7 @@ namespace Stratis.Bitcoin.Features.Wallet
         {
             Guard.NotNull(nodeSettings, nameof(nodeSettings));
 
-            this.logger = nodeSettings.LoggerFactory.CreateLogger("Impleum.Bitcoin.Features.Wallet.WalletSettings");
+            this.logger = nodeSettings.LoggerFactory.CreateLogger(typeof(WalletSettings).FullName);
 
             TextFileConfiguration config = nodeSettings.ConfigReader;
 

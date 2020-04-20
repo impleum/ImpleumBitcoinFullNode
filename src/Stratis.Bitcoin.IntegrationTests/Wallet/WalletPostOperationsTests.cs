@@ -37,7 +37,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
         public WalletPostOperationsTests()
         {
-            this.network = new ImpleumRegTest();
+            this.network = new StratisRegTest();
         }
 
         private void AddAndLoadWalletFileToWalletFolder(CoreNode node)

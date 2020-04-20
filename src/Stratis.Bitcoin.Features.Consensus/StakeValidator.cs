@@ -78,7 +78,7 @@ namespace Stratis.Bitcoin.Features.Consensus
         /// <param name="loggerFactory">Factory for creating loggers.</param>
         public StakeValidator(Network network, IStakeChain stakeChain, ChainIndexer chainIndexer, ICoinView coinView, ILoggerFactory loggerFactory)
         {
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.stakeChain = stakeChain;
             this.chainIndexer = chainIndexer;
             this.coinView = coinView;
@@ -228,9 +228,6 @@ namespace Stratis.Bitcoin.Features.Consensus
                 this.logger.LogTrace("(-)[INVALID_STAKE_HASH_TARGET]");
                 ConsensusErrors.StakeHashInvalidTarget.Throw();
             }
-
-            context.CoinAge = this.GetCoinAge(transaction, prevChainedHeader);
-            this.CheckStakeKernelHash(context, headerBits, prevBlockStake.StakeModifierV2, prevUtxo, txIn.PrevOut, transaction.Time);
         }
 
         /// <inheritdoc/>
@@ -488,29 +485,6 @@ namespace Stratis.Bitcoin.Features.Consensus
 
             bool verifyRes = new PubKey(data).Verify(blockHash, new ECDSASignature(signature.Signature));
             return verifyRes;
-        }
-
-        public long GetCoinAge(Transaction coinstakeTx, ChainedHeader prevBlock)
-        {
-            if (coinstakeTx.IsCoinBase)
-                return 0;
-
-            BigInteger bnCentSecond = BigInteger.Zero;  // coin age in the unit of cent-seconds
-            foreach (TxIn input in coinstakeTx.Inputs)
-            {
-                var inputCoins = this.coinView.FetchCoins(new[] { input.PrevOut.Hash });
-                if ((inputCoins == null) || (inputCoins.UnspentOutputs.Length != 1))
-                    continue;
-                if (this.IsConfirmedInNPrevBlocks(inputCoins.UnspentOutputs[0], prevBlock, (this.network.Consensus.Options as PosConsensusOptions)?.GetStakeMinConfirmations(prevBlock.Height + 1, this.network) - 1 ?? 1))
-                    continue;
-
-                long nValueIn = inputCoins.UnspentOutputs[0].Outputs[input.PrevOut.N].Value;
-                var multiplier = BigInteger.ValueOf(coinstakeTx.Time - inputCoins.UnspentOutputs[0].Time);
-                bnCentSecond = bnCentSecond.Add(BigInteger.ValueOf(nValueIn).Multiply(multiplier).Divide(BigInteger.ValueOf(Money.CENT)));
-            }
-            BigInteger bnCoinDay = bnCentSecond.Multiply(BigInteger.ValueOf(Money.CENT)).Divide(BigInteger.ValueOf(Money.COIN))
-                .Divide(BigInteger.ValueOf(24 * 60 * 60));
-            return bnCoinDay.LongValue;
         }
     }
 }

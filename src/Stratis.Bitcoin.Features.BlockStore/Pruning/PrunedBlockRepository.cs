@@ -24,7 +24,7 @@ namespace Stratis.Bitcoin.Features.BlockStore.Pruning
         {
             this.blockRepository = blockRepository;
             this.dBreezeSerializer = dBreezeSerializer;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.storeSettings = storeSettings;
         }
 

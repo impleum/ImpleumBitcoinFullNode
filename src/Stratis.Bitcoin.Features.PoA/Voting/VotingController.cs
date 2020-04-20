@@ -30,7 +30,7 @@ namespace Stratis.Bitcoin.Features.PoA.Voting
             this.votingManager = votingManager;
             this.whitelistedHashesRepository = whitelistedHashesRepository;
 
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("STR_1.Bitcoin.FullNode");
         }
 
         [Route("fedmembers")]

@@ -19,7 +19,7 @@ namespace Stratis.Bitcoin.Features.Apps
 
         public AppsHost(ILoggerFactory loggerFactory) 
         {
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.hostedApps = new List<(IStratisApp app, IWebHost host)>();
         }
 

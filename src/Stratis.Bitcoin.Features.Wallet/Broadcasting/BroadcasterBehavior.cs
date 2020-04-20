@@ -30,7 +30,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Broadcasting
         public BroadcasterBehavior(
             IBroadcasterManager broadcasterManager,
             ILoggerFactory loggerFactory)
-            : this(broadcasterManager, loggerFactory.CreateLogger("Impleum.Bitcoin.Features.Wallet.Broadcasting.BroadcasterBehavior"))
+            : this(broadcasterManager, loggerFactory.CreateLogger(typeof(BroadcasterBehavior).FullName))
         {
         }
 

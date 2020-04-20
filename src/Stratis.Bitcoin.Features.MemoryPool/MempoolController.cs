@@ -24,7 +24,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             Guard.NotNull(mempoolManager, nameof(mempoolManager));
 
             this.MempoolManager = mempoolManager;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
         }
 
         [ActionName("getrawmempool")]
@@ -36,7 +36,9 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         }
 
         /// <summary>
-        /// Lists the contents of the memory pool.
+        /// Gets a hash of each transaction in the memory pool. In other words, a list of the TX IDs for all the transactions in the mempool are retrieved. 
+        ///
+        /// 
         /// </summary>
         /// <returns>Json formatted <see cref="List{T}<see cref="uint256"/>"/> containing the memory pool contents. Returns <see cref="IActionResult"/> formatted error if fails.</returns>
         [Route("api/[controller]/getrawmempool")]

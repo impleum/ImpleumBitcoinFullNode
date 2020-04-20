@@ -182,9 +182,9 @@
         public virtual int GetStakeMinConfirmations(int height, Network network)
         {
             if (network.Name.ToLowerInvariant().Contains("test")) // TODO: When rules are moved to network, we can use the extension method IsTest() from Stratis.Bitcoin.
-                return 10;//height < CoinstakeMinConfirmationActivationHeightTestnet ? 10 : 20;
+                return height < CoinstakeMinConfirmationActivationHeightTestnet ? 10 : 20;
 
-            return 50; //height < CoinstakeMinConfirmationActivationHeightMainnet ? 50 : 500;
+            return height < CoinstakeMinConfirmationActivationHeightMainnet ? 50 : 500;
         }
     }
 }

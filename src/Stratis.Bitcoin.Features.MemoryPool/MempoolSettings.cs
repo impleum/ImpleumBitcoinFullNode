@@ -59,7 +59,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
         {
             Guard.NotNull(nodeSettings, nameof(nodeSettings));
 
-            this.logger = nodeSettings.LoggerFactory.CreateLogger("Impleum.Bitcoin.Features.MemoryPool.MempoolSettings");
+            this.logger = nodeSettings.LoggerFactory.CreateLogger(typeof(MempoolSettings).FullName);
 
             TextFileConfiguration config = nodeSettings.ConfigReader;
 

@@ -19,10 +19,6 @@
         /// <summary>
         /// Stratis
         /// </summary>
-        Stratis = 105,
-        /// <summary>
-        /// Stratis
-        /// </summary>
-        Impleum = 769
+        Stratis = 105
     }
 }

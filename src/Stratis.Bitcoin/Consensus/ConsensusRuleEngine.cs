@@ -19,7 +19,7 @@ namespace Stratis.Bitcoin.Consensus
     public abstract class ConsensusRuleEngine : IConsensusRuleEngine
     {
         /// <summary>Instance logger.</summary>
-        protected readonly ILogger logger;
+        private readonly ILogger logger;
 
         /// <summary>A factory to creates logger instances for each rule.</summary>
         public ILoggerFactory LoggerFactory { get; }
@@ -101,7 +101,7 @@ namespace Stratis.Bitcoin.Consensus
             this.DateTimeProvider = dateTimeProvider;
             this.invalidBlockHashStore = invalidBlockHashStore;
             this.LoggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.NodeDeployments = nodeDeployments;
 
             this.headerValidationRules = new List<HeaderValidationConsensusRule>();

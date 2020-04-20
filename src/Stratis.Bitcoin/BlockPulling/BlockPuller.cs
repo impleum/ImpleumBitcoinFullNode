@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using NBitcoin.Protocol;
 using Stratis.Bitcoin.Base;
 using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.P2P.Peer;
@@ -237,7 +236,7 @@ namespace Stratis.Bitcoin.BlockPulling
 
             this.chainState = chainState;
             this.dateTimeProvider = dateTimeProvider;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
 
             nodeStats.RegisterStats(this.AddComponentStats, StatsType.Component);
         }
@@ -287,7 +286,14 @@ namespace Stratis.Bitcoin.BlockPulling
         {
             lock (this.peerLock)
             {
-                return this.pullerBehaviorsByPeerId.Sum(x => x.Value.SpeedBytesPerSecond);
+                try
+                {
+                    return this.pullerBehaviorsByPeerId.Sum(x => x.Value.SpeedBytesPerSecond);
+                }
+                catch (OverflowException)
+                {
+                    return long.MaxValue;
+                }
             }
         }
 

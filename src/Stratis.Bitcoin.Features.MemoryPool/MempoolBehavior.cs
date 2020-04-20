@@ -106,7 +106,7 @@ namespace Stratis.Bitcoin.Features.MemoryPool
             this.connectionManager = connectionManager;
             this.initialBlockDownloadState = initialBlockDownloadState;
             this.signals = signals;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.loggerFactory = loggerFactory;
             this.network = network;
 

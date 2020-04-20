@@ -1,7 +1,5 @@
 ﻿using NBitcoin;
 using NBitcoin.Networks;
-using NBitcoin.Protocol;
-using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Networks;
 
 namespace Stratis.Bitcoin.Tests.Common
@@ -19,11 +17,5 @@ namespace Stratis.Bitcoin.Tests.Common
         public static Network StratisTest => NetworkRegistration.GetNetwork("StratisTest") ?? NetworkRegistration.Register(new StratisTest());
 
         public static Network StratisRegTest => NetworkRegistration.GetNetwork("StratisRegTest") ?? NetworkRegistration.Register(new StratisRegTest());
-
-        public static Network ImpleumMain => NetworkRegistration.GetNetwork("ImpleumMain") ?? NetworkRegistration.Register(new ImpleumMain());
-
-        public static Network ImpleumTest => NetworkRegistration.GetNetwork("ImpleumTest") ?? NetworkRegistration.Register(new ImpleumTest());
-
-        public static Network ImpleumRegTest => NetworkRegistration.GetNetwork("ImpleumRegTest") ?? NetworkRegistration.Register(new ImpleumRegTest());
     }
 }

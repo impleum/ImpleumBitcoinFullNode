@@ -43,7 +43,7 @@ namespace Stratis.Bitcoin.Base.AsyncWork
             this.asyncDelegateWorkers = new Dictionary<IAsyncDelegateDequeuer, AsyncTaskInfo>();
 
             this.loggerFactory = Guard.NotNull(loggerFactory, nameof(loggerFactory));
-            this.logger = this.loggerFactory.CreateLogger("Impleum.Bitcoin.Base.AsyncWork.AsyncProvider");
+            this.logger = this.loggerFactory.CreateLogger("STR_1.Bitcoin.Base.AsyncWork.AsyncProvider");
 
             this.signals = Guard.NotNull(signals, nameof(signals));
             this.nodeLifetime = Guard.NotNull(nodeLifetime, nameof(nodeLifetime));
