@@ -37,7 +37,7 @@ namespace Stratis.Bitcoin.Controllers
         {
             this.connectionManager = connectionManager;
             this.network = network;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.peerBanning = peerBanning;
         }
 

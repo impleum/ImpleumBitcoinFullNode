@@ -90,7 +90,7 @@ namespace Stratis.Bitcoin.Configuration
         public Network Network { get; private set; }
 
         /// <summary>A string that is used to help identify the Full Node when it connects to other peers on a network.
-        /// Defaults to "StratisNode".
+        /// Defaults to "ImpleumNode".
         /// </summary>
         public string Agent { get; private set; }
 
@@ -127,7 +127,7 @@ namespace Stratis.Bitcoin.Configuration
         ///   name would be determined. In this case we first need to determine the network.
         /// </remarks>
         public NodeSettings(Network network = null, ProtocolVersion protocolVersion = SupportedProtocolVersion,
-            string agent = "StratisNode", string[] args = null, NetworksSelector networksSelector = null)
+            string agent = "ImpleumNode", string[] args = null, NetworksSelector networksSelector = null)
         {
             // Create the default logger factory and logger.
             var loggerFactory = new ExtendedLoggerFactory();
@@ -378,7 +378,7 @@ namespace Stratis.Bitcoin.Configuration
             builder.AppendLine($"-help/--help              Show this help.");
             builder.AppendLine($"-conf=<Path>              Path to the configuration file. Defaults to {defaults.ConfigurationFile}.");
             builder.AppendLine($"-datadir=<Path>           Path to the data directory. Defaults to {defaults.DataDir}.");
-            builder.AppendLine($"-datadirroot=<Path>       The path to the root data directory, which holds all node data on the machine. Defaults to 'StratisNode'.");
+            builder.AppendLine($"-datadirroot=<Path>       The path to the root data directory, which holds all node data on the machine. Defaults to 'ImpleumNode'.");
             builder.AppendLine($"-debug[=<string>]         Set 'Debug' logging level. Specify what to log via e.g. '-debug=Stratis.Bitcoin.Miner,Stratis.Bitcoin.Wallet'.");
             builder.AppendLine($"-loglevel=<string>        Direct control over the logging level: '-loglevel=trace/debug/info/warn/error/fatal'.");
 

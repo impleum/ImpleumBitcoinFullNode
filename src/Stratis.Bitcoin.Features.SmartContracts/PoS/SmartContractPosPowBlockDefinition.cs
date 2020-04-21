@@ -62,7 +62,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.PoS
         {
             this.coinView = coinView;
             this.executorFactory = executorFactory;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.senderRetriever = senderRetriever;
             this.stakeChain = stakeChain;
             this.stakeValidator = stakeValidator;

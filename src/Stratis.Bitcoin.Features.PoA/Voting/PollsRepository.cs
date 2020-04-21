@@ -37,7 +37,7 @@ namespace Stratis.Bitcoin.Features.PoA.Voting
             Directory.CreateDirectory(folder);
             this.dbreeze = new DBreezeEngine(folder);
 
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.dBreezeSerializer = dBreezeSerializer;
         }
 

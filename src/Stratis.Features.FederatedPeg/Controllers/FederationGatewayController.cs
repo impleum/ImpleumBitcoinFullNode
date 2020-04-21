@@ -32,22 +32,22 @@ namespace Stratis.Features.FederatedPeg.Controllers
 
         private readonly IMaturedBlocksProvider maturedBlocksProvider;
 
-        private readonly IFederationGatewaySettings federationGatewaySettings;
+        private readonly IFederatedPegSettings federatedPegSettings;
 
         private readonly IFederationWalletManager federationWalletManager;
 
-        private readonly FederationManager federationManager;
+        private readonly IFederationManager federationManager;
 
         public FederationGatewayController(
             ILoggerFactory loggerFactory,
             IMaturedBlocksProvider maturedBlocksProvider,
-            IFederationGatewaySettings federationGatewaySettings,
+            IFederatedPegSettings federatedPegSettings,
             IFederationWalletManager federationWalletManager,
-            FederationManager federationManager = null)
+            IFederationManager federationManager = null)
         {
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.maturedBlocksProvider = maturedBlocksProvider;
-            this.federationGatewaySettings = federationGatewaySettings;
+            this.federatedPegSettings = federatedPegSettings;
             this.federationWalletManager = federationWalletManager;
             this.federationManager = federationManager;
         }
@@ -71,10 +71,16 @@ namespace Stratis.Features.FederatedPeg.Controllers
 
             try
             {
-                List<MaturedBlockDepositsModel> deposits = await this.maturedBlocksProvider.GetMaturedDepositsAsync(
+                Result<List<MaturedBlockDepositsModel>> depositsResult = await this.maturedBlocksProvider.GetMaturedDepositsAsync(
                     blockRequest.BlockHeight, blockRequest.MaxBlocksToSend).ConfigureAwait(false);
 
-                return this.Json(deposits);
+                if (depositsResult.IsSuccess)
+                {
+                    return this.Json(depositsResult.Value);
+                }
+
+                this.logger.LogTrace("Error calling /api/FederationGateway/{0}: {1}.", FederationGatewayRouteEndPoint.GetMaturedBlockDeposits, depositsResult.Error);
+                return ErrorHelpers.BuildErrorResponse(HttpStatusCode.BadRequest, $"Could not re-sync matured block deposits: {depositsResult.Error}", depositsResult.Error);
             }
             catch (Exception e)
             {
@@ -93,20 +99,20 @@ namespace Stratis.Features.FederatedPeg.Controllers
         {
             try
             {
-                bool isMainchain = this.federationGatewaySettings.IsMainChain;
+                bool isMainchain = this.federatedPegSettings.IsMainChain;
 
                 var model = new FederationGatewayInfoModel
                 {
-                    IsActive = this.federationWalletManager.IsFederationActive(),
+                    IsActive = this.federationWalletManager.IsFederationWalletActive(),
                     IsMainChain = isMainchain,
-                    FederationNodeIpEndPoints = this.federationGatewaySettings.FederationNodeIpEndPoints.Select(i => $"{i.Address}:{i.Port}"),
-                    MultisigPublicKey = this.federationGatewaySettings.PublicKey,
-                    FederationMultisigPubKeys = this.federationGatewaySettings.FederationPublicKeys.Select(k => k.ToString()),
-                    MiningPublicKey =  isMainchain ? null : this.federationManager.FederationMemberKey?.PubKey.ToString(),
+                    FederationNodeIpEndPoints = this.federatedPegSettings.FederationNodeIpEndPoints.Select(i => $"{i.Address}:{i.Port}"),
+                    MultisigPublicKey = this.federatedPegSettings.PublicKey,
+                    FederationMultisigPubKeys = this.federatedPegSettings.FederationPublicKeys.Select(k => k.ToString()),
+                    MiningPublicKey =  isMainchain ? null : this.federationManager.CurrentFederationKey?.PubKey.ToString(),
                     FederationMiningPubKeys =  isMainchain ? null : this.federationManager.GetFederationMembers().Select(k => k.ToString()),
-                    MultiSigAddress = this.federationGatewaySettings.MultiSigAddress,
-                    MultiSigRedeemScript = this.federationGatewaySettings.MultiSigRedeemScript.ToString(),
-                    MinimumDepositConfirmations = this.federationGatewaySettings.MinimumDepositConfirmations
+                    MultiSigAddress = this.federatedPegSettings.MultiSigAddress,
+                    MultiSigRedeemScript = this.federatedPegSettings.MultiSigRedeemScript.ToString(),
+                    MinimumDepositConfirmations = this.federatedPegSettings.MinimumDepositConfirmations
                 };
 
                 return this.Json(model);

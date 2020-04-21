@@ -37,6 +37,13 @@ namespace Stratis.Features.FederatedPeg.Wallet
     {
         public const string NoSpendableTransactionsMessage = "No spendable transactions found.";
 
+        public const string NotEnoughFundsMessage = "Not enough funds.";
+
+        /// <summary>
+        /// Amount in satoshis to use as the value for the Op_Return output on the withdrawal transaction.
+        /// </summary>
+        public const decimal OpReturnSatoshis = 1;
+
         /// <summary>A threshold that if possible will limit the amount of UTXO sent to the <see cref="ICoinSelector"/>.</summary>
         /// <remarks>
         /// 500 is a safe number that if reached ensures the coin selector will not take too long to complete,
@@ -54,21 +61,27 @@ namespace Stratis.Features.FederatedPeg.Wallet
 
         private readonly MemoryCache privateKeyCache;
 
+        private readonly IFederatedPegSettings settings;
+
         public FederationWalletTransactionHandler(
             ILoggerFactory loggerFactory,
             IFederationWalletManager walletManager,
             IWalletFeePolicy walletFeePolicy,
-            Network network)
+            Network network,
+            IFederatedPegSettings settings)
         {
             Guard.NotNull(loggerFactory, nameof(loggerFactory));
             Guard.NotNull(walletManager, nameof(walletManager));
             Guard.NotNull(walletFeePolicy, nameof(walletFeePolicy));
             Guard.NotNull(network, nameof(network));
+            Guard.NotNull(settings, nameof(settings));
 
             this.walletManager = walletManager;
             this.walletFeePolicy = walletFeePolicy;
             this.network = network;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.settings = settings;
+
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.privateKeyCache = new MemoryCache(new MemoryCacheOptions() { ExpirationScanFrequency = new TimeSpan(0, 1, 0) });
         }
 
@@ -111,7 +124,14 @@ namespace Stratis.Features.FederatedPeg.Wallet
 
             var transactionBuilder = new TransactionBuilder(this.network);
 
-            transactionBuilder.CoinSelector = new DeterministicCoinSelector();
+            if (context.IsConsolidatingTransaction)
+            {
+                transactionBuilder.CoinSelector = new ConsolidationCoinSelector();
+            }
+            else
+            {
+                transactionBuilder.CoinSelector = new DeterministicCoinSelector();
+            }
 
             this.AddRecipients(transactionBuilder, context);
             this.AddOpReturnOutput(transactionBuilder, context);
@@ -160,56 +180,6 @@ namespace Stratis.Features.FederatedPeg.Wallet
         }
 
         /// <summary>
-        /// Compares transaction data to determine the order of inclusion in the transaction.
-        /// </summary>
-        /// <param name="x">First transaction data.</param>
-        /// <param name="y">Second transaction data.</param>
-        /// <returns>Returns <c>0</c> if the outputs are the same and <c>-1<c> or <c>1</c> depending on whether the first or second output takes precedence.</returns>
-        public static int CompareTransactionData(TransactionData x, TransactionData y)
-        {
-            // The oldest UTXO (determined by block height) is selected first.
-            if ((x.BlockHeight ?? int.MaxValue) != (y.BlockHeight ?? int.MaxValue))
-            {
-                return ((x.BlockHeight ?? int.MaxValue) < (y.BlockHeight ?? int.MaxValue)) ? -1 : 1;
-            }
-
-            // If a block has more than one UTXO, then they are selected in order of transaction id.
-            if (x.Id != y.Id)
-            {
-                return (x.Id < y.Id) ? -1 : 1;
-            }
-
-            // If multiple UTXOs appear within a transaction then they are selected in ascending index order.
-            if (x.Index != y.Index)
-            {
-                return (x.Index < y.Index) ? -1 : 1;
-            }
-
-            return 0;
-        }
-
-        /// <summary>
-        /// Compares two unspent outputs to determine the order of inclusion in the transaction.
-        /// </summary>
-        /// <param name="x">First unspent output.</param>
-        /// <param name="y">Second unspent output.</param>
-        /// <returns>Returns <c>0</c> if the outputs are the same and <c>-1<c> or <c>1</c> depending on whether the first or second output takes precedence.</returns>
-        private int CompareUnspentOutputReferences(UnspentOutputReference x, UnspentOutputReference y)
-        {
-            return CompareTransactionData(x.Transaction, y.Transaction);
-        }
-
-        /// <summary>
-        /// Returns the unspent outputs in the preferred order of consumption.
-        /// </summary>
-        /// <param name="context">The context associated with the current transaction being built.</param>
-        /// <returns>The unspent outputs in the preferred order of consumption.</returns>
-        private IOrderedEnumerable<UnspentOutputReference> GetOrderedUnspentOutputs(TransactionBuildContext context)
-        {
-            return context.UnspentOutputs.OrderBy(a => a, Comparer<UnspentOutputReference>.Create((x, y) => this.CompareUnspentOutputReferences(x, y)));
-        }
-
-        /// <summary>
         /// Find the next available change address.
         /// </summary>
         /// <param name="transactionBuilder"></param>
@@ -229,18 +199,34 @@ namespace Stratis.Features.FederatedPeg.Wallet
         /// <param name="context">The context associated with the current transaction being built.</param>
         private void AddCoins(TransactionBuilder transactionBuilder, TransactionBuildContext context)
         {
-            context.UnspentOutputs = this.walletManager.GetSpendableTransactionsInWallet(context.MinConfirmations).ToList();
+            (List<Coin> coins, List<UnspentOutputReference> unspentOutputs) = DetermineCoins(this.walletManager, this.network, context, this.settings);
 
-            if (context.UnspentOutputs.Count == 0)
+            context.UnspentOutputs = unspentOutputs;
+
+            if (unspentOutputs.Count == 0)
             {
                 throw new WalletException(NoSpendableTransactionsMessage);
             }
 
+            transactionBuilder.AddCoins(coins);
+        }
+
+        /// <summary>
+        /// Determines the inputs/coins that will be used for the transaction.
+        /// </summary>
+        /// <param name="walletManager">The federation wallet manager.</param>
+        /// <param name="network">The network.</param>
+        /// <param name="context">The transacion build context.</param>
+        /// <returns>The coins and unspent outputs that will be used.</returns>
+        public static (List<Coin>, List<UnspentOutputReference>) DetermineCoins(IFederationWalletManager walletManager, Network network, TransactionBuildContext context, IFederatedPegSettings settings)
+        {
+            List<UnspentOutputReference> unspentOutputs = walletManager.GetSpendableTransactionsInWallet(context.MinConfirmations).ToList();
+
             // Get total spendable balance in the account.
-            long balance = context.UnspentOutputs.Sum(t => t.Transaction.Amount);
+            long balance = unspentOutputs.Sum(t => t.Transaction.Amount);
             long totalToSend = context.Recipients.Sum(s => s.Amount);
             if (balance < totalToSend)
-                throw new WalletException("Not enough funds.");
+                throw new WalletException(NotEnoughFundsMessage);
 
             if (context.SelectedInputs.Any())
             {
@@ -249,7 +235,7 @@ namespace Stratis.Features.FederatedPeg.Wallet
                 // input is part of the UTXO set and filter out UTXOs that are not
                 // in the initial list if 'context.AllowOtherInputs' is false.
 
-                Dictionary<OutPoint, UnspentOutputReference> availableHashList = context.UnspentOutputs.ToDictionary(item => item.ToOutPoint(), item => item);
+                Dictionary<OutPoint, UnspentOutputReference> availableHashList = unspentOutputs.ToDictionary(item => item.ToOutPoint(), item => item);
 
                 if (!context.SelectedInputs.All(input => availableHashList.ContainsKey(input)))
                     throw new WalletException("Not all the selected inputs were found on the wallet.");
@@ -258,31 +244,30 @@ namespace Stratis.Features.FederatedPeg.Wallet
                 {
                     foreach (KeyValuePair<OutPoint, UnspentOutputReference> unspentOutputsItem in availableHashList)
                         if (!context.SelectedInputs.Contains(unspentOutputsItem.Key))
-                            context.UnspentOutputs.Remove(unspentOutputsItem.Value);
+                            unspentOutputs.Remove(unspentOutputsItem.Value);
                 }
             }
 
             long sum = 0;
-            int index = 0;
+            int count = 0;
             var coins = new List<Coin>();
 
-            // Note that the coins are ordered and selected by the CoinSelector later on.
-            // TODO: Move GetOrderedUnspentOutputs to happen inside the DeterministicCoinSelector.
-            IEnumerable<UnspentOutputReference> orderedUnspentOutputs = this.GetOrderedUnspentOutputs(context);
+            // Assume the outputs came in in-order
 
-            foreach (UnspentOutputReference item in orderedUnspentOutputs)
+            foreach (UnspentOutputReference item in unspentOutputs)
             {
-                coins.Add(ScriptCoin.Create(this.network, item.Transaction.Id, (uint)item.Transaction.Index, item.Transaction.Amount, item.Transaction.ScriptPubKey, this.walletManager.GetWallet().MultiSigAddress.RedeemScript));
+                coins.Add(ScriptCoin.Create(network, item.Transaction.Id, (uint)item.Transaction.Index, item.Transaction.Amount, item.Transaction.ScriptPubKey, walletManager.GetWallet().MultiSigAddress.RedeemScript));
                 sum += item.Transaction.Amount;
-                index++;
 
-                // Sufficient UTXOs are selected to cover the value of the outputs + fee.
-                if (sum >= (totalToSend + context.TransactionFee))
+                count++;
+
+                // Sufficient UTXOs are selected to cover the value of the outputs + fee. But if it's a consolidating transaction, consume all.
+                if (sum >= (totalToSend + settings.GetWithdrawalTransactionFee(count))
+                    && !context.IsConsolidatingTransaction)
                     break;
-
             }
 
-            transactionBuilder.AddCoins(coins);
+            return (coins, unspentOutputs);
         }
 
         /// <summary>
@@ -345,7 +330,7 @@ namespace Stratis.Features.FederatedPeg.Wallet
             if (context.OpReturnData == null) return;
 
             Script opReturnScript = TxNullDataTemplate.Instance.GenerateScriptPubKey(context.OpReturnData);
-            transactionBuilder.Send(opReturnScript, Money.Zero);
+            transactionBuilder.Send(opReturnScript, Money.Satoshis(OpReturnSatoshis));
         }
     }
 
@@ -473,6 +458,11 @@ namespace Stratis.Features.FederatedPeg.Wallet
         /// The timestamp to set on the transaction.
         /// </summary>
         public uint? Time { get; set; }
+
+        /// <summary>
+        /// Whether or not this is a transaction built by the federation to consolidate its own inputs.
+        /// </summary>
+        public bool IsConsolidatingTransaction { get; set; }
     }
 
     /// <summary>

@@ -40,7 +40,7 @@ namespace Stratis.Bitcoin.Builder
             Guard.NotNull(fullNode, nameof(fullNode));
 
             this.node = fullNode;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
         }
 
         /// <inheritdoc />

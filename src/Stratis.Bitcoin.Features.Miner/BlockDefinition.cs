@@ -120,7 +120,7 @@ namespace Stratis.Bitcoin.Features.Miner
         {
             this.ConsensusManager = consensusManager;
             this.DateTimeProvider = dateTimeProvider;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.Mempool = mempool;
             this.MempoolLock = mempoolLock;
             this.Network = network;

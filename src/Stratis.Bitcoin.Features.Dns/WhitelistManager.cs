@@ -86,7 +86,7 @@ namespace Stratis.Bitcoin.Features.Dns
             Guard.NotNull(peerBanning, nameof(peerBanning));
 
             this.dateTimeProvider = dateTimeProvider;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.peerAddressManager = peerAddressManager;
             this.dnsServer = dnsServer;
             this.dnsSettings = dnsSettings;

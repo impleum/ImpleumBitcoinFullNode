@@ -13,6 +13,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
     /// Proof of stake override for the coinview rules - BIP68, MaxSigOps and BlockReward checks.
     /// </summary>
     public sealed class PosCoinviewRule : CoinViewRule
+    
     {
         /// <summary>Provides functionality for checking validity of PoS blocks.</summary>
         private IStakeValidator stakeValidator;
@@ -53,8 +54,7 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
             {
                 var posRuleContext = context as PosRuleContext;
                 Money stakeReward = block.Transactions[1].TotalOut - posRuleContext.TotalCoinStakeValueIn;
-                Money calcStakeReward = fees + this.GetProofOfStakeReward(height, posRuleContext.CoinAge);
-               
+                Money calcStakeReward = fees + this.GetProofOfStakeReward(height);
 
                 this.Logger.LogTrace("Block stake reward is {0}, calculated reward is {1}.", stakeReward, calcStakeReward);
                 if (stakeReward > calcStakeReward)
@@ -73,6 +73,11 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                     ConsensusErrors.BadCoinbaseAmount.Throw();
                 }
             }
+        }
+
+        protected override Money GetTransactionFee(UnspentOutputSet view, Transaction tx)
+        {
+            return tx.IsCoinStake ? Money.Zero : view.GetValueIn(tx) - tx.TotalOut;
         }
 
         /// <inheritdoc />
@@ -204,7 +209,6 @@ namespace Stratis.Bitcoin.Features.Consensus.Rules.CommonRules
                 return Money.Coins(0.48m);
             return Money.Coins(0);
         }
-
         /// <summary>
         /// Gets miner's coin stake reward.
         /// </summary>

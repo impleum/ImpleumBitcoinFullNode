@@ -28,7 +28,7 @@ namespace Stratis.Bitcoin.Features.Consensus
             this.coinView = coinView;
             this.chainState = chainState;
             this.network = network;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
         }
 
         /// <inheritdoc />

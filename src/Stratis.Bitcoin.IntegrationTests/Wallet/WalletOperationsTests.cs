@@ -44,7 +44,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
 
         public WalletOperationsFixture()
         {
-            this.network = new ImpleumRegTest();
+            this.network = new StratisRegTest();
             this.builder = NodeBuilder.Create("WalletOperationsTests");
             CoreNode stratisNode = this.builder.CreateStratisPosNode(this.network).Start();
 
@@ -179,8 +179,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             account.InternalAddresses.Count().Should().Be(20);
             account.Index.Should().Be(0);
             account.ExtendedPubKey.Should().NotBeNullOrEmpty();
-            account.GetCoinType().Should().Be(CoinType.Impleum);
-            account.HdPath.Should().Be("m/44'/769'/0'");
+            account.GetCoinType().Should().Be(CoinType.Stratis);
+            account.HdPath.Should().Be("m/44'/105'/0'");
         }
 
         [Fact]
@@ -230,8 +230,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             account.InternalAddresses.Count().Should().Be(20);
             account.Index.Should().Be(0);
             account.ExtendedPubKey.Should().NotBeNullOrEmpty();
-            account.GetCoinType().Should().Be(CoinType.Impleum);
-            account.HdPath.Should().Be("m/44'/769'/0'");
+            account.GetCoinType().Should().Be(CoinType.Stratis);
+            account.HdPath.Should().Be("m/44'/105'/0'");
         }
 
         [Fact]
@@ -255,7 +255,11 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             // Check the mnemonic returned.
             response = response.Replace("\"", "");
             response.Split(" ").Length.Should().Be(12);
-            Wordlist.AutoDetectLanguage(response).Should().Be(Language.ChineseTraditional);
+            Language detectedLanguage = Wordlist.AutoDetectLanguage(response);
+
+            // Relax the test due to the potential language ambiguity of the words returned.
+            detectedLanguage.Should().Match(p => p.Equals(Language.ChineseTraditional) || p.Equals(Language.ChineseSimplified));
+
             response.Should().Be(mnemonic);
 
             // Check a wallet file has been created.
@@ -281,8 +285,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             account.InternalAddresses.Count().Should().Be(20);
             account.Index.Should().Be(0);
             account.ExtendedPubKey.Should().NotBeNullOrEmpty();
-            account.GetCoinType().Should().Be(CoinType.Impleum);
-            account.HdPath.Should().Be("m/44'/769'/0'");
+            account.GetCoinType().Should().Be(CoinType.Stratis);
+            account.HdPath.Should().Be("m/44'/105'/0'");
         }
 
         [Fact]
@@ -332,8 +336,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             account.InternalAddresses.Count().Should().Be(20);
             account.Index.Should().Be(0);
             account.ExtendedPubKey.Should().NotBeNullOrEmpty();
-            account.GetCoinType().Should().Be(CoinType.Impleum);
-            account.HdPath.Should().Be("m/44'/769'/0'");
+            account.GetCoinType().Should().Be(CoinType.Stratis);
+            account.HdPath.Should().Be("m/44'/105'/0'");
         }
 
         [Fact]
@@ -380,8 +384,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             account.InternalAddresses.Count().Should().Be(20);
             account.Index.Should().Be(0);
             account.ExtendedPubKey.Should().NotBeNullOrEmpty();
-            account.GetCoinType().Should().Be(CoinType.Impleum);
-            account.HdPath.Should().Be("m/44'/769'/0'");
+            account.GetCoinType().Should().Be(CoinType.Stratis);
+            account.HdPath.Should().Be("m/44'/105'/0'");
         }
 
         [Fact]
@@ -778,8 +782,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             account.InternalAddresses.Count().Should().Be(20);
             account.Index.Should().Be(0);
             account.ExtendedPubKey.Should().NotBeNullOrEmpty();
-            account.GetCoinType().Should().Be(CoinType.Impleum);
-            account.HdPath.Should().Be("m/44'/769'/0'");
+            account.GetCoinType().Should().Be(CoinType.Stratis);
+            account.HdPath.Should().Be("m/44'/105'/0'");
         }
 
         [Fact]
@@ -823,8 +827,8 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             account.InternalAddresses.Count().Should().Be(20);
             account.Index.Should().Be(0);
             account.ExtendedPubKey.Should().NotBeNullOrEmpty();
-            account.GetCoinType().Should().Be(CoinType.Impleum);
-            account.HdPath.Should().Be("m/44'/769'/0'");
+            account.GetCoinType().Should().Be(CoinType.Stratis);
+            account.HdPath.Should().Be("m/44'/105'/0'");
         }
 
         [Fact]
@@ -891,7 +895,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             var accountBalance = response.AccountsBalances.Single();
             accountBalance.HdPath.Should().Be("m/44'/105'/0'");
             accountBalance.Name.Should().Be("account 0");
-            accountBalance.CoinType.Should().Be(CoinType.Impleum);
+            accountBalance.CoinType.Should().Be(CoinType.Stratis);
             accountBalance.AmountConfirmed.Should().Be(new Money(142190299995400));
             accountBalance.AmountUnconfirmed.Should().Be(new Money(100000000000));
         }
@@ -954,7 +958,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
                 .GetJsonAsync<AddressBalanceModel>();
 
             addressBalance.Address.Should().Be(address);
-            addressBalance.CoinType.Should().Be(CoinType.Impleum);
+            addressBalance.CoinType.Should().Be(CoinType.Stratis);
             addressBalance.AmountConfirmed.Should().Be(new Money(10150100000000));
             addressBalance.AmountUnconfirmed.Should().Be(Money.Zero);
         }
@@ -1201,7 +1205,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Wallet
             generalInfoModel.ConnectedNodes.Should().Be(0);
             generalInfoModel.CreationTime.ToUnixTimeSeconds().Should().Be(1540204793);
             generalInfoModel.IsDecrypted.Should().BeTrue();
-            generalInfoModel.Network.Name.Should().Be(new ImpleumRegTest().Name);
+            generalInfoModel.Network.Name.Should().Be(new StratisRegTest().Name);
             generalInfoModel.WalletFilePath.Should().Be(this.fixture.WalletWithFundsFilePath);
         }
 

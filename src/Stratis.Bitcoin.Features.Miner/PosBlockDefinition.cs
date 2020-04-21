@@ -39,7 +39,7 @@ namespace Stratis.Bitcoin.Features.Miner
             IStakeValidator stakeValidator)
             : base(consensusManager, dateTimeProvider, loggerFactory, mempool, mempoolLock, minerSettings, network)
         {
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.stakeChain = stakeChain;
             this.stakeValidator = stakeValidator;
         }

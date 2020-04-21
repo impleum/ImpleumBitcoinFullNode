@@ -11,7 +11,7 @@ namespace Stratis.Bitcoin.Features.PoA
 
         public PoABlockHeaderValidator(ILoggerFactory factory)
         {
-            this.logger = factory.CreateLogger(this.GetType().FullName);
+            this.logger = factory.CreateLogger("Impleum.Bitcoin.Fullnode");
         }
 
         /// <summary>Signs PoA header with the specified key.</summary>

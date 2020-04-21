@@ -69,7 +69,7 @@ namespace Stratis.Bitcoin.Features.Miner
             this.powMining = powMining;
             this.timeSyncBehaviorState = timeSyncBehaviorState;
             this.posMinting = posMinting;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
         }
 
         /// <summary>

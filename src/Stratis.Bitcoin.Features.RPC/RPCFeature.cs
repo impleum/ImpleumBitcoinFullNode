@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
@@ -33,7 +32,7 @@ namespace Stratis.Bitcoin.Features.RPC
             this.fullNodeBuilder = fullNodeBuilder;
             this.fullNode = fullNode;
             this.nodeSettings = nodeSettings;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.rpcSettings = rpcSettings;
         }
 

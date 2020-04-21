@@ -36,7 +36,7 @@ namespace Stratis.Bitcoin.Features.ColdStaking.Controllers
             this.ColdStakingManager = walletManager as ColdStakingManager;
             Guard.NotNull(this.ColdStakingManager, nameof(this.ColdStakingManager));
 
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.walletTransactionHandler = walletTransactionHandler;
         }
 

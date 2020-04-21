@@ -13,7 +13,7 @@ namespace Stratis.Bitcoin.Features.Apps
         public AppsController(ILoggerFactory loggerFactory, IAppsStore appsStore)
         {
             this.appsStore = appsStore;
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
         }
 
         [HttpGet]

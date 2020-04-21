@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.Bitcoin.Configuration;
+using Stratis.Bitcoin.AsyncWork;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Consensus.Validators;
@@ -28,7 +28,7 @@ namespace Stratis.Bitcoin.Features.PoA
     /// Blocks can be created only for particular timestamps- once per round.
     /// Round length in seconds is equal to amount of fed members multiplied by target spacing.
     /// Miner's slot in each round is the same and is determined by the index
-    /// of current key in <see cref="FederationManager.GetFederationMembers"/>
+    /// of current key in <see cref="IFederationManager.GetFederationMembers"/>
     /// </remarks>
     public interface IPoAMiner : IDisposable
     {
@@ -45,7 +45,7 @@ namespace Stratis.Bitcoin.Features.PoA
 
         protected readonly ILogger logger;
 
-        private readonly PoANetwork network;
+        protected readonly PoANetwork network;
 
         /// <summary>
         /// A cancellation token source that can cancel the mining processes and is linked to the <see cref="INodeLifetime.ApplicationStopping"/>.
@@ -56,13 +56,13 @@ namespace Stratis.Bitcoin.Features.PoA
 
         private readonly BlockDefinition blockDefinition;
 
-        private readonly SlotsManager slotsManager;
+        private readonly ISlotsManager slotsManager;
 
         private readonly IConnectionManager connectionManager;
 
         private readonly PoABlockHeaderValidator poaHeaderValidator;
 
-        private readonly FederationManager federationManager;
+        protected readonly IFederationManager federationManager;
 
         private readonly IIntegrityValidator integrityValidator;
 
@@ -73,6 +73,7 @@ namespace Stratis.Bitcoin.Features.PoA
         private readonly VotingDataEncoder votingDataEncoder;
 
         private readonly PoAMinerSettings settings;
+        private readonly IAsyncProvider asyncProvider;
 
         private Task miningTask;
 
@@ -84,15 +85,16 @@ namespace Stratis.Bitcoin.Features.PoA
             ILoggerFactory loggerFactory,
             IInitialBlockDownloadState ibdState,
             BlockDefinition blockDefinition,
-            SlotsManager slotsManager,
+            ISlotsManager slotsManager,
             IConnectionManager connectionManager,
             PoABlockHeaderValidator poaHeaderValidator,
-            FederationManager federationManager,
+            IFederationManager federationManager,
             IIntegrityValidator integrityValidator,
             IWalletManager walletManager,
             INodeStats nodeStats,
             VotingManager votingManager,
-            PoAMinerSettings poAMinerSettings)
+            PoAMinerSettings poAMinerSettings,
+            IAsyncProvider asyncProvider)
         {
             this.consensusManager = consensusManager;
             this.dateTimeProvider = dateTimeProvider;
@@ -107,8 +109,9 @@ namespace Stratis.Bitcoin.Features.PoA
             this.walletManager = walletManager;
             this.votingManager = votingManager;
             this.settings = poAMinerSettings;
+            this.asyncProvider = asyncProvider;
 
-            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.FullNode");
+            this.logger = loggerFactory.CreateLogger("Impleum.Bitcoin.Fullnode");
             this.cancellation = CancellationTokenSource.CreateLinkedTokenSource(new[] { nodeLifetime.ApplicationStopping });
             this.votingDataEncoder = new VotingDataEncoder(loggerFactory);
 
@@ -121,6 +124,7 @@ namespace Stratis.Bitcoin.Features.PoA
             if (this.miningTask == null)
             {
                 this.miningTask = this.CreateBlocksAsync();
+                this.asyncProvider.RegisterTask($"{nameof(PoAMiner)}.{nameof(this.miningTask)}", this.miningTask);
             }
         }
 
@@ -130,6 +134,9 @@ namespace Stratis.Bitcoin.Features.PoA
             {
                 try
                 {
+                    this.logger.LogTrace("IsInitialBlockDownload={0}, AnyConnectedPeers={1}, BootstrappingMode={2}, IsFederationMember={3}",
+                        this.ibdState.IsInitialBlockDownload(), this.connectionManager.ConnectedPeers.Any(), this.settings.BootstrappingMode, this.federationManager.IsFederationMember);
+
                     // Don't mine in IBD in case we are connected to any node unless bootstrapping mode is enabled.
                     if (((this.ibdState.IsInitialBlockDownload() || !this.connectionManager.ConnectedPeers.Any()) && !this.settings.BootstrappingMode)
                         || !this.federationManager.IsFederationMember)
@@ -157,6 +164,11 @@ namespace Stratis.Bitcoin.Features.PoA
                 }
                 catch (OperationCanceledException)
                 {
+                }
+                // TODO: Find a better way to do this.
+                catch (ConsensusErrorException ce) when (ce.ConsensusError.Code == "invalid-collateral-amount")
+                {
+                    this.logger.LogInformation("Miner failed to mine block due to: '{0}'.", ce.ConsensusError.Message);
                 }
                 catch (Exception exception)
                 {
@@ -211,6 +223,7 @@ namespace Stratis.Bitcoin.Features.PoA
             {
                 // Can happen only when target spacing had crazy low value or key was compromised and someone is mining with our key.
                 this.logger.LogWarning("Somehow another block was connected with greater timestamp. Dropping current block.");
+                this.logger.LogTrace("(-)[ANOTHER_BLOCK_CONNECTED]:null");
                 return null;
             }
 
@@ -224,8 +237,13 @@ namespace Stratis.Bitcoin.Features.PoA
 
             BlockTemplate blockTemplate = this.blockDefinition.Build(tip, walletScriptPubKey);
 
-            if (this.network.ConsensusOptions.VotingEnabled)
-                this.AddVotingData(blockTemplate);
+            this.FillBlockTemplate(blockTemplate, out bool dropTemplate);
+
+            if (dropTemplate)
+            {
+                this.logger.LogTrace("(-)[DROPPED]:null");
+                return null;
+            }
 
             blockTemplate.Block.Header.Time = timestamp;
 
@@ -234,13 +252,14 @@ namespace Stratis.Bitcoin.Features.PoA
 
             // Sign block with our private key.
             var header = blockTemplate.Block.Header as PoABlockHeader;
-            this.poaHeaderValidator.Sign(this.federationManager.FederationMemberKey, header);
+            this.poaHeaderValidator.Sign(this.federationManager.CurrentFederationKey, header);
 
             ChainedHeader chainedHeader = await this.consensusManager.BlockMinedAsync(blockTemplate.Block).ConfigureAwait(false);
 
             if (chainedHeader == null)
             {
                 // Block wasn't accepted because we already connected block from the network.
+                this.logger.LogTrace("(-)[FAILED_TO_CONNECT]:null");
                 return null;
             }
 
@@ -248,10 +267,20 @@ namespace Stratis.Bitcoin.Features.PoA
             if (result.Error != null)
             {
                 // Sanity check. Should never happen.
+                this.logger.LogTrace("(-)[INTEGRITY_FAILURE]");
                 throw new Exception(result.Error.ToString());
             }
 
             return chainedHeader;
+        }
+
+        /// <summary>Fills block template with custom non-standard data.</summary>
+        protected virtual void FillBlockTemplate(BlockTemplate blockTemplate, out bool dropTemplate)
+        {
+            if (this.network.ConsensusOptions.VotingEnabled)
+                this.AddVotingData(blockTemplate);
+
+            dropTemplate = false;
         }
 
         /// <summary>Gets scriptPubKey from the wallet.</summary>
@@ -305,9 +334,10 @@ namespace Stratis.Bitcoin.Features.PoA
             ChainedHeader currentHeader = tip;
             uint currentTime = currentHeader.Header.Time;
 
-            int maxDepth = 20;
+            int maxDepth = 46;
             int pubKeyTakeCharacters = 4;
             int depthReached = 0;
+            int hitCount = 0;
 
             log.AppendLine($"Mining information for the last {maxDepth} blocks.");
             log.AppendLine("MISS means that miner didn't produce a block at the timestamp he was supposed to.");
@@ -315,10 +345,11 @@ namespace Stratis.Bitcoin.Features.PoA
             for (int i = tip.Height; (i > 0) && (i > tip.Height - maxDepth); i--)
             {
                 // Add stats for current header.
-                string pubKeyRepresentation = this.slotsManager.GetPubKeyForTimestamp(currentTime).ToString().Substring(0, pubKeyTakeCharacters);
+                string pubKeyRepresentation = this.slotsManager.GetFederationMemberForTimestamp(currentTime).PubKey.ToString().Substring(0, pubKeyTakeCharacters);
 
                 log.Append("[" + pubKeyRepresentation + "]-");
                 depthReached++;
+                hitCount++;
 
                 currentHeader = currentHeader.Previous;
                 currentTime -= this.network.ConsensusOptions.TargetSpacingSeconds;
@@ -338,6 +369,9 @@ namespace Stratis.Bitcoin.Features.PoA
             }
 
             log.Append("...");
+            log.AppendLine();
+            log.AppendLine($"Block producers hits      : {hitCount} of {maxDepth}({(((float)hitCount / (float)maxDepth)).ToString("P2")})");
+            log.AppendLine($"Block producers idle time : {TimeSpan.FromSeconds(this.network.ConsensusOptions.TargetSpacingSeconds * (maxDepth - hitCount)).ToString(@"hh\:mm\:ss")}");
             log.AppendLine();
         }
 
